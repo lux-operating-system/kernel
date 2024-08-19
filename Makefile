@@ -1,6 +1,7 @@
+PLATFORM=x86_64
 ASFLAGS=-f elf64
-CCFLAGS=-c -I./src/include -ffreestanding -O2
-LDFLAGS=-T./src/platform/x86_64/lux-x86_64.ld -nostdlib
+CCFLAGS=-c -I./src/include -I./src/platform/$(PLATFORM)/include -ffreestanding -O2
+LDFLAGS=-T./src/platform/$(PLATFORM)/lux-$(PLATFORM).ld -nostdlib
 AS=nasm
 CC=x86_64-elf-gcc
 LD=x86_64-elf-ld
