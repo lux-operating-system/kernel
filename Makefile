@@ -5,7 +5,7 @@ AS=nasm
 CC=x86_64-elf-gcc
 LD=x86_64-elf-ld
 SRCC:=$(shell find ./src -type f -name "*.c")
-OBJC:=$(SRC:.c=.o)
+OBJC:=$(SRCC:.c=.o)
 SRCA:=$(shell find ./src -type f -name "*.asm")
 OBJA:=$(SRCA:.asm=.o)
 
