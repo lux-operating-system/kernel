@@ -14,7 +14,15 @@
 // 0x20: user data descriptor
 // 0x28: task segment descriptor
 
-#define GDT_ENTRIES             6
+#define GDT_ENTRIES             7
+
+#define GDT_NULL                0
+#define GDT_KERNEL_CODE         1
+#define GDT_KERNEL_DATA         2
+#define GDT_USER_CODE           3
+#define GDT_USER_DATA           4
+#define GDT_TSS_LOW             5
+#define GDT_TSS_HIGH            6
 
 #define GDT_LIMIT               0xFFFFF     // constant for all entries
 #define GDT_BASE                0
