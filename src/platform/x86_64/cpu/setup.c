@@ -5,8 +5,8 @@
  * Core Microkernel
  */
 
-#include <platform.h>
-#include <gdt.h>
+#include <platform/platform.h>
+#include <platform/gdt.h>
 
 int platformCPUSetup() {
 

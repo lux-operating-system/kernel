@@ -5,11 +5,15 @@
  * Core Microkernel
  */
 
+#include <stddef.h>
 #include <stdint.h>
-#include <boot.h>
+#include <kernel/boot.h>
+#include <platform/platform.h>
 
-// platform-specific kernel entry point
+extern int main(int, char **);
+
+// x86_64-specific kernel entry point
 int platformMain(KernelBootInfo *k) {
-    while(1);
-    return 0;
+    platformCPUSetup();
+    return main(0, NULL);
 }

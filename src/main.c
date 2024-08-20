@@ -6,9 +6,8 @@
  */
 
 #include <stdint.h>
-#include <boot.h>
 
 // true kernel entry point
-int main(KernelBootInfo *k) {
+int main(int argc, char **argv) {
     return 0;
 }
