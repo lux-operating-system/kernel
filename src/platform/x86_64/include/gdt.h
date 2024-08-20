@@ -36,11 +36,11 @@
 
 typedef struct {
     uint16_t limit;
-    uint16_t base_lo;
-    uint8_t base_mi;
+    uint16_t baseLo;
+    uint8_t baseMi;
     uint8_t access;
-    uint8_t flags_limit_hi;
-    uint8_t base_hi;
+    uint8_t flagsLimitHi;
+    uint8_t baseHi;
 } __attribute__((packed)) GDTEntry;
 
 typedef struct {
