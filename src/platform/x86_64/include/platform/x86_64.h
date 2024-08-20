@@ -23,3 +23,7 @@ void outd(uint16_t, uint32_t);
 uint8_t inb(uint16_t);
 uint16_t inw(uint16_t);
 uint32_t ind(uint16_t);
+void resetSegments(uint64_t, uint8_t);
+
+#define PRIVILEGE_KERNEL        0
+#define PRIVILEGE_USER          3

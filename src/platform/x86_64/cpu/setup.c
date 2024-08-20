@@ -57,4 +57,5 @@ int platformCPUSetup() {
     gdtr.base = (uint64_t)&gdt;
     gdtr.limit = (sizeof(GDTEntry) * GDT_ENTRIES) - 1;
     loadGDT(&gdtr);
+    resetSegments(GDT_KERNEL_CODE, PRIVILEGE_KERNEL);
 }

@@ -106,3 +106,33 @@ ind:
     mov rdx, rdi
     in eax, dx
     ret
+
+global resetSegments
+align 16
+resetSegments:
+    mov rax, rsp    ; preserve original stack
+
+    ; rdi = index into GDT for code segment
+    ; rsi = privilege level
+    inc rdi         ; advance to data segment
+    shl rdi, 3      ; mul 8
+    or rdi, rsi
+
+    mov ds, rdi
+    mov es, rdi
+    mov fs, rdi
+    mov gs, rdi
+
+    ; create interrupt frame
+    push rdi        ; ss
+    push rax        ; rsp
+    pushfq          ; rflags
+    
+    sub rdi, 8
+    push rdi        ; code segment
+    mov rax, .next
+    push rax        ; rip
+    iretq
+
+.next:
+    ret
