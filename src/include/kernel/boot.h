@@ -37,6 +37,7 @@ typedef struct {
     uint64_t kernelTotalSize;
     
     uint64_t acpiRSDP;
+    uint64_t highestPhysicalAddress;
     uint64_t memoryMap;
     uint8_t memoryMapSize;
 
