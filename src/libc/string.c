@@ -58,6 +58,9 @@ int memcmp(const void *d1, const void *d2, size_t n) {
         if(*d1c != *d2c) {
             return *d1c - *d2c;
         }
+
+        d1c++;
+        d2c++;
     }
 
     return 0;
