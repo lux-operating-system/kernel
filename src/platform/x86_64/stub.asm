@@ -14,14 +14,15 @@ _start:
     mov rsp, initial_stack_top
     mov rbp, rsp
 
-    ; all remaining CPU setup will be done in the main C code
-    extern main
+    ; now we call platform-specific initialization code
+    ; this function will later call the true kernel main
+    extern platformMain
     cld
-    mov rax, main
+    mov rax, platformMain
     call rax
 
-    ; this should never return
 .hang:
+    ; this should never return
     cli
     hlt
     jmp .hang

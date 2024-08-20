@@ -8,7 +8,8 @@
 #include <stdint.h>
 #include <boot.h>
 
-// true kernel entry point
-int main(KernelBootInfo *k) {
+// platform-specific kernel entry point
+int platformMain(KernelBootInfo *k) {
+    while(1);
     return 0;
 }
