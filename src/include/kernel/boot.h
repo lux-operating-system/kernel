@@ -45,6 +45,7 @@ typedef struct {
     uint16_t height;
     uint8_t bpp;
     uint64_t framebuffer;
+    uint32_t pitch;
     uint8_t redPosition;
     uint8_t redMask;
     uint8_t greenPosition;

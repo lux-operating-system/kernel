@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <kernel/boot.h>
 #include <kernel/memory.h>
+#include <kernel/tty.h>
 #include <platform/platform.h>
 
 extern int main(int, char **);
@@ -17,5 +18,6 @@ extern int main(int, char **);
 int platformMain(KernelBootInfo *k) {
     platformCPUSetup();
     pmmInit(k);
+    ttyInit(k);
     return main(0, NULL);
 }
