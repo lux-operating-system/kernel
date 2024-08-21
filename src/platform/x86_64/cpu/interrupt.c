@@ -19,7 +19,7 @@
 
 void installInterrupt(uint64_t handler, uint16_t segment, int privilege, int type, int i) {
     if(i > 0xFF) {
-        KERROR("request to install interrupt handler %d, ignoring\n", i);
+        KERROR("request to install interrupt handler 0x%02X, ignoring\n", i);
         return;
     }
 
@@ -33,4 +33,7 @@ void installInterrupt(uint64_t handler, uint16_t segment, int privilege, int typ
     idt[i].segment = (segment << 3) | privilege;
     idt[i].flags = (privilege << IDT_FLAGS_DPL_SHIFT) | (type << IDT_FLAGS_TYPE_SHIFT);
     idt[i].flags |= IDT_FLAGS_VALID;
+
+    KDEBUG("%s handler 0x%02X with %s privilege\n", type == INTERRUPT_TYPE_TRAP ? "trap" : "interrupt", i,
+        privilege == PRIVILEGE_KERNEL ? "kernel" : "user");
 }
