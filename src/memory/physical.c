@@ -14,7 +14,8 @@
 #include <kernel/logger.h>
 
 static PhysicalMemoryStatus status;
-uint8_t *pmmBitmap;
+static uint8_t *pmmBitmap;
+static size_t pmmBitmapSize;
 
 /* pmmMark(): marks a page as free or used
  * params: phys - physical address
@@ -63,6 +64,34 @@ int pmmMarkContiguous(uintptr_t phys, size_t count, bool use) {
     return status;
 }
 
+/* pmmInitMark(): marks pages as free or used without checking their status
+ * this is necessary during the startup process while parsing the memory map 
+ * params: phys - physical address
+ * params: use - whether the page is used
+ * returns: nothing
+ */
+
+static void pmmInitMark(uintptr_t phys, bool use) {
+    uintptr_t page = phys / PAGE_SIZE;
+    uintptr_t byte = page / 8;
+    uintptr_t bit = page % 8;
+
+    if(use) {
+        pmmBitmap[byte] |= (1 << bit);
+        status.reservedPages++;
+    } else {
+        pmmBitmap[byte] &= ~(1 << bit);
+        status.usablePages++;
+    }
+}
+
+static void pmmInitMarkContiguous(uintptr_t phys, size_t count, bool use) {
+    for(size_t i = 0; i < count; i++) {
+        pmmInitMark(phys, use);
+        phys += PAGE_SIZE;
+    }
+}
+
 /* pmmInit(): this is called from platformMain() early in the boot process
  * params: boot - kernel boot information structure
  * returns: nothing
@@ -77,17 +106,21 @@ void pmmInit(KernelBootInfo *boot) {
     status.highestPhysicalAddress = boot->highestPhysicalAddress;
     status.highestPage = (status.highestPhysicalAddress + PAGE_SIZE - 1) / PAGE_SIZE;
 
+    pmmBitmapSize = (status.highestPage + 7) / 8;
+
     KDEBUG("highest kernel address is 0x%08X\n", boot->kernelHighestAddress);
     KDEBUG("highest physical address is 0x%08X\n", boot->highestPhysicalAddress);
 
-    // reset the bitmap and then reserve the kernel space, IO registers, etc
-    memset(pmmBitmap, 0, status.highestPage);
+    // reset the bitmap reserving everything, and then mark the RAM regions as free later
+    memset(pmmBitmap, 0xFF, pmmBitmapSize);
     MemoryMap *mmap = (MemoryMap *)boot->memoryMap;
+
+    //status.usedPages = status.highestPage;
 
     KDEBUG("system memory map:\n");
 
     const char *memTypes[] = {
-        "usable",
+        "RAM",
         "reserved",
         "ACPI reclaimable",
         "ACPI NVS",
@@ -95,7 +128,8 @@ void pmmInit(KernelBootInfo *boot) {
     };
 
     for(int i = 0; i < boot->memoryMapSize; i++) {
-        KDEBUG(" %d %016X - %016X - %s\n", i, mmap[i].base, mmap[i].base+mmap[i].len, memTypes[(mmap[i].type%5) - 1]);
+        KDEBUG(" %016X - %016X - %s\n", mmap[i].base, mmap[i].base+mmap[i].len-1, 
+            mmap[i].type <= MEMORY_TYPE_BAD ? memTypes[(mmap[i].type%5) - 1] : "undefined");
 
         // the system doesn't have to implement ACPI 3.0 for us to check for this
         // the boot loader appends this flag on pre-ACPI 3.0 systems
@@ -106,28 +140,31 @@ void pmmInit(KernelBootInfo *boot) {
                 // there is a boundary between usable and unusable memory on a
                 // non-page-aligned boundary
                 // this is very unlikely but keeps us safe just in case
-                status.usablePages += mmap[i].len / PAGE_SIZE;
+                //status.usablePages += mmap[i].len / PAGE_SIZE;
+                pmmInitMarkContiguous(mmap[i].base, mmap[i].len / PAGE_SIZE, false);
                 break;
             case MEMORY_TYPE_RESERVED:
             case MEMORY_TYPE_ACPI_RECLAIMABLE:
             case MEMORY_TYPE_ACPI_NVS:
             case MEMORY_TYPE_BAD:
             default:
-                pmmMarkContiguous(mmap[i].base, (mmap[i].len + PAGE_SIZE - 1) / PAGE_SIZE, true);
+                pmmInitMarkContiguous(mmap[i].base, (mmap[i].len + PAGE_SIZE - 1) / PAGE_SIZE, true);
             }
         }
     }
 
     // make usedPages track what's used out of actual usable memory
     // we need this because pmmMark() used in initialization alters usedPages
-    status.reservedPages = status.usedPages;
+    //status.reservedPages = status.usedPages;
     status.usedPages = 0;
 
-    // now reserve all the kernel's memory including ramdisks, modules, etc
-    // likewise, todo: replace this with moduleHighestAddress eventually
-    size_t kernelPages = (boot->kernelHighestAddress + PAGE_SIZE - 1) / PAGE_SIZE;
+    // now reserve all the kernel's memory including ramdisks, modules
+    // this is reserving until the end of the pmm bitmap
+    uintptr_t pmmBitmapEnd = (uintptr_t)pmmBitmap + pmmBitmapSize + PAGE_SIZE - 1;
+    size_t kernelPages = pmmBitmapEnd / PAGE_SIZE;
     pmmMarkContiguous(0, kernelPages, true);
 
+    KDEBUG("bitmap size = %d pages (%d KiB)\n", (pmmBitmapSize+PAGE_SIZE-1)/PAGE_SIZE, pmmBitmapSize/1024);
     KDEBUG("total usable memory = %d pages (%d MiB)\n", status.usablePages, (status.usablePages * PAGE_SIZE) / 0x100000);
     KDEBUG("kernel-reserved memory = %d pages (%d MiB)\n", status.usedPages, (status.usedPages * PAGE_SIZE) / 0x100000);
     KDEBUG("hardware-reserved memory = %d pages (%d MiB)\n", status.reservedPages, (status.reservedPages * PAGE_SIZE) / 0x100000);
