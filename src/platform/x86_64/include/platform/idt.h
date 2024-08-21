@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#pragma once
+
 #define IDT_FLAGS_VALID                 0x8000
 
 #define IDT_FLAGS_TYPE_INTERRUPT        0x0E

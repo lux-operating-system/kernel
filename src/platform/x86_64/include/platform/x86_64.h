@@ -9,6 +9,8 @@
 #include <platform/idt.h>
 #include <platform/gdt.h>
 
+#pragma once
+
 // wrappers for instructions that don't have an equivalent in C
 uint64_t readCR0();
 void writeCR0(uint64_t);
