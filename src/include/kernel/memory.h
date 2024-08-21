@@ -26,4 +26,5 @@ void pmmInit(KernelBootInfo *);
 void pmmStatus(PhysicalMemoryStatus *);
 uintptr_t pmmAllocate(void);
 uintptr_t pmmAllocateContiguous(size_t);
-void pmmFree(uintptr_t, size_t);
+int pmmFree(uintptr_t);
+int pmmFreeContiguous(uintptr_t, size_t);
