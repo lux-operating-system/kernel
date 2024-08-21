@@ -11,6 +11,7 @@
 #include <kernel/boot.h>
 #include <kernel/font.h>
 #include <kernel/tty.h>
+#include <kernel/logger.h>
 
 KTTY ktty;
 
@@ -62,6 +63,9 @@ void ttyInit(KernelBootInfo *boot) {
 
         fb = (uint32_t *)((uintptr_t)fb + ktty.pitch);
     }
+
+    // show signs of life
+    KDEBUG("kernel tty initialized\n");
 }
 
 /* ttyCheckBoundaries(): checks for the cursor position and scrolls
