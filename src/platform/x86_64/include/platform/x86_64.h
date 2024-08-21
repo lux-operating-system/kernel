@@ -6,6 +6,8 @@
  */
 
 #include <stdint.h>
+#include <platform/idt.h>
+#include <platform/gdt.h>
 
 // wrappers for instructions that don't have an equivalent in C
 uint64_t readCR0();
@@ -25,5 +27,12 @@ uint16_t inw(uint16_t);
 uint32_t ind(uint16_t);
 void resetSegments(uint64_t, uint8_t);
 
+// other x86_64-specific routines
+extern IDTEntry idt[];
+void installInterrupt(uint64_t, uint16_t, int, int, int);
+
 #define PRIVILEGE_KERNEL        0
 #define PRIVILEGE_USER          3
+
+#define INTERRUPT_TYPE_INT      0x0E
+#define INTERRUPT_TYPE_TRAP     0x0F
