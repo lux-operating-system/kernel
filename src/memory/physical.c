@@ -171,6 +171,14 @@ void pmmInit(KernelBootInfo *boot) {
     KDEBUG("total usable memory = %d pages (%d MiB)\n", status.usablePages, (status.usablePages * PAGE_SIZE) / 0x100000);
     KDEBUG("kernel-reserved memory = %d pages (%d MiB)\n", status.usedPages, (status.usedPages * PAGE_SIZE) / 0x100000);
     KDEBUG("hardware-reserved memory = %d pages (%d MiB)\n", status.reservedPages, (status.reservedPages * PAGE_SIZE) / 0x100000);
+
+    pmmAllocate();
+    pmmAllocate();
+    pmmAllocate();
+    pmmAllocate();
+    pmmAllocate();
+    pmmAllocate();
+    
 }
 
 /* pmmStatus(): returns the physical memory manager's status
@@ -204,6 +212,15 @@ bool pmmIsUsed(uintptr_t phys) {
  */
 
 uintptr_t pmmAllocate(void) {
-    uintptr_t addr = 0;
-    return addr;    // placeholder
+    uintptr_t addr;
+
+    for(addr = status.lowestUsableAddress; addr < status.highestUsableAddress; addr += PAGE_SIZE) {
+        if(!pmmIsUsed(addr)) {
+            pmmMark(addr, true);
+            //KDEBUG("allocated physical page at 0x%08X, %d pages in use\n", addr, status.usedPages);
+            return addr;
+        }
+    }
+
+    return 0;
 }
