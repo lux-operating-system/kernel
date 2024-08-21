@@ -11,6 +11,7 @@
 #include <string.h>
 #include <kernel/memory.h>
 #include <kernel/boot.h>
+#include <kernel/logger.h>
 
 static PhysicalMemoryStatus status;
 uint8_t *pmmBitmap;
@@ -76,11 +77,26 @@ void pmmInit(KernelBootInfo *boot) {
     status.highestPhysicalAddress = boot->highestPhysicalAddress;
     status.highestPage = (status.highestPhysicalAddress + PAGE_SIZE - 1) / PAGE_SIZE;
 
+    KDEBUG("highest kernel address is 0x%08X\n", boot->kernelHighestAddress);
+    KDEBUG("highest physical address is 0x%08X\n", boot->highestPhysicalAddress);
+
     // reset the bitmap and then reserve the kernel space, IO registers, etc
     memset(pmmBitmap, 0, status.highestPage);
     MemoryMap *mmap = (MemoryMap *)boot->memoryMap;
 
+    KDEBUG("system memory map:\n");
+
+    const char *memTypes[] = {
+        "usable",
+        "reserved",
+        "ACPI reclaimable",
+        "ACPI NVS",
+        "bad memory"
+    };
+
     for(int i = 0; i < boot->memoryMapSize; i++) {
+        KDEBUG(" %d %016X - %016X - %s\n", i, mmap[i].base, mmap[i].base+mmap[i].len, memTypes[(mmap[i].type%5) - 1]);
+
         // the system doesn't have to implement ACPI 3.0 for us to check for this
         // the boot loader appends this flag on pre-ACPI 3.0 systems
         if(mmap[i].acpiAttributes & MEMORY_ATTRIBUTES_VALID) {
@@ -111,4 +127,8 @@ void pmmInit(KernelBootInfo *boot) {
     // likewise, todo: replace this with moduleHighestAddress eventually
     size_t kernelPages = (boot->kernelHighestAddress + PAGE_SIZE - 1) / PAGE_SIZE;
     pmmMarkContiguous(0, kernelPages, true);
+
+    KDEBUG("total usable memory = %d pages (%d MiB)\n", status.usablePages, (status.usablePages * PAGE_SIZE) / 0x100000);
+    KDEBUG("kernel-reserved memory = %d pages (%d MiB)\n", status.usedPages, (status.usedPages * PAGE_SIZE) / 0x100000);
+    KDEBUG("hardware-reserved memory = %d pages (%d MiB)\n", status.reservedPages, (status.reservedPages * PAGE_SIZE) / 0x100000);
 }
