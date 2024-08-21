@@ -227,3 +227,59 @@ int pmmFree(uintptr_t phys) {
     //KDEBUG("freeing memory at 0x%08X, %d pages in use\n", phys, status.usedPages);
     return pmmMark(phys, false);
 }
+
+/* pmmAllocateContiguous(): allocates contiguous physical memory
+ * params: count - how many pages to allocate
+ * params: flags - requirements for the memory block
+ * returns: physical address of the first page, zero on fail
+ */
+
+uintptr_t pmmAllocateContiguous(size_t count, int flags) {
+    // the flags parameter essentially allows us to control if we need physical
+    // memory below the 4 GB address line (<= 0xFFFFFFFF)
+    // this is going to become necessary in drivers for devices that only have
+    // a 32-bit addressing mode, like certain DMA and network controllers
+    uintptr_t start = status.lowestUsableAddress;
+    uintptr_t end;
+    if(flags & PMM_CONTIGUOUS_LOW && status.highestUsableAddress > 0xFFFFFFFF) {
+        end = 0xFFFFF000;   // last page of the 32-bit address space
+    } else {
+        end = status.highestUsableAddress - (count * PAGE_SIZE);
+    }
+
+    uintptr_t addr;
+
+    do {
+        for(addr = start; addr < (start + (count * PAGE_SIZE)); addr += PAGE_SIZE) {
+            if(pmmIsUsed(addr)) break;
+        }
+
+        if(addr >= (start + (count * PAGE_SIZE))) {
+            if(!pmmMarkContiguous(start, count, true)) {
+                return start;
+            }
+
+            return 0;
+        } else {
+            start += PAGE_SIZE;
+        }
+    } while(start < end);
+
+    return 0;
+}
+
+/* pmmFreeContiguous(): frees a contiguous block of physical memory
+ * params: phys - physical address of the first page
+ * params: count - how many pages to free
+ * returns: 0 on success
+ */
+
+int pmmFreeContiguous(uintptr_t phys, size_t count) {
+    int status = 0;
+    for(size_t i = 0; i < count; i++) {
+        status |= pmmFree(phys);
+        phys += PAGE_SIZE;
+    }
+    
+    return status;
+}
