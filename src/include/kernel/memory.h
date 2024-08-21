@@ -15,6 +15,8 @@
 
 typedef struct {
     uint64_t highestPhysicalAddress;
+    uint64_t lowestUsableAddress;
+    uint64_t highestUsableAddress;
     size_t highestPage;
     size_t usablePages, usedPages;
     size_t reservedPages;
@@ -22,6 +24,6 @@ typedef struct {
 
 void pmmInit(KernelBootInfo *);
 void pmmStatus(PhysicalMemoryStatus *);
-uintptr_t pmmAllocate();
+uintptr_t pmmAllocate(void);
 uintptr_t pmmAllocateContiguous(size_t);
 void pmmFree(uintptr_t, size_t);

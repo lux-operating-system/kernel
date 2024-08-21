@@ -108,9 +108,6 @@ void pmmInit(KernelBootInfo *boot) {
 
     pmmBitmapSize = (status.highestPage + 7) / 8;
 
-    KDEBUG("highest kernel address is 0x%08X\n", boot->kernelHighestAddress);
-    KDEBUG("highest physical address is 0x%08X\n", boot->highestPhysicalAddress);
-
     // reset the bitmap reserving everything, and then mark the RAM regions as free later
     memset(pmmBitmap, 0xFF, pmmBitmapSize);
     MemoryMap *mmap = (MemoryMap *)boot->memoryMap;
@@ -142,6 +139,10 @@ void pmmInit(KernelBootInfo *boot) {
                 // this is very unlikely but keeps us safe just in case
                 //status.usablePages += mmap[i].len / PAGE_SIZE;
                 pmmInitMarkContiguous(mmap[i].base, mmap[i].len / PAGE_SIZE, false);
+
+                if((mmap[i].base + mmap[i].len) > status.highestUsableAddress) {
+                    status.highestUsableAddress = mmap[i].base + mmap[i].len - 1;
+                }
                 break;
             case MEMORY_TYPE_RESERVED:
             case MEMORY_TYPE_ACPI_RECLAIMABLE:
@@ -153,19 +154,56 @@ void pmmInit(KernelBootInfo *boot) {
         }
     }
 
-    // make usedPages track what's used out of actual usable memory
-    // we need this because pmmMark() used in initialization alters usedPages
-    //status.reservedPages = status.usedPages;
-    status.usedPages = 0;
-
     // now reserve all the kernel's memory including ramdisks, modules
     // this is reserving until the end of the pmm bitmap
     uintptr_t pmmBitmapEnd = (uintptr_t)pmmBitmap + pmmBitmapSize + PAGE_SIZE - 1;
     size_t kernelPages = pmmBitmapEnd / PAGE_SIZE;
     pmmMarkContiguous(0, kernelPages, true);
 
+    status.lowestUsableAddress = (uintptr_t)(pmmBitmap + pmmBitmapSize + PAGE_SIZE) & ~(PAGE_SIZE-1);
+
+    KDEBUG("highest kernel address is 0x%08X\n", boot->kernelHighestAddress);
+    KDEBUG("highest physical address is 0x%08X\n", boot->highestPhysicalAddress);
+    KDEBUG("lowest usable address is 0x%08X\n", status.lowestUsableAddress);
+    KDEBUG("highest usable address is 0x%08X\n", status.highestUsableAddress);
+
     KDEBUG("bitmap size = %d pages (%d KiB)\n", (pmmBitmapSize+PAGE_SIZE-1)/PAGE_SIZE, pmmBitmapSize/1024);
     KDEBUG("total usable memory = %d pages (%d MiB)\n", status.usablePages, (status.usablePages * PAGE_SIZE) / 0x100000);
     KDEBUG("kernel-reserved memory = %d pages (%d MiB)\n", status.usedPages, (status.usedPages * PAGE_SIZE) / 0x100000);
     KDEBUG("hardware-reserved memory = %d pages (%d MiB)\n", status.reservedPages, (status.reservedPages * PAGE_SIZE) / 0x100000);
+}
+
+/* pmmStatus(): returns the physical memory manager's status
+ * params: dst - destination structure to copy the status to
+ * returns: nothing
+ */
+
+void pmmStatus(PhysicalMemoryStatus *dst) {
+    memcpy(dst, &status, sizeof(PhysicalMemoryStatus));
+}
+
+/* pmmIsUsed(): returns whether a page is used
+ * params: phys - physical address
+ * returns: true/false
+ */
+
+bool pmmIsUsed(uintptr_t phys) {
+    // return true automatically for all unusable pages
+    if(phys >= status.highestUsableAddress) return true;
+
+    uintptr_t page = phys / PAGE_SIZE;
+    uintptr_t byte = page / 8;
+    uintptr_t bit = page % 8;
+
+    return ((pmmBitmap[byte] >> bit) & 1);
+}
+
+/* pmmAllocate(): allocates one page
+ * params: none
+ * returns: physical address of the page allocated, zero on fail
+ */
+
+uintptr_t pmmAllocate(void) {
+    uintptr_t addr = 0;
+    return addr;    // placeholder
 }
