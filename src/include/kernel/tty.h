@@ -14,6 +14,7 @@
 typedef struct {
     uint16_t w, h;          // in pixels
     uint16_t wc, hc;        // in characters
+    uint8_t bpp, bytesPerPixel;
     uint16_t posx, posy;
     uint32_t fg, bg;
     uint32_t *fb;
@@ -22,3 +23,5 @@ typedef struct {
 } KTTY;
 
 void ttyInit(KernelBootInfo *);
+void ttyPutc(char);
+void ttyPuts(const char *);

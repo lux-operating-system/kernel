@@ -19,4 +19,4 @@
 #define FONT_MIN_GLYPH          32      // ' '
 #define FONT_MAX_GLYPH          126     // '~'
 
-const uint8_t font[];
+extern const uint8_t font[];
