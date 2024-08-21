@@ -34,12 +34,51 @@ void ttyInit(KernelBootInfo *boot) {
     ttyPuts("tty: terminal initialized\n");
 }
 
+/* ttyCheckBoundaries(): checks for the cursor position and scrolls
+ */
+
+void ttyCheckBoundaries() {
+    if(ktty.posx >= ktty.wc) {
+        ktty.posx = 0;
+        ktty.posy++;
+        if(ktty.posy >= ktty.hc) {
+            // scroll up by one line
+            uint32_t *secondLine = (uint32_t *)((uintptr_t)ktty.fb + (FONT_HEIGHT*ktty.pitch));
+            size_t size = (ktty.hc - 1) * FONT_HEIGHT * ktty.pitch;
+            memcpy(ktty.fb, secondLine, size);
+
+            // clear the scrolled line, which is also pointed to by size
+            uint32_t *lastLine = (uint32_t *)((uintptr_t)ktty.fb + size);
+            for(int i = 0; i < FONT_HEIGHT; i++) {
+                for(int j = 0; j < ktty.w; j++) {
+                    lastLine[j] = ktty.bg;
+                }
+
+                lastLine = (uint32_t *)((uintptr_t)lastLine + ktty.pitch);
+            }
+        }
+    }
+}
+
 /* ttyPutc(): puts a character on screen at cursor position
  * params: c - character
  * returns: nothing
  */
 
 void ttyPutc(char c) {
+    // handle special characters
+    if(c == '\n') {             // new line
+        ktty.posx = 0;
+        ktty.posy++;
+        ttyCheckBoundaries();
+        return;
+    } else if(c == '\r') {      // carriage return
+        ktty.posx = 0;
+        return;
+    }
+
+    /* TODO: escape sequences */
+
     if(c < FONT_MIN_GLYPH || c > FONT_MAX_GLYPH) return;
 
     // get pixel offset
@@ -68,13 +107,7 @@ void ttyPutc(char c) {
 
     // and advance the cursor
     ktty.posx++;
-    if(ktty.posx >= ktty.wc) {
-        ktty.posx = 0;
-        ktty.posy++;
-        if(ktty.posy >= ktty.hc) {
-            // TODO: implement scrolling here
-        }
-    }
+    ttyCheckBoundaries();
 }
 
 /* ttyPuts(): puts a string on screen at cursor position
