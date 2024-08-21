@@ -13,3 +13,5 @@
 
 char *itoa(int, char *, int);
 int atoi(const char *);
+char *ltoa(long, char *, int);
+long atol(const char *);
