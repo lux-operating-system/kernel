@@ -62,8 +62,6 @@ void ttyInit(KernelBootInfo *boot) {
 
         fb = (uint32_t *)((uintptr_t)fb + ktty.pitch);
     }
-
-    ttyPuts("\e[46;31mhello with bizarre colors");
 }
 
 /* ttyCheckBoundaries(): checks for the cursor position and scrolls
