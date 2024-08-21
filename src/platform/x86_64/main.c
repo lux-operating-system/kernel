@@ -17,7 +17,7 @@ extern int main(int, char **);
 // x86_64-specific kernel entry point
 int platformMain(KernelBootInfo *k) {
     platformCPUSetup();
-    pmmInit(k);
     ttyInit(k);
+    pmmInit(k);
     return main(0, NULL);
 }
