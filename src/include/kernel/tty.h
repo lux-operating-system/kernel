@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include <kernel/boot.h>
 
 typedef struct {
@@ -20,6 +21,8 @@ typedef struct {
     uint32_t *fb;
     uint32_t pitch;
     char escape[256];
+    bool escaping;
+    int escapeIndex;
 } KTTY;
 
 extern const uint32_t ttyColors[];

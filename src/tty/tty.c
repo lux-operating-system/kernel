@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <kernel/boot.h>
 #include <kernel/font.h>
 #include <kernel/tty.h>
@@ -62,7 +63,7 @@ void ttyInit(KernelBootInfo *boot) {
         fb = (uint32_t *)((uintptr_t)fb + ktty.pitch);
     }
 
-    ttyPuts("tty: terminal initialized\n");
+    ttyPuts("\e[46;31mhello with bizarre colors");
 }
 
 /* ttyCheckBoundaries(): checks for the cursor position and scrolls
@@ -91,6 +92,45 @@ void ttyCheckBoundaries() {
     }
 }
 
+/* ttyParseEscape(): parses an escape sequence
+ */
+
+void ttyParseEscape() {
+    int bufferIndex = 0;
+    int command;
+    char buffer[32];
+    memset(buffer, 0, 32);
+
+    if(ktty.escape[0] != '[') return;   // only the color sequences are implemented
+
+    for(int i = 1; i <= ktty.escapeIndex; i++) {
+        // check if we found a numerical value
+        if(ktty.escape[i] >= '0' && ktty.escape[i] <= '9') {
+            buffer[bufferIndex] = ktty.escape[i];
+            bufferIndex++;
+        } else {
+            // found a non-numerical value, so now process the value we do have
+            command = atoi(buffer);
+            if(command >= 30 && command <= 37) {
+                // set foreground color (dark)
+                ktty.fg = ttyColors[command - 30];
+            } else if(command >= 40 && command <= 47) {
+                // set background color (dark)
+                ktty.bg = ttyColors[command - 40];
+            } else if(command >= 90 && command <= 97) {
+                // set foreground color (light)
+                ktty.fg = ttyColors[command - 82];
+            } else if(command >= 100 && command <= 107) {
+                // set background color (light)
+                ktty.bg = ttyColors[command - 92];
+            }
+
+            bufferIndex = 0;
+            memset(buffer, 0, 32);
+        }
+    }
+}
+
 /* ttyPutc(): puts a character on screen at cursor position
  * params: c - character
  * returns: nothing
@@ -106,9 +146,25 @@ void ttyPutc(char c) {
     } else if(c == '\r') {      // carriage return
         ktty.posx = 0;
         return;
+    } else if(c == '\e') {      // escape
+        ktty.escapeIndex = 0;
+        memset(ktty.escape, 0, 256);
+        ktty.escaping = true;
+        return;
     }
 
-    /* TODO: escape sequences */
+    if(ktty.escaping) {
+        ktty.escape[ktty.escapeIndex] = c;
+        ktty.escapeIndex++;
+
+        // the only sequences implemented are the color sequences
+        if(c == 'm') {
+            ktty.escaping = false;
+            ttyParseEscape();
+        }
+
+        return;
+    }
 
     if(c < FONT_MIN_GLYPH || c > FONT_MAX_GLYPH) return;
 
