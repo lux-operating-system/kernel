@@ -13,6 +13,25 @@
 
 KTTY ktty;
 
+const uint32_t ttyColors[] = {
+    0x1F1F1F,       // black
+    0x990000,       // red
+    0x00A600,       // green
+    0x999900,       // yellow
+    0x0000B2,       // blue
+    0xB200B2,       // magenta
+    0x00A6B2,       // cyan
+    0xBFBFBF,       // white
+    0x666666,       // gray
+    0xE60000,       // bright red
+    0x00D900,       // bright green
+    0xE6E600,       // bright yellow
+    0x0000FF,       // bright blue
+    0xE600E6,       // bright magenta
+    0x00E6E6,       // bright cyan
+    0xE6E6E6        // bright white
+};
+
 /* ttyInit(): initializes a minimal kernel terminal for debugging
  * params: boot - kernel boot information structure
  * returns: nothing
@@ -27,9 +46,21 @@ void ttyInit(KernelBootInfo *boot) {
     ktty.hc = ktty.h / FONT_HEIGHT;
     ktty.pitch = boot->pitch;
     ktty.fb = (uint32_t *)boot->framebuffer;
-    ktty.fg = 0x7F7F7F;
+    ktty.bg = ttyColors[0];
+    ktty.fg = ttyColors[7];
     ktty.bpp = boot->bpp;
     ktty.bytesPerPixel = (ktty.bpp + 7) / 8;
+
+    // clear the screen
+    uint32_t *fb = ktty.fb;
+
+    for(int i = 0; i < ktty.h; i++) {
+        for(int j = 0; j < ktty.w; j++) {
+            fb[j] = ktty.bg;
+        }
+
+        fb = (uint32_t *)((uintptr_t)fb + ktty.pitch);
+    }
 
     ttyPuts("tty: terminal initialized\n");
 }

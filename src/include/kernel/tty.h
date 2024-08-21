@@ -22,6 +22,8 @@ typedef struct {
     char escape[256];
 } KTTY;
 
+extern const uint32_t ttyColors[];
+
 void ttyInit(KernelBootInfo *);
 void ttyPutc(char);
 void ttyPuts(const char *);
