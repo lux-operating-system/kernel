@@ -57,10 +57,6 @@ void installExceptions() {
     installInterrupt((uint64_t)&xmathException, GDT_KERNEL_CODE, PRIVILEGE_KERNEL, INTERRUPT_TYPE_TRAP, 0x13);
     installInterrupt((uint64_t)&virtualException, GDT_KERNEL_CODE, PRIVILEGE_KERNEL, INTERRUPT_TYPE_TRAP, 0x14);
     installInterrupt((uint64_t)&controlException, GDT_KERNEL_CODE, PRIVILEGE_KERNEL, INTERRUPT_TYPE_TRAP, 0x15);
-
-    // simulate a page fault for testing
-    uint64_t *ptr = (uint64_t *)0x78AF748392;   // some invalid address
-    KDEBUG("page fault: %d\n", *ptr);
 }
 
 void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
