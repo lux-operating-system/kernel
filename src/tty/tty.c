@@ -66,6 +66,8 @@ void ttyInit(KernelBootInfo *boot) {
 
     // show signs of life
     KDEBUG("kernel tty initialized\n");
+    KDEBUG("screen resolution is %dx%dx%d bpp\n", ktty.w, ktty.h, ktty.bpp);
+    KDEBUG("terminal resolution is %dx%d\n", ktty.wc, ktty.hc);
 }
 
 /* ttyCheckBoundaries(): checks for the cursor position and scrolls
@@ -75,22 +77,26 @@ void ttyCheckBoundaries() {
     if(ktty.posx >= ktty.wc) {
         ktty.posx = 0;
         ktty.posy++;
-        if(ktty.posy >= ktty.hc) {
-            // scroll up by one line
-            uint32_t *secondLine = (uint32_t *)((uintptr_t)ktty.fb + (FONT_HEIGHT*ktty.pitch));
-            size_t size = (ktty.hc - 1) * FONT_HEIGHT * ktty.pitch;
-            memcpy(ktty.fb, secondLine, size);
+    }
 
-            // clear the scrolled line, which is also pointed to by size
-            uint32_t *lastLine = (uint32_t *)((uintptr_t)ktty.fb + size);
-            for(int i = 0; i < FONT_HEIGHT; i++) {
-                for(int j = 0; j < ktty.w; j++) {
-                    lastLine[j] = ktty.bg;
-                }
+    if(ktty.posy >= ktty.hc) {
+        // scroll up by one line
+        uint32_t *secondLine = (uint32_t *)((uintptr_t)ktty.fb + (FONT_HEIGHT*ktty.pitch));
+        size_t size = (ktty.hc - 1) * FONT_HEIGHT * ktty.pitch;
+        memcpy(ktty.fb, secondLine, size);
 
-                lastLine = (uint32_t *)((uintptr_t)lastLine + ktty.pitch);
+        // clear the scrolled line, which is also pointed to by size
+        uint32_t *lastLine = (uint32_t *)((uintptr_t)ktty.fb + size);
+        for(int i = 0; i < FONT_HEIGHT; i++) {
+            for(int j = 0; j < ktty.w; j++) {
+                lastLine[j] = ktty.bg;
             }
+
+            lastLine = (uint32_t *)((uintptr_t)lastLine + ktty.pitch);
         }
+
+        ktty.posx = 0;
+        ktty.posy = ktty.hc - 1;
     }
 }
 
