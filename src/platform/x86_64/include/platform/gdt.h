@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#pragma once
+
 // 0x00: null descriptor
 // 0x08: kernel code descriptor
 // 0x10: kernel data descriptor

@@ -11,6 +11,8 @@
 #include <kernel/memory.h>
 #include <kernel/tty.h>
 #include <platform/platform.h>
+#include <platform/x86_64.h>
+#include <platform/exception.h>
 
 extern int main(int, char **);
 
@@ -18,6 +20,8 @@ extern int main(int, char **);
 int platformMain(KernelBootInfo *k) {
     platformCPUSetup();
     ttyInit(k);
+    installExceptions();
     pmmInit(k);
+
     return main(0, NULL);
 }
