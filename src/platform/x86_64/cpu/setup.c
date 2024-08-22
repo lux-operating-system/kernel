@@ -8,10 +8,13 @@
 #include <string.h>
 #include <platform/platform.h>
 #include <platform/gdt.h>
+#include <platform/idt.h>
 #include <platform/x86_64.h>
 
 GDTEntry gdt[GDT_ENTRIES];
 GDTR gdtr;
+IDTEntry idt[256];
+IDTR idtr;
 
 int platformCPUSetup() {
     // construct a global descriptor table
@@ -58,4 +61,10 @@ int platformCPUSetup() {
     gdtr.limit = (sizeof(GDTEntry) * GDT_ENTRIES) - 1;
     loadGDT(&gdtr);
     resetSegments(GDT_KERNEL_CODE, PRIVILEGE_KERNEL);
+
+    // create and load an empty interrupt descriptor table
+    memset(&idt, 0, sizeof(IDTEntry) * 256);
+    idtr.base = (uint64_t)&idt;
+    idtr.limit = (sizeof(IDTEntry) * 256) - 1;
+    loadIDT(&idtr);
 }
