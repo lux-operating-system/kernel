@@ -117,3 +117,87 @@ uintptr_t platformGetPage(int *flags, uintptr_t addr) {
     
     return (ptEntry & ~(PAGE_SIZE-1)) | offset;
 }
+
+/* platformMapPage(): maps a physical address to a logical address
+ * params: logical - logical address, page-aligned
+ * params: physical - physical address, page-aligned
+ * params: flags - page flags requested
+ * returns: logical address on success, 0 on failure
+ */
+
+uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
+    // force page-alignment
+    logical &= ~(PAGE_SIZE-1);
+    physical &= ~(PAGE_SIZE-1);
+
+    int pml4Index = (logical >> 39) & 511; // 512 GiB * 512 = some massive number
+    int pdpIndex = (logical >> 30) & 511;  // 1 GiB * 512 = 512 GiB per PDP
+    int pdIndex = (logical >> 21) & 511;   // 2 MiB * 512 = 1 GiB per PD
+    int ptIndex = (logical >> 12) & 511;   // 4 KiB * 512 = 2 MiB per PT
+
+    uint64_t *pml4 = (uint64_t *)readCR3();
+    uint64_t pml4Entry = pml4[pml4Index];
+    if(!pml4Entry & PT_PAGE_PRESENT) {
+        pml4Entry = pmmAllocate();
+        if(!pml4Entry) {
+            KERROR("platformMapPage: map 0x%08X to 0x%08X\n", physical, logical);
+            KERROR("failed to allocate memory for page directory pointer\n");
+            return 0;
+        }
+
+        memset((void *)pml4Entry, 0, PAGE_SIZE);
+        pml4[pml4Index] = pml4Entry | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
+    }
+
+    uint64_t *pdp = (uint64_t *)(pml4Entry & ~(PAGE_SIZE-1));
+    uint64_t pdpEntry = pdp[pdpIndex];
+    if(!pdpEntry & PT_PAGE_PRESENT) {
+        pdpEntry = pmmAllocate();
+        if(!pdpEntry) {
+            KERROR("platformMapPage: map 0x%08X to 0x%08X\n", physical, logical);
+            KERROR("failed to allocate memory for page directory\n");
+            return 0;
+        }
+
+        memset((void *)pdpEntry, 0, PAGE_SIZE);
+        pdp[pdpIndex] = pdpEntry | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
+    }
+
+    uint64_t *pd = (uint64_t *)(pdpEntry & ~(PAGE_SIZE-1));
+    uint64_t pdEntry = pd[pdIndex];
+    if(!pdEntry & PT_PAGE_PRESENT) {
+        pdEntry = pmmAllocate();
+        if(!pdEntry) {
+            KERROR("platformMapPage: map 0x%08X to 0x%08X\n", physical, logical);
+            KERROR("failed to allocate memory for page table\n");
+            return 0;
+        }
+
+        memset((void *)pdEntry, 0, PAGE_SIZE);
+        pd[pdIndex] = pdEntry | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
+    }
+
+    uint64_t *pt = (uint64_t *)(pdEntry & ~(PAGE_SIZE-1));
+    uint64_t parsedFlags = 0;
+
+    if(flags & PLATFORM_PAGE_PRESENT) parsedFlags |= PT_PAGE_PRESENT;
+    if(flags & PLATFORM_PAGE_WRITE) parsedFlags |= PT_PAGE_RW;
+    if(flags & PLATFORM_PAGE_USER) parsedFlags |= PT_PAGE_USER;
+    if(!flags & PLATFORM_PAGE_EXEC) parsedFlags |= PT_PAGE_NXE;
+
+    pt[ptIndex] = physical | parsedFlags;
+    return logical;
+}
+
+/* platformUnmapPage(): unmaps a physical address from a logical address 
+ * params: addr - logical address
+ * returns: 0 on success
+ */
+
+int platformUnmapPage(uintptr_t addr) {
+    // essentially just map it to physical address zero with flags set to zero
+    // this will allow us to differentiate between truly unused pages and absent
+    // but swappable pages in secondary storage
+    addr &= ~(PAGE_SIZE-1);
+    return !(platformMapPage(addr, 0, 0) == addr);
+}
