@@ -9,6 +9,31 @@
 #include <platform/exception.h>
 #include <kernel/logger.h>
 
+static const char *exceptions[] = {
+    "Divide error",             // 0x00
+    "Debug exception",          // 0x01
+    "Non-maskable interrupt",   // 0x02
+    "Breakpoint",               // 0x03
+    "Overflow",                 // 0x04
+    "Boundary range exceeded",  // 0x05
+    "Undefined opcode",         // 0x06
+    "Device not present",       // 0x07
+    "Double fault",             // 0x08
+    "Reserved exception",       // 0x09
+    "Invalid TSS",              // 0x0A
+    "Data segment exception",   // 0x0B
+    "Stack segment exception",  // 0x0C
+    "General protection fault", // 0x0D
+    "Page fault",               // 0x0E
+    "Reserved exception",       // 0x0F
+    "Math fault",               // 0x10
+    "Alignment exception",      // 0x11
+    "Machine check fail",       // 0x12
+    "Extended math fault",      // 0x13
+    "Virtualization fault",     // 0x14
+    "Control protection fault", // 0x15
+};
+
 void installExceptions() {
     KDEBUG("installing exception handlers...\n");
 
@@ -39,5 +64,8 @@ void installExceptions() {
 }
 
 void exception(uint64_t number, uint64_t code) {
-    while (1);
+    // TODO: handle different exceptions differently (specifically page faults)
+    // TODO: implement a separaye kernel panic and userspace exception handling
+    KERROR("%d - %s with error code %d\n", number, exceptions[number], code);
+    while(1);
 }
