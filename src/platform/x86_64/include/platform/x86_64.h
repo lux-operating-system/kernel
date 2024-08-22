@@ -63,3 +63,14 @@ void installInterrupt(uint64_t, uint16_t, int, int, int);
 
 #define INTERRUPT_TYPE_INT      0x0E
 #define INTERRUPT_TYPE_TRAP     0x0F
+
+// paging
+#define PT_PAGE_PRESENT         0x0001
+#define PT_PAGE_RW              0x0002
+#define PT_PAGE_USER            0x0004
+#define PT_PAGE_WRITE_THROUGH   0x0008
+#define PT_PAGE_NO_CACHE        0x0010
+#define PT_PAGE_SIZE_EXTENSION  0x0080
+#define PT_PAGE_NXE             (1 << 63)   // SET to disable execution privilege
+
+#define IDENTITY_MAP_GBS        16          // lower 16 GiB
