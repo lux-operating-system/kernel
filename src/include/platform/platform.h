@@ -22,6 +22,6 @@
 
 int platformCPUSetup();         // very early setup for one CPU
 int platformPagingSetup();      // paging setup for virtual memory management
-uintptr_t platformGetPageAddress(int *, uintptr_t);     // get physical address and flags of a page
+uintptr_t platformGetPage(int *, uintptr_t);     // get physical address and flags of a page
 int platformMapPage(uintptr_t, uintptr_t, int);         // map a physical address to a virtual address
 int platformUnmapPage(uintptr_t);               // and vice versa

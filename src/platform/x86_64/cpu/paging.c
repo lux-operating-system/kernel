@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <stdint.h>
 #include <platform/x86_64.h>
 #include <platform/platform.h>
 #include <kernel/logger.h>
@@ -63,4 +64,56 @@ int platformPagingSetup() {
 
 void *platformGetPagingRoot() {
     return kernelPagingRoot;
+}
+
+/* platformGetPage(): returns the physical address and flags of a logical address
+ * params: flags - pointer to where to store the flags
+ * params: addr - logical address
+ * returns: physical address corresponding to logical address
+ */
+
+uintptr_t platformGetPage(int *flags, uintptr_t addr) {
+    uint64_t highestIdentityAddress = ((uint64_t)IDENTITY_MAP_GBS << 30) - 1; // GiB to bytes
+    if(addr <= highestIdentityAddress) {
+        *flags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_WRITE | PLATFORM_PAGE_EXEC;
+        return addr;
+    }
+
+    *flags = 0;
+    int pml4Index = (addr >> 39) & 511; // 512 GiB * 512 = some massive number
+    int pdpIndex = (addr >> 30) & 511;  // 1 GiB * 512 = 512 GiB per PDP
+    int pdIndex = (addr >> 21) & 511;   // 2 MiB * 512 = 1 GiB per PD
+    int ptIndex = (addr >> 12) & 511;   // 4 KiB * 512 = 2 MiB per PT
+    uintptr_t offset = addr & (PAGE_SIZE-1);
+
+    // TODO: account for inconsistencies between virtual and physical addresses here
+    uint64_t *pml4 = (uint64_t *)readCR3();
+    uint64_t pml4Entry = pml4[pml4Index];
+    if(!pml4Entry & PT_PAGE_PRESENT) {
+        return 0;
+    }
+
+    uint64_t *pdp = (uint64_t *)(pml4Entry & ~(PAGE_SIZE-1));
+    uint64_t pdpEntry = pdp[pdpIndex];
+    if(!pdpEntry & PT_PAGE_PRESENT) {
+        return 0;
+    }
+
+    uint64_t *pd = (uint64_t *)(pdpEntry & ~(PAGE_SIZE-1));
+    uint64_t pdEntry = pd[pdIndex];
+    if(!pdEntry & PT_PAGE_PRESENT) {
+        return 0;
+    }
+
+    uint64_t *pt = (uint64_t *)(pdEntry & ~(PAGE_SIZE-1));
+    uint64_t ptEntry = pt[ptIndex];
+    
+    if(ptEntry & PT_PAGE_PRESENT) *flags |= PLATFORM_PAGE_PRESENT;
+    else if(ptEntry) *flags |= PLATFORM_PAGE_SWAP;  // not present in main memory but non-zero
+
+    if(ptEntry & PT_PAGE_RW) *flags |= PLATFORM_PAGE_WRITE;
+    if(ptEntry & PT_PAGE_USER) *flags |= PLATFORM_PAGE_USER;
+    if(!(ptEntry & PT_PAGE_NXE)) *flags |= PLATFORM_PAGE_EXEC;
+    
+    return (ptEntry & ~(PAGE_SIZE-1)) | offset;
 }
