@@ -51,9 +51,12 @@ extern exception
 global %1
 align 16
 %1:
+    push 0                  ; fake code
     pushaq
     mov rdi, %2
-    mov rsi, 0
+    mov rsi, 0              ; fake code
+    mov rdx, rsp            ; registers we just pushed
+    cld
     call exception
     popaq
     iretq
@@ -67,6 +70,8 @@ align 16
     pushaq
     mov rdi, %2
     mov rsi, [rsp+120]      ; error code
+    mov rdx, rsp            ; registers we just pushed
+    cld
     call exception
     popaq
     iretq

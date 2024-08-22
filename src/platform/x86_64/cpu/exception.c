@@ -63,9 +63,18 @@ void installExceptions() {
     KDEBUG("page fault: %d\n", *ptr);
 }
 
-void exception(uint64_t number, uint64_t code) {
+void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     // TODO: handle different exceptions differently (specifically page faults)
     // TODO: implement a separaye kernel panic and userspace exception handling
     KERROR("%d - %s with error code %d\n", number, exceptions[number], code);
+    KERROR(" rip: 0x%016X  cs:  0x%02X\n", r->rip, r->cs);
+    KERROR(" rax: 0x%016X  rbx: 0x%016X  rcx: 0x%016X\n", r->rax, r->rbx, r->rcx);
+    KERROR(" rdx: 0x%016X  rsi: 0x%016X  rdi: 0x%016X\n", r->rdx, r->rsi, r->rdi);
+    KERROR(" r8:  0x%016X  r9:  0x%016X  r10: 0x%016X\n", r->r8, r->r9, r->r10);
+    KERROR(" r11: 0x%016X  r12: 0x%016X  r13: 0x%016X\n", r->r11, r->r12, r->r13);
+    KERROR(" r14: 0x%016X  r15: 0x%016X\n", r->r14, r->r15);
+    KERROR(" rsp: 0x%016X  rbp: 0x%016X  ss: 0x%02X\n", r->rsp, r->rbp, r->ss);
+    KERROR(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
+    KERROR(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
     while(1);
 }

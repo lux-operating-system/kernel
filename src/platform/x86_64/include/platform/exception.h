@@ -11,7 +11,7 @@
 #pragma once
 
 /* generic exception handler */
-void exception(uint64_t, uint64_t);
+void exception(uint64_t, uint64_t, InterruptRegisters *);
 
 void installExceptions();
 
