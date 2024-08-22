@@ -22,6 +22,7 @@ int platformMain(KernelBootInfo *k) {
     ttyInit(k);
     installExceptions();
     pmmInit(k);
+    vmmInit();
 
     return main(0, NULL);
 }
