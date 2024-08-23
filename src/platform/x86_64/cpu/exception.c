@@ -76,7 +76,7 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
         if(code & PF_FETCH) pfStatus |= VMM_PAGE_FAULT_FETCH;
 
         uintptr_t addr = readCR2();
-        vmmPageFault(addr, pfStatus);
+        if(!vmmPageFault(addr, pfStatus)) return;
     }
 
     // TODO: implement a separate kernel panic and userspace exception handling
