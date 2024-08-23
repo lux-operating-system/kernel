@@ -171,7 +171,8 @@ void *calloc(size_t num, size_t size) {
 }
 
 void *realloc(void *ptr, size_t newSize) {
-    if(!ptr || !newSize) return NULL;
+    if(!newSize) return NULL;
+    if(!ptr) return malloc(newSize);
 
     void *newPtr = malloc(newSize);
     if(!newPtr) return NULL;
