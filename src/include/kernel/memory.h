@@ -11,7 +11,9 @@
 #include <stdint.h>
 #include <kernel/boot.h>
 
-#define PAGE_SIZE               4096
+/* this must be defined on a platform-specific basis */
+/* it defines the page size and other necessary attributes for paging */
+#include <platform/mmap.h>
 
 #define PMM_CONTIGUOUS_LOW      0x01
 
