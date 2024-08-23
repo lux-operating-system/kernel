@@ -87,6 +87,37 @@ uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) 
     } while(start < end);
 }
 
+/* vmmFree(): frees virtual memory and associated physical memory/swap space
+ * params: addr - logical address to be freed
+ * params: count - page count
+ * returns: 0 on success
+ */
+
+int vmmFree(uintptr_t addr, size_t count) {
+    // force page alignment
+    addr &= ~(PAGE_SIZE-1);
+
+    int status = 0;
+    int pageStatus;
+    uintptr_t phys;
+
+    for(size_t i = 0; i < count; i++) {
+        pageStatus = vmmPageStatus(addr + (i * PAGE_SIZE), &phys);
+        if(pageStatus & PLATFORM_PAGE_ERROR) {
+            status |= 1;
+        } else if(pageStatus & PLATFORM_PAGE_PRESENT) {
+            status |= pmmFree(phys);
+        } else if(pageStatus & PLATFORM_PAGE_SWAP) {
+            // TODO: free swap space when swapping is implemented
+        }
+
+        // now free the virtual page itself
+        status |= platformUnmapPage(addr + (i * PAGE_SIZE));
+    }
+
+    return status;
+}
+
 /* vmmPageFault(): platform-independent page fault handler
  * params: addr - logical address that caused the fault
  * params: access - access conditions that caused the fault
