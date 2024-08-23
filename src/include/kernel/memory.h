@@ -28,6 +28,14 @@
 #define VMM_PAGE_FAULT_WRITE    0x04        // caused by a write operation
 #define VMM_PAGE_FAULT_FETCH    0x08        // caused by instruction fetch
 
+// these values are used as "magic" addresses for pages marked as swap (i.e. not-present)
+// they are all 2 MiB-aligned for compatibility across architectures
+// they essentially indicate to the virtual memory manager how to handle a page fault
+#define VMM_PAGE_SWAP           0x200000    // swap from disk
+#define VMM_PAGE_ALLOCATE       0x400000    // allocate physical memory
+
+// TODO: adjust bit masks and shifting here when implementing true swapping
+
 typedef struct {
     uint64_t highestPhysicalAddress;
     uint64_t lowestUsableAddress;

@@ -47,7 +47,7 @@ bool vmmIsUsed(uintptr_t addr) {
     return (s & PLATFORM_PAGE_PRESENT) || (s & PLATFORM_PAGE_SWAP);
 }
 
-/* vmmAllocate(): allocates physical memory and maps to logical memory
+/* vmmAllocate(): allocates virtual memory
  * params: base - base of logical address
  * params: count - number of pages to allocate
  * params: flags - attributes of the memory to be allocated
@@ -56,5 +56,7 @@ bool vmmIsUsed(uintptr_t addr) {
 
 uintptr_t vmmAllocate(uintptr_t base, size_t count, int flags) {
     uintptr_t start = base;
-    return 0;   // stub
+    
+    // find free virtual memory
+    
 }
