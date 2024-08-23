@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <kernel/boot.h>
 
 typedef struct {
     // revision == 0
@@ -45,3 +46,6 @@ typedef struct {
     ACPIStandardHeader header;
     uint64_t tables[];
 } __attribute__((packed)) ACPIXSDT;
+
+int acpiInit(KernelBootInfo *);
+void *acpiFindTable(const char *);
