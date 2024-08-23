@@ -7,6 +7,14 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <kernel/memory.h>
+
+struct mallocHeader {
+    uint64_t byteSize;
+    uint64_t pageSize;
+};
 
 char *itoa(int n, char *buffer, int radix) {
     if(!radix || radix > HEX) return NULL;
@@ -136,4 +144,58 @@ long atol(const char *s) {
     }
 
     return v;
+}
+
+void *malloc(size_t size) {
+    if(!size) return NULL;
+    size_t pageSize = (size + sizeof(struct mallocHeader) + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    // allocate memory with kernel permissions, write permissions, and no execute
+    // there's probably never a scenario where it's a good idea to execute code
+    // in a block of memory allocated by malloc() or its derivatives
+    uintptr_t ptr = vmmAllocate(KERNEL_HEAP_BASE, USER_BASE_ADDRESS, pageSize, VMM_WRITE);
+    if(!ptr) return NULL;
+
+    struct mallocHeader *header = (struct mallocHeader *)ptr;
+    header->byteSize = size;
+    header->pageSize = pageSize;
+
+    return (void *)((uintptr_t)ptr + sizeof(struct mallocHeader));
+}
+
+void *calloc(size_t num, size_t size) {
+    void *ptr = malloc(num * size);
+    if(!ptr) return NULL;
+    memset(ptr, 0, num * size);
+    return ptr;
+}
+
+void *realloc(void *ptr, size_t newSize) {
+    if(!ptr || !newSize) return NULL;
+
+    void *newPtr = malloc(newSize);
+    if(!newPtr) return NULL;
+
+    uintptr_t oldBase = (uintptr_t)ptr;
+    oldBase &= ~(PAGE_SIZE-1);
+    struct mallocHeader *header = (struct mallocHeader *)oldBase;
+    size_t oldSize = header->byteSize;
+
+    if(oldSize > newSize) {
+        // we're shrinking the memory, copy the new size only
+        memcpy(newPtr, ptr, newSize);
+    } else {
+        memcpy(newPtr, ptr, oldSize);
+    }
+
+    free(ptr);
+    return newPtr;
+}
+
+void free(void *ptr) {
+    if(!ptr) return;
+    uintptr_t base = (uintptr_t)ptr;
+    base &= ~(PAGE_SIZE-1);
+    struct mallocHeader *header = (struct mallocHeader *)base;
+    vmmFree(base, header->pageSize);
 }
