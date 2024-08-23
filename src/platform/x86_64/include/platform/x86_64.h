@@ -72,3 +72,12 @@ void installInterrupt(uint64_t, uint16_t, int, int, int);
 #define PT_PAGE_NO_CACHE        0x0010
 #define PT_PAGE_SIZE_EXTENSION  0x0080
 #define PT_PAGE_NXE             (1 << 63)   // SET to disable execution privilege
+
+// page fault status code
+#define PF_PRESENT              0x01
+#define PF_WRITE                0x02
+#define PF_USER                 0x04
+#define PF_RESERVED_WRITE       0x08
+#define PF_FETCH                0x10
+// there are more causes of page faults, but these are the only implemented ones
+
