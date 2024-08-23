@@ -8,6 +8,7 @@
 #include <platform/x86_64.h>
 #include <platform/exception.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 static const char *exceptions[] = {
     "Divide error",             // 0x00
@@ -60,8 +61,25 @@ void installExceptions() {
 }
 
 void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
-    // TODO: handle different exceptions differently (specifically page faults)
-    // TODO: implement a separaye kernel panic and userspace exception handling
+    // TODO: handle different exceptions differently
+
+    // invoke the virtual memory manager ONLY if a page fault occurs for an ABSENT page
+    // because this will either mean that a page needs to be swapped OR physical memory
+    // needs to be allocated
+    // page faults for PRESENT pages mean that a thread violated its permissions, so
+    // terminate the process (TODO)
+    if((number == 14) && !(code & PF_PRESENT)) {     // page fault is exception #14 on x86
+        int pfStatus = 0;
+        if(code & PF_FETCH) pfStatus |= VMM_PAGE_FAULT_FETCH;
+        if(code & PF_USER) pfStatus |= VMM_PAGE_FAULT_USER;
+        if(code & PF_WRITE) pfStatus |= VMM_PAGE_FAULT_WRITE;
+        if(code & PF_FETCH) pfStatus |= VMM_PAGE_FAULT_FETCH;
+
+        uintptr_t addr = readCR2();
+        vmmPageFault(addr, pfStatus);
+    }
+
+    // TODO: implement a separate kernel panic and userspace exception handling
     KERROR("%d - %s with error code %d\n", number, exceptions[number], code);
     KERROR(" rip: 0x%016X  cs:  0x%02X\n", r->rip, r->cs);
     KERROR(" rax: 0x%016X  rbx: 0x%016X  rcx: 0x%016X\n", r->rax, r->rbx, r->rcx);
