@@ -86,3 +86,66 @@ uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) 
         start += PAGE_SIZE;
     } while(start < end);
 }
+
+/* vmmPageFault(): platform-independent page fault handler
+ * params: addr - logical address that caused the fault
+ * params: access - access conditions that caused the fault
+ * returns: 0 on success
+ */
+
+int vmmPageFault(uintptr_t addr, int access) {
+    // determine the conditions that caused the fault
+    if(access & VMM_PAGE_FAULT_PRESENT) {
+        // page faults on a present page indicate privilege violations
+        // this is an automatic fail
+        KWARN("access violation at 0x%016X\n", addr);
+        return -1;
+    }
+
+    // get the conditions of the page that caused the fault
+    uintptr_t phys;
+    int status = vmmPageStatus(addr & ~(PAGE_SIZE-1), &phys);
+    //KDEBUG("physical: 0x%08X  status: 0x%02X\n", phys, status);
+
+    // invalid page?
+    if(status & PLATFORM_PAGE_ERROR) return -1;
+
+    // no exec perms and attempt to fetch?
+    if(!(status & PLATFORM_PAGE_EXEC) && (access & VMM_PAGE_FAULT_FETCH)) return -1;
+    // user accessing kernel page?
+    if(!(status & PLATFORM_PAGE_USER) && (access & VMM_PAGE_FAULT_USER)) return -1;
+    // writing to read-only page?
+    if(!(status & PLATFORM_PAGE_WRITE) && (access & VMM_PAGE_FAULT_WRITE)) return -1;
+
+    // at this point we know there hasn't been any violations
+    // so bring the page into memory if necessary
+    if(status & PLATFORM_PAGE_SWAP) {
+        uint64_t swapFlags = phys & VMM_PAGE_SWAP_MASK;
+        switch(swapFlags) {
+        case VMM_PAGE_SWAP:
+            KERROR("TODO: page swapping is not implemented yet; returning failure for now\n");
+            return -1;
+            break;
+        case VMM_PAGE_ALLOCATE:
+            /* here we need to allocate a physical page */
+            phys = pmmAllocate();
+            if(!phys) {
+                KERROR("ran out of physical memory while handling page fault\n");
+                return -1;
+            }
+
+            // map the physical page and return
+            if(!platformMapPage(addr & ~(PAGE_SIZE-1), phys, status | PLATFORM_PAGE_PRESENT)) {
+                KERROR("could not map physical page 0x%08X to logical 0x%08X\n", phys, addr & ~(PAGE_SIZE-1));
+                return -1;
+            }
+
+            //KDEBUG("handled page fault; allocated physical 0x%08X to logical 0x%08X\n", phys, addr & ~(PAGE_SIZE-1));
+            return 0;
+        default:
+            KERROR("undefined page table value 0x%016X\n", phys);
+        }
+    }
+
+    return -1;
+}
