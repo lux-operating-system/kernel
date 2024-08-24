@@ -8,8 +8,11 @@
 /* Symmetric Multiprocessing Implementation */
 
 #include <stddef.h>
+#include <string.h>
 #include <platform/platform.h>
 #include <platform/smp.h>
+#include <platform/x86_64.h>
+#include <platform/apic.h>
 #include <kernel/logger.h>
 
 static PlatformCPU *cpus = NULL;
@@ -61,6 +64,11 @@ int smpBoot() {
 
     KDEBUG("attempt to start %d application processors...\n", cpuCount - runningCpuCount);
 
+    // set up the AP entry point
+    apEntryVars[AP_ENTRY_GDTR] = (uint32_t)&gdtr;
+    apEntryVars[AP_ENTRY_IDTR] = (uint32_t)&idtr;
+    apEntryVars[AP_ENTRY_CR3] = readCR3();
+
     PlatformCPU *cpu;
 
     for(int i = 0; i < cpuCount; i++) {
@@ -68,6 +76,35 @@ int smpBoot() {
         if(!cpu || cpu->bootCPU || cpu->running) continue;
 
         KDEBUG("starting CPU with local APIC ID 0x%02X\n", cpu->apicID);
+
+        // copy the AP entry into low memory
+        memcpy((void *)0x1000, apEntry, AP_ENTRY_SIZE);
+
+        // send an INIT IPI
+        lapicWrite(LAPIC_INT_COMMAND_HIGH, cpu->apicID << 24);
+        lapicWrite(LAPIC_INT_COMMAND_LOW, LAPIC_INT_CMD_INIT | LAPIC_INT_CMD_LEVEL_NORMAL);
+
+        // wait for delivery
+        while(lapicRead(LAPIC_INT_COMMAND_LOW) & LAPIC_INT_CMD_DELIVERY);
+
+        // deassert the INIT IPI
+        lapicWrite(LAPIC_INT_COMMAND_HIGH, cpu->apicID << 24);
+        lapicWrite(LAPIC_INT_COMMAND_LOW, LAPIC_INT_CMD_INIT | LAPIC_INT_CMD_LEVEL_DEASSERT);
+
+        // and again wait for delivery
+        while(lapicRead(LAPIC_INT_COMMAND_LOW) & LAPIC_INT_CMD_DELIVERY);
+
+        // startup IPI
+        lapicWrite(LAPIC_INT_COMMAND_HIGH, cpu->apicID << 24);
+        lapicWrite(LAPIC_INT_COMMAND_LOW, LAPIC_INT_CMD_STARTUP | 0x01);    // the page we copied the AP entry to
+
+        while(lapicRead(LAPIC_INT_COMMAND_LOW) & LAPIC_INT_CMD_DELIVERY);
+        
+        // check that the CPU actually started
+        uint32_t volatile *life = (uint32_t volatile *)0x1FE0;    // the AP will set this flag to one when it boots
+        while(!*life);
+
+        runningCpuCount++;
     }
 
     return runningCpuCount;

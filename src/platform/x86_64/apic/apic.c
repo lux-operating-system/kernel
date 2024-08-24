@@ -30,6 +30,7 @@ int apicInit() {
     KDEBUG("reading ACPI MADT table...\n");
 
     KDEBUG("32-bit local APIC address: 0x%08X\n", madt->localAPIC);
+    localAPICBase = madt->localAPIC;
     KDEBUG("legacy PIC is %s\n", madt->legacyPIC & MADT_LEGACY_PIC_PRESENT ? "present" : "absent");
 
     // if the legacy PIC is present, we need to disable it so it doesn't
@@ -102,11 +103,11 @@ int apicInit() {
 /* Local APIC Read/Write */
 
 void lapicWrite(uint32_t reg, uint32_t val) {
-    volatile uint32_t *ptr = (volatile uint32_t *)((uintptr_t)localAPICBase + reg);
+    uint32_t volatile *ptr = (uint32_t volatile *)((uintptr_t)localAPICBase + reg);
     *ptr = val;
 }
 
 uint32_t lapicRead(uint32_t reg) {
-    volatile uint32_t *ptr = (volatile uint32_t *)((uintptr_t)localAPICBase + reg);
+    uint32_t volatile *ptr = (uint32_t volatile*)((uintptr_t)localAPICBase + reg);
     return *ptr;
 }

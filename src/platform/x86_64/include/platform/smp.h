@@ -29,7 +29,10 @@ extern uint8_t apEntry[];
 extern uint32_t apEntryVars[];
 
 #define AP_ENTRY_SIZE           4096
-#define AP_ENTRY_GDTR           0       // index into apEntryVars[]
-#define AP_ENTRY_IDTR           1
-#define AP_ENTRY_CR3            2
-#define AP_ENTRY_STACK          3
+#define AP_ENTRY_GDTR           1       // index into apEntryVars[]
+#define AP_ENTRY_IDTR           2
+#define AP_ENTRY_CR3            3
+#define AP_ENTRY_STACK_LOW      4
+#define AP_ENTRY_STACK_HIGH     5
+#define AP_ENTRY_NEXT_LOW       6
+#define AP_ENTRY_NEXT_HIGH      7

@@ -51,6 +51,13 @@
 #define LAPIC_TIMER_CURRENT             0x390
 #define LAPIC_TIMER_DIVIDE              0x3E0
 
+// Local APIC Interrupt Command
+#define LAPIC_INT_CMD_INIT              (5 << 8)
+#define LAPIC_INT_CMD_STARTUP           (6 << 8)
+#define LAPIC_INT_CMD_DELIVERY          (1 << 12)   // set to ZERO on success
+#define LAPIC_INT_CMD_LEVEL_DEASSERT    (2 << 14)
+#define LAPIC_INT_CMD_LEVEL_NORMAL      (1 << 14)
+
 typedef struct {
     ACPIStandardHeader header;
     uint32_t localAPIC;

@@ -17,26 +17,34 @@ apEntry:
     xor ax, ax
     mov ds, ax
 
-    mov eax, [0x1FF0]
+    mov eax, [0x1FE4]
     lgdt [eax]
-    mov eax, [0x1FF4]
+    mov eax, [0x1FE8]
     lidt [eax]
-    mov eax, [0x1FF8]
+    mov eax, [0x1FEC]
     mov cr3, eax
+
+    ; indicate to the kernel that the CPU started
+    mov eax, 1
+    mov [0x1FE0], eax
 
     cli
     hlt
 
-times 0x1FF0 - ($-$$) db 0
+times 0xFE0 - ($-$$) db 0
 
-global apEntryVars:
+global apEntryVars
 apEntryVars:
 
 ; the kernel will also fill in these variables
-gdtrPointer:        dd 0        ; 0x1FF0: pointer to the GDTR
-idtrPointer:        dd 0        ; 0x1FF4: pointer to the IDTR
-kernelCR3:          dd 0        ; 0x1FF8: pointer to kernel paging
-stackTop:           dd 0        ; 0x1FFC: newly allocated stack for this CPU
+life:               dd 0        ; 0x1FE0: sign of life
+gdtrPointer:        dd 0        ; 0x1FE4: pointer to the GDTR
+idtrPointer:        dd 0        ; 0x1FE8: pointer to the IDTR
+kernelCR3:          dd 0        ; 0x1FEC: pointer to kernel paging
+stackTopLow:        dd 0        ; 0x1FF0: newly allocated stack for this CPU
+stackTopHigh:       dd 0        ; 0x1FF4: high bits
+nextLow:            dd 0        ; 0x1FF8: true entry point to call next
+nextHigh:           dd 0        ; 0x1FFC: high bits
 
 global apEntryEnd
 apEntryEnd:
