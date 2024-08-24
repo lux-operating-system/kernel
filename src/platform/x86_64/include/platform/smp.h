@@ -21,3 +21,4 @@ typedef struct PlatformCPU {
     struct PlatformCPU *next;
 } PlatformCPU;
 
+int smpBoot();

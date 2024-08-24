@@ -93,5 +93,8 @@ int apicInit() {
         n += ptr[1];
         ptr += ptr[1];
     }
+
+    /* now boot SMPs */
+    smpBoot();
     while(1);
 }
