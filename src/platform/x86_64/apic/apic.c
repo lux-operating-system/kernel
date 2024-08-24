@@ -6,8 +6,11 @@
  */
 
 #include <stddef.h>
+#include <stdlib.h>
+#include <platform/platform.h>
 #include <platform/apic.h>
 #include <platform/x86_64.h>
+#include <platform/smp.h>
 #include <kernel/acpi.h>
 #include <kernel/logger.h>
 
@@ -39,6 +42,13 @@ int apicInit() {
     uint8_t *ptr = madt->entries;
     size_t n = (size_t)(ptr - (uint8_t *)madt);
 
+    // identify the BSP
+    CPUIDRegisters regs;
+    readCPUID(1, &regs);
+    uint8_t bspID = regs.ebx >> 24;
+
+    KDEBUG("BSP local APIC ID is 0x%02X\n", bspID);
+
     while(n < madt->header.length) {
         switch(*ptr) {
         case MADT_TYPE_LOCAL_APIC:
@@ -46,6 +56,23 @@ int apicInit() {
             KDEBUG("local APIC with ACPI ID 0x%02X APIC ID 0x%02X flags 0x%08X (%s)\n", localAPIC->procID,
                 localAPIC->apicID, localAPIC->flags,
                 localAPIC->flags & MADT_LOCAL_APIC_ENABLED ? "enabled" : "disabled");
+
+            // register the CPU with the platform-independent code if it's enabled
+            if(localAPIC->flags & MADT_LOCAL_APIC_ENABLED) {
+                PlatformCPU *cpu = malloc(sizeof(PlatformCPU));
+                if(!cpu) {
+                    KERROR("could not allocate memory to register CPU\n");
+                    break;
+                }
+
+                cpu->apicID = localAPIC->apicID;
+                cpu->procID = localAPIC->procID;
+                cpu->bootCPU = (localAPIC->apicID == bspID);
+                cpu->running = cpu->bootCPU;
+                cpu->next = NULL;
+
+                platformRegisterCPU(cpu);
+            }
             break;
         case MADT_TYPE_IOAPIC:
             ACPIMADTIOAPIC *ioapic = (ACPIMADTIOAPIC *)ptr;
