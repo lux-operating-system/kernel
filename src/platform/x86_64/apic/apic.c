@@ -98,3 +98,15 @@ int apicInit() {
     smpBoot();
     while(1);
 }
+
+/* Local APIC Read/Write */
+
+void lapicWrite(uint32_t reg, uint32_t val) {
+    volatile uint32_t *ptr = (volatile uint32_t *)((uintptr_t)localAPICBase + reg);
+    *ptr = val;
+}
+
+uint32_t lapicRead(uint32_t reg) {
+    volatile uint32_t *ptr = (volatile uint32_t *)((uintptr_t)localAPICBase + reg);
+    return *ptr;
+}

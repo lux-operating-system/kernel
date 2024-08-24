@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <kernel/acpi.h>
 
+// ACPI MADT table
 #define MADT_TYPE_LOCAL_APIC            0
 #define MADT_TYPE_IOAPIC                1
 #define MADT_TYPE_INTERRUPT_OVERRIDE    2
@@ -27,6 +28,28 @@
 #define MADT_INTERRUPT_LEVEL            0x08
 
 #define MADT_CPU_BROADCAST              0xFF
+
+// Local APIC Registers
+#define LAPIC_ID                        0x020
+#define LAPIC_VERSION                   0x030
+#define LAPIC_TPR                       0x080   // task priority register
+#define LAPIC_APR                       0x090   // arbitration priority register
+#define LAPIC_PPR                       0x0A0   // processor priority register
+#define LAPIC_EOI                       0x0B0
+#define LAPIC_RRD                       0x0C0   // remote read register
+#define LAPIC_DEST                      0x0D0
+#define LAPIC_DEST_FORMAT               0x0E0
+#define LAPIC_SPURIOUS_VECTOR           0x0F0
+#define LAPIC_ERROR                     0x280
+#define LAPIC_INT_COMMAND_LOW           0x300
+#define LAPIC_INT_COMMAND_HIGH          0x310
+#define LAPIC_LVT_TIMER                 0x320
+#define LAPIC_LVT_LINT0                 0x350
+#define LAPIC_LVT_LINT1                 0x360
+#define LAPIC_LVT_ERROR                 0x370
+#define LAPIC_TIMER_INITIAL             0x380
+#define LAPIC_TIMER_CURRENT             0x390
+#define LAPIC_TIMER_DIVIDE              0x3E0
 
 typedef struct {
     ACPIStandardHeader header;
@@ -92,3 +115,5 @@ typedef struct {
 } __attribute__((packed)) ACPIMADTLocalAPICOverride;
 
 int apicInit();
+void lapicWrite(uint32_t, uint32_t);
+uint32_t lapicRead(uint32_t);
