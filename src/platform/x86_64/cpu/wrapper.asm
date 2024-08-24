@@ -148,14 +148,18 @@ readCPUID:
     ;   uint32_t edx;
     ; } __attribute__((packed)) CPUIDRegisters;
 
+    push rbx
+
     mov eax, edi        ; leaf
     push rsi            ; regs
     mov ecx, [esi+8]
     cpuid
     pop rsi
-    mov [esi], eax
-    mov [esi+4], ebx
-    mov [esi+8], ecx
-    mov [esi+12], edx
+    mov [rsi], eax
+    mov [rsi+4], ebx
+    mov [rsi+8], ecx
+    mov [rsi+12], edx
+
+    pop rbx
 
     ret
