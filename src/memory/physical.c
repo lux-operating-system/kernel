@@ -12,10 +12,12 @@
 #include <kernel/memory.h>
 #include <kernel/boot.h>
 #include <kernel/logger.h>
+#include <platform/lock.h>
 
 static PhysicalMemoryStatus status;
 static uint8_t *pmmBitmap;
 static size_t pmmBitmapSize;
+static lock_t lock = LOCK_INITIAL;
 
 /* pmmMark(): marks a page as free or used
  * params: phys - physical address
@@ -204,16 +206,20 @@ bool pmmIsUsed(uintptr_t phys) {
  */
 
 uintptr_t pmmAllocate(void) {
+    acquireLockBlocking(&lock);
     uintptr_t addr;
 
     for(addr = status.lowestUsableAddress; addr < status.highestUsableAddress; addr += PAGE_SIZE) {
         if(!pmmIsUsed(addr)) {
             pmmMark(addr, true);
             //KDEBUG("allocated physical page at 0x%08X, %d pages in use\n", addr, status.usedPages);
+
+            releaseLock(&lock);
             return addr;
         }
     }
 
+    releaseLock(&lock);
     return 0;
 }
 
@@ -225,7 +231,11 @@ uintptr_t pmmAllocate(void) {
 int pmmFree(uintptr_t phys) {
     if(phys <= status.lowestUsableAddress || phys >= status.highestUsableAddress) return -1;
     //KDEBUG("freeing memory at 0x%08X, %d pages in use\n", phys, status.usedPages);
-    return pmmMark(phys, false);
+
+    acquireLockBlocking(&lock);
+    int s = pmmMark(phys, false);
+    releaseLock(&lock);
+    return s;
 }
 
 /* pmmAllocateContiguous(): allocates contiguous physical memory
@@ -239,6 +249,9 @@ uintptr_t pmmAllocateContiguous(size_t count, int flags) {
     // memory below the 4 GB address line (<= 0xFFFFFFFF)
     // this is going to become necessary in drivers for devices that only have
     // a 32-bit addressing mode, like certain DMA and network controllers
+
+    acquireLockBlocking(&lock);
+
     uintptr_t start = status.lowestUsableAddress;
     uintptr_t end;
     if(flags & PMM_CONTIGUOUS_LOW && status.highestUsableAddress > 0xFFFFFFFF) {
@@ -256,15 +269,18 @@ uintptr_t pmmAllocateContiguous(size_t count, int flags) {
 
         if(addr >= (start + (count * PAGE_SIZE))) {
             if(!pmmMarkContiguous(start, count, true)) {
+                releaseLock(&lock);
                 return start;
             }
 
+            releaseLock(&lock);
             return 0;
         } else {
             start += PAGE_SIZE;
         }
     } while(start < end);
 
+    releaseLock(&lock);
     return 0;
 }
 

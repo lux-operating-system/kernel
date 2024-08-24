@@ -36,6 +36,13 @@ typedef struct {
     uint64_t ss;
 } __attribute__((packed)) InterruptRegisters;
 
+typedef struct {
+    uint32_t eax;
+    uint32_t ebx;
+    uint32_t ecx;
+    uint32_t edx;
+} __attribute__((packed)) CPUIDRegisters;
+
 // wrappers for instructions that don't have an equivalent in C
 uint64_t readCR0();
 void writeCR0(uint64_t);
@@ -53,9 +60,13 @@ uint8_t inb(uint16_t);
 uint16_t inw(uint16_t);
 uint32_t ind(uint16_t);
 void resetSegments(uint64_t, uint8_t);
+uint32_t readCPUID(uint32_t, CPUIDRegisters *);
 
 // other x86_64-specific routines
+extern GDTEntry gdt[];
 extern IDTEntry idt[];
+extern GDTR gdtr;
+extern IDTR idtr;
 void installInterrupt(uint64_t, uint16_t, int, int, int);
 
 #define PRIVILEGE_KERNEL        0
