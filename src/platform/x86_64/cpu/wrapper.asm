@@ -150,6 +150,11 @@ readCPUID:
 
     push rbx
 
+    ; this will allow us to detect zeroes when a function isn't supported
+    xor ebx, ebx
+    xor ecx, ecx
+    xor edx, edx
+
     mov eax, edi        ; leaf
     push rsi            ; regs
     mov ecx, [esi+8]
