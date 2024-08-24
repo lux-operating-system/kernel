@@ -24,14 +24,60 @@ apEntry:
     mov eax, [0x1FEC]
     mov cr3, eax
 
+    ; configure the CPU for long mode - this is the same sequence we followed
+    ; in the boot loader
+    mov eax, 0x6A0          ; enable SSE, PAE, and global pages
+    mov cr4, eax
+
+    mov ecx, 0xC0000080
+    rdmsr
+    or eax, 0x100           ; enable 64-bit mode
+    wrmsr
+
+    mov eax, cr0
+    and eax, 0x9FFFFFFF     ; enable global caching
+    or eax, 0x80010001      ; enable paging, write-protection, and protected mode
+    mov cr0, eax
+
+    jmp 0x08:0x1080
+
+times 0x80 - ($-$$) nop
+[bits 64]
+
+    ; now we're in 64-bit long mode
+    mov rax, 0x10
+    mov ss, rax
+    mov ds, rax
+    mov es, rax
+    mov fs, rax
+    mov gs, rax
+
+    mov rax, 0x1FF0         ; top of stack pointer
+    mov rsp, [rax]
+    mov rbp, rsp
+
+    mov rax, 2
+    push rax
+    popfq
+
     ; indicate to the kernel that the CPU started
     mov eax, 1
     mov [0x1FE0], eax
 
+    mov rax, 0x1FF8         ; entry point
+    mov rax, [rax]
+    call rax
+
+    ; this should never return
+
+    times 0x100 - ($-$$) nop
+
+.hang:
     cli
     hlt
+    jmp 0x1100
 
-times 0xFE0 - ($-$$) db 0
+times 0xFE0 - ($-$$) nop
 
 global apEntryVars
 apEntryVars:

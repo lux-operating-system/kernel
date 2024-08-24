@@ -36,3 +36,5 @@ extern uint32_t apEntryVars[];
 #define AP_ENTRY_STACK_HIGH     5
 #define AP_ENTRY_NEXT_LOW       6
 #define AP_ENTRY_NEXT_HIGH      7
+
+#define AP_STACK_SIZE           32768

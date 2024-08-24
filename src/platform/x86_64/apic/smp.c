@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 #include <platform/platform.h>
 #include <platform/smp.h>
 #include <platform/x86_64.h>
@@ -54,6 +55,12 @@ void *platformGetCPU(int n) {
     return cpu;
 }
 
+/* apMain(): entry points for application processors */
+
+int apMain() {
+    while(1);
+}
+
 /* smpBoot(): boots all other processors in an SMP system
  * params: none
  * returns: total number of CPUs running, including the boot CPU
@@ -68,6 +75,8 @@ int smpBoot() {
     apEntryVars[AP_ENTRY_GDTR] = (uint32_t)&gdtr;
     apEntryVars[AP_ENTRY_IDTR] = (uint32_t)&idtr;
     apEntryVars[AP_ENTRY_CR3] = readCR3();
+    apEntryVars[AP_ENTRY_NEXT_LOW] = (uint32_t)&apMain;
+    apEntryVars[AP_ENTRY_NEXT_HIGH] = (uint32_t)((uintptr_t)&apMain >> 32);
 
     PlatformCPU *cpu;
 
@@ -76,6 +85,17 @@ int smpBoot() {
         if(!cpu || cpu->bootCPU || cpu->running) continue;
 
         KDEBUG("starting CPU with local APIC ID 0x%02X\n", cpu->apicID);
+
+        // allocate a stack for the AP
+        void *stack = calloc(AP_STACK_SIZE, 1);
+        if(!stack) {
+            KERROR("failed to allocate memory for AP stack\n");
+            while(1);
+        }
+
+        uintptr_t stackPtr = (uintptr_t)(stack + AP_STACK_SIZE);
+        apEntryVars[AP_ENTRY_STACK_LOW] = (uint32_t)stackPtr;
+        apEntryVars[AP_ENTRY_STACK_HIGH] = (uint32_t)((uintptr_t)stackPtr >> 32);
 
         // copy the AP entry into low memory
         memcpy((void *)0x1000, apEntry, AP_ENTRY_SIZE);
