@@ -7,8 +7,13 @@
 
 #include <stdio.h>
 #include <kernel/logger.h>
+#include <platform/lock.h>
+
+static lock_t lock = LOCK_INITIAL;
 
 int kprintf(int level, uint64_t timestamp, const char *src, const char *f, ...) {
+    acquireLockBlocking(&lock);
+
     int len = printf("\e[37m%08d ", timestamp);
 
     switch(level) {
@@ -30,5 +35,7 @@ int kprintf(int level, uint64_t timestamp, const char *src, const char *f, ...) 
     va_start(args, f);
     len += vprintf(f, args);
     va_end(args);
+
+    releaseLock(&lock);
     return len;
 }
