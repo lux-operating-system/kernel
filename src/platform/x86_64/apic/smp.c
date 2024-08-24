@@ -124,6 +124,7 @@ int smpBoot() {
         uint32_t volatile *life = (uint32_t volatile *)0x1FE0;    // the AP will set this flag to one when it boots
         while(!*life);
 
+        cpu->running = true;
         runningCpuCount++;
     }
 
