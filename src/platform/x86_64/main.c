@@ -10,6 +10,7 @@
 #include <kernel/boot.h>
 #include <kernel/memory.h>
 #include <kernel/tty.h>
+#include <kernel/acpi.h>
 #include <platform/platform.h>
 #include <platform/x86_64.h>
 #include <platform/exception.h>
@@ -23,6 +24,7 @@ int platformMain(KernelBootInfo *k) {
     installExceptions();
     pmmInit(k);
     vmmInit();
+    acpiInit(k);
 
     return main(0, NULL);
 }
