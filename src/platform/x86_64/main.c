@@ -2,7 +2,7 @@
  * lux - a lightweight unix-like operating system
  * Omar Elghoul, 2024
  * 
- * Core Microkernel
+ * Platform-Specific Code for x86_64
  */
 
 #include <stddef.h>
@@ -14,6 +14,7 @@
 #include <platform/platform.h>
 #include <platform/x86_64.h>
 #include <platform/exception.h>
+#include <platform/apic.h>
 
 extern int main(int, char **);
 
@@ -25,6 +26,7 @@ int platformMain(KernelBootInfo *k) {
     pmmInit(k);
     vmmInit();
     acpiInit(k);
+    apicInit();
 
     return main(0, NULL);
 }
