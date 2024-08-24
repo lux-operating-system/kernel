@@ -22,3 +22,14 @@ typedef struct PlatformCPU {
 } PlatformCPU;
 
 int smpBoot();
+
+/* entry point for non-boot CPUs */
+
+extern uint8_t apEntry[];
+extern uint32_t apEntryVars[];
+
+#define AP_ENTRY_SIZE           4096
+#define AP_ENTRY_GDTR           0       // index into apEntryVars[]
+#define AP_ENTRY_IDTR           1
+#define AP_ENTRY_CR3            2
+#define AP_ENTRY_STACK          3
