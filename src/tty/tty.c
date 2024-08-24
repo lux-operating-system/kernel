@@ -8,12 +8,14 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <platform/lock.h>
 #include <kernel/boot.h>
 #include <kernel/font.h>
 #include <kernel/tty.h>
 #include <kernel/logger.h>
 
 KTTY ktty;
+static lock_t lock = LOCK_INITIAL;
 
 const uint32_t ttyColors[] = {
     0x1F1F1F,       // black
@@ -145,19 +147,24 @@ void ttyParseEscape() {
  */
 
 void ttyPutc(char c) {
+    acquireLockBlocking(&lock);
+
     // handle special characters
     if(c == '\n') {             // new line
         ktty.posx = 0;
         ktty.posy++;
         ttyCheckBoundaries();
+        releaseLock(&lock);
         return;
     } else if(c == '\r') {      // carriage return
         ktty.posx = 0;
+        releaseLock(&lock);
         return;
     } else if(c == '\e') {      // escape
         ktty.escapeIndex = 0;
         memset(ktty.escape, 0, 256);
         ktty.escaping = true;
+        releaseLock(&lock);
         return;
     }
 
@@ -171,10 +178,14 @@ void ttyPutc(char c) {
             ttyParseEscape();
         }
 
+        releaseLock(&lock);
         return;
     }
 
-    if(c < FONT_MIN_GLYPH || c > FONT_MAX_GLYPH) return;
+    if(c < FONT_MIN_GLYPH || c > FONT_MAX_GLYPH) {
+        releaseLock(&lock);
+        return;
+    }
 
     // get pixel offset
     uint16_t x = ktty.posx * FONT_WIDTH;
@@ -203,6 +214,7 @@ void ttyPutc(char c) {
     // and advance the cursor
     ktty.posx++;
     ttyCheckBoundaries();
+    releaseLock(&lock);
 }
 
 /* ttyPuts(): puts a string on screen at cursor position
