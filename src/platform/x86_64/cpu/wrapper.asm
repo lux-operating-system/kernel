@@ -136,3 +136,26 @@ resetSegments:
 
 .next:
     ret
+
+global readCPUID
+align 16
+readCPUID:
+    ; readCPUID(uint32_t leaf, CPUIDRegisters *regs)
+    ; typedef struct {
+    ;   uint32_t eax;
+    ;   uint32_t ebx;
+    ;   uint32_t ecx;
+    ;   uint32_t edx;
+    ; } __attribute__((packed)) CPUIDRegisters;
+
+    mov eax, edi        ; leaf
+    push rsi            ; regs
+    mov ecx, [esi+8]
+    cpuid
+    pop rsi
+    mov [esi], eax
+    mov [esi+4], ebx
+    mov [esi+8], ecx
+    mov [esi+12], edx
+
+    ret
