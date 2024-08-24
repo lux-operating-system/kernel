@@ -48,4 +48,4 @@ typedef struct {
 } __attribute__((packed)) ACPIXSDT;
 
 int acpiInit(KernelBootInfo *);
-void *acpiFindTable(const char *);
+void *acpiFindTable(const char *, int);

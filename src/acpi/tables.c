@@ -69,3 +69,28 @@ int acpiInit(KernelBootInfo *k) {
     KDEBUG("system is compliant with ACPI revision %d\n", acpiVersion);
     return 0;
 }
+
+/* acpiFindTable(): finds an ACPI table by signature
+ * params: sig - 4-character signature of the table
+ * params: index - zero-based index of the table in cases of multiple tables
+ * returns: pointer to the table header, NULL if not found
+ */
+
+void *acpiFindTable(const char *sig, int index) {
+    int c = 0;
+    ACPIStandardHeader *h;
+    for(int i = 0; i < tableCount; i++) {
+        if(xsdt) {
+            h = (ACPIStandardHeader *)xsdt->tables[i];
+        } else {
+            h = (ACPIStandardHeader *)(uintptr_t)rsdt->tables[i];
+        }
+
+        if(!memcmp(h->signature, sig, 4)) {
+            c++;
+            if(c > index) return h;
+        }
+    }
+
+    return NULL;
+}
