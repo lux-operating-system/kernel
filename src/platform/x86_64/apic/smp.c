@@ -87,6 +87,12 @@ int smpBoot() {
         KDEBUG("starting CPU with local APIC ID 0x%02X\n", cpu->apicID);
 
         // allocate a stack for the AP
+        // NOTE: we're using calloc() and not malloc() here to force a write to
+        // the allocated memory
+        // this allows the boot CPU to handle the page fault and allocate true
+        // physical memory for the AP CPU, which would not be able to handle a
+        // page fault yet because the page fault would require a stack while
+        // literally also trying to allocate a stack, crashing the entire CPU
         void *stack = calloc(AP_STACK_SIZE, 1);
         if(!stack) {
             KERROR("failed to allocate memory for AP stack\n");
