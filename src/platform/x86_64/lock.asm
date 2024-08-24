@@ -69,5 +69,5 @@ global releaseLock
 align 16
 releaseLock:
     lock and byte[rdi], 0
-    mov rax, 0
+    xor rax, rax
     ret
