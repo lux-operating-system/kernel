@@ -112,3 +112,13 @@ uint32_t lapicRead(uint32_t reg) {
     uint32_t volatile *ptr = (uint32_t volatile*)((uintptr_t)localAPICBase + reg);
     return *ptr;
 }
+
+/* platformAcknowledgeIRQ(): platform-independent function that will be called
+ * at the end of an IRQ handler
+ * params: unused - pointer to data that may be necessary for IRQ acknowledgement; unused on x86_64
+ * returns: nothing
+ */
+
+void platformAcknowledgeIRQ(void *unused) {
+    lapicWrite(LAPIC_EOI, 0);
+}
