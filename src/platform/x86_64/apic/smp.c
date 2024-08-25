@@ -70,8 +70,8 @@ int apMain() {
     if(!(apic & MSR_LAPIC_ENABLED)) {
         writeMSR(MSR_LAPIC, apic | MSR_LAPIC_ENABLED);
     }
-    lapicWrite(LAPIC_TPR, 0);
-    lapicWrite(LAPIC_DEST_FORMAT, 0);
+    lapicWrite(LAPIC_TPR, 0);       // enable all interrupts
+    lapicWrite(LAPIC_DEST_FORMAT, lapicRead(LAPIC_DEST_FORMAT) | 0xF0000000);   // flat mode
     lapicWrite(LAPIC_SPURIOUS_VECTOR, 0x1FF);
 
     // APIC timer
