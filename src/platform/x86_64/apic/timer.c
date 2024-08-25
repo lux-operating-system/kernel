@@ -49,7 +49,7 @@ int apicTimerInit() {
     lapicWrite(LAPIC_TIMER_INITIAL, 0);     // disable timer so we can set it up
     lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_ONE_SHOT | LAPIC_LVT_MASK);
     lapicWrite(LAPIC_TIMER_DIVIDE, LAPIC_TIMER_DIVIDER_1);
-    lapicWrite(LAPIC_TIMER_INITIAL, 0x8FFFFFFF);    // enable timer
+    lapicWrite(LAPIC_TIMER_INITIAL, 0xFFFFFFFF);    // enable timer
 
     uint32_t apicInitial = lapicRead(LAPIC_TIMER_CURRENT);
 
