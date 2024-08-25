@@ -97,6 +97,7 @@ int apicInit() {
 
     /* now boot SMPs */
     smpBoot();
+    apicTimerInit();
     while(1);
 }
 

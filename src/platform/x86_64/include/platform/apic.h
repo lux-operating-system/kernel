@@ -51,12 +51,33 @@
 #define LAPIC_TIMER_CURRENT             0x390
 #define LAPIC_TIMER_DIVIDE              0x3E0
 
+#define LAPIC_LVT_MASK                  (1 << 16)
+#define LAPIC_LVT_LEVEL                 (1 << 15)
+#define LAPIC_LVT_LOW                   (1 << 13)
+
+#define LAPIC_TIMER_ONE_SHOT            (0 << 17)
+#define LAPIC_TIMER_PERIODIC            (1 << 17)
+#define LAPIC_TIMER_TSC_DEADLINE        (2 << 17)
+
+#define LAPIC_TIMER_DIVIDER_2           0
+#define LAPIC_TIMER_DIVIDER_4           1
+#define LAPIC_TIMER_DIVIDER_8           2
+#define LAPIC_TIMER_DIVIDER_16          3
+#define LAPIC_TIMER_DIVIDER_32          4
+#define LAPIC_TIMER_DIVIDER_64          5
+#define LAPIC_TIMER_DIVIDER_128         6
+#define LAPIC_TIMER_DIVIDER_1           7
+
 // Local APIC Interrupt Command
 #define LAPIC_INT_CMD_INIT              (5 << 8)
 #define LAPIC_INT_CMD_STARTUP           (6 << 8)
 #define LAPIC_INT_CMD_DELIVERY          (1 << 12)   // set to ZERO on success
 #define LAPIC_INT_CMD_LEVEL_DEASSERT    (2 << 14)
 #define LAPIC_INT_CMD_LEVEL_NORMAL      (1 << 14)
+
+// Local APIC MSR
+#define MSR_LAPIC                       0x1B
+#define MSR_LAPIC_ENABLED               (1 << 11)
 
 typedef struct {
     ACPIStandardHeader header;
@@ -124,3 +145,4 @@ typedef struct {
 int apicInit();
 void lapicWrite(uint32_t, uint32_t);
 uint32_t lapicRead(uint32_t);
+int apicTimerInit();
