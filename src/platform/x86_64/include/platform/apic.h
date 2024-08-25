@@ -59,14 +59,14 @@
 #define LAPIC_TIMER_PERIODIC            (1 << 17)
 #define LAPIC_TIMER_TSC_DEADLINE        (2 << 17)
 
-#define LAPIC_TIMER_DIVIDER_2           0
-#define LAPIC_TIMER_DIVIDER_4           1
-#define LAPIC_TIMER_DIVIDER_8           2
-#define LAPIC_TIMER_DIVIDER_16          3
-#define LAPIC_TIMER_DIVIDER_32          4
-#define LAPIC_TIMER_DIVIDER_64          5
-#define LAPIC_TIMER_DIVIDER_128         6
-#define LAPIC_TIMER_DIVIDER_1           7
+#define LAPIC_TIMER_DIVIDER_2           0x00
+#define LAPIC_TIMER_DIVIDER_4           0x01
+#define LAPIC_TIMER_DIVIDER_8           0x02
+#define LAPIC_TIMER_DIVIDER_16          0x03
+#define LAPIC_TIMER_DIVIDER_32          0x08
+#define LAPIC_TIMER_DIVIDER_64          0x09
+#define LAPIC_TIMER_DIVIDER_128         0x0A
+#define LAPIC_TIMER_DIVIDER_1           0x0B
 
 // Local APIC Interrupt Command
 #define LAPIC_INT_CMD_INIT              (5 << 8)
