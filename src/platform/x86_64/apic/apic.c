@@ -95,9 +95,9 @@ int apicInit() {
         ptr += ptr[1];
     }
 
-    /* now boot SMPs */
-    smpBoot();
-    apicTimerInit();
+    /* continue booting with info acquired from ACPI */
+    apicTimerInit();        // local APIC timer
+    smpBoot();              // start up other non-boot CPUs
     while(1);
 }
 

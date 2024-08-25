@@ -16,6 +16,8 @@
 #include <platform/platform.h>
 #include <kernel/logger.h>
 
+static uint64_t apicFrequency;
+
 /* apicTimerInit(): initializes the local APIC timer
  * this may depend on the CMOS to calibrate the timer */
 
@@ -70,7 +72,7 @@ int apicTimerInit() {
     // disable the APIC timer
     lapicWrite(LAPIC_TIMER_INITIAL, 0);
     uint64_t apicTicks = (uint64_t)apicInitial - (uint64_t)apicFinal;
-    uint64_t apicFrequency = apicTicks * 100;    // the PIT was set up to 100 Hz
+    apicFrequency = apicTicks * 100;    // the PIT was set up to 100 Hz
 
     KDEBUG("local APIC frequency is %d MHz\n", apicFrequency / 1000 / 1000);
 
@@ -82,10 +84,12 @@ int apicTimerInit() {
     // unmask the IRQ and enable the timer
     lapicWrite(LAPIC_LVT_TIMER, lapicRead(LAPIC_LVT_TIMER) & ~LAPIC_LVT_MASK);
     lapicWrite(LAPIC_TIMER_INITIAL, apicFrequency / PLATFORM_TIMER_FREQUENCY);
+}
 
-    while(1) {
-        asm volatile ("sti \n hlt");
-    }
+/* apicTimerFrequency(): returns the local APIC's frequency */
+
+uint64_t apicTimerFrequency() {
+    return apicFrequency;
 }
 
 /* timerIRQ(): timer IRQ handler 

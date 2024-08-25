@@ -147,4 +147,5 @@ int apicInit();
 void lapicWrite(uint32_t, uint32_t);
 uint32_t lapicRead(uint32_t);
 int apicTimerInit();
+uint64_t apicTimerFrequency();
 void timerHandlerStub();
