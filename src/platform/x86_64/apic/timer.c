@@ -39,20 +39,20 @@ int apicTimerInit() {
     
     /* TODO: use the HPET instead of the PIT to measure timer frequency */
     // set up the PIT to wait for 1/20 of a second
-    uint16_t pitFrequency = 1193180 / 20;      // PIT frequency divided by 20 Hz
+    uint16_t pitFrequency = 1193180 / 100;      // PIT frequency divided by 100 Hz
     KDEBUG("using PIT to calibrate local APIC timer: starting counter 0x%04X\n", pitFrequency);
 
     // set up the APIC timer in one-shot mode with no interrupts
     lapicWrite(LAPIC_TIMER_INITIAL, 0);     // disable timer so we can set it up
     lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_ONE_SHOT | LAPIC_LVT_MASK);
     lapicWrite(LAPIC_TIMER_DIVIDE, LAPIC_TIMER_DIVIDER_1);
-    lapicWrite(LAPIC_TIMER_INITIAL, 0xFFFFFFFF);    // enable timer
+    lapicWrite(LAPIC_TIMER_INITIAL, 0x8FFFFFFF);    // enable timer
 
     uint32_t apicInitial = lapicRead(LAPIC_TIMER_CURRENT);
 
     outb(0x43, 0x30);   // channel 0, high and low in one transfer, mode 0
-    outb(0x41, pitFrequency & 0xFF);
-    outb(0x41, pitFrequency >> 8);
+    outb(0x40, pitFrequency & 0xFF);
+    outb(0x40, pitFrequency >> 8);
 
     uint16_t currentCounter = pitFrequency;
     uint16_t oldCurrentCounter = pitFrequency;
@@ -60,17 +60,17 @@ int apicTimerInit() {
     while(currentCounter <= oldCurrentCounter) {
         oldCurrentCounter = currentCounter;
 
-        outb(0x43, 0x30);
-        currentCounter = inb(0x41);
-        currentCounter |= inb(0x41) << 8;
+        outb(0x43, 0x00);       // channel 0, latch command
+        currentCounter = inb(0x40);
+        currentCounter |= inb(0x40) << 8;
     }
 
     uint32_t apicFinal = lapicRead(LAPIC_TIMER_CURRENT);
 
     // disable the APIC timer
     lapicWrite(LAPIC_TIMER_INITIAL, 0);
-    uint32_t apicTicks = apicFinal - apicInitial;
-    uint64_t apicFrequency = apicTicks * 20;    // the PIT was set up to 20 Hz
+    uint64_t apicTicks = (uint64_t)apicInitial - (uint64_t)apicFinal;
+    uint64_t apicFrequency = apicTicks * 100;    // the PIT was set up to 100 Hz
 
     KDEBUG("local APIC frequency is %d MHz\n", apicFrequency / 1000 / 1000);
 
@@ -90,8 +90,11 @@ int apicTimerInit() {
 
 /* timerIRQ(): timer IRQ handler 
  * this is called PLATFORM_TIMER_FREQUENCY times per second */
-
+uint64_t timerTicks = 0;
 void timerIRQ() {
-    KDEBUG("sign of life from timer IRQ\n");
+    timerTicks++;
+    if(!(timerTicks % PLATFORM_TIMER_FREQUENCY)) {
+        KDEBUG("timer irq: one second has passed\n");
+    }
     platformAcknowledgeIRQ(NULL);
 }
