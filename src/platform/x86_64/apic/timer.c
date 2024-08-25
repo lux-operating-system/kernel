@@ -10,8 +10,10 @@
  * physical circuit as the CPU, reducing latency compared to external timers
  * like the HPET or the legacy PIT (which I don't intend to support) */
 
+#include <stddef.h>
 #include <platform/apic.h>
 #include <platform/x86_64.h>
+#include <platform/platform.h>
 #include <kernel/logger.h>
 
 /* apicTimerInit(): initializes the local APIC timer
@@ -27,11 +29,13 @@ int apicTimerInit() {
     }*/
 
     // enable the local APIC
-    lapicWrite(LAPIC_SPURIOUS_VECTOR, 0x1FF);
     uint64_t apic = readMSR(MSR_LAPIC);
     if(!(apic & MSR_LAPIC_ENABLED)) {
         writeMSR(MSR_LAPIC, apic | MSR_LAPIC_ENABLED);
     }
+    lapicWrite(LAPIC_TPR, 0);
+    lapicWrite(LAPIC_DEST_FORMAT, 0);
+    lapicWrite(LAPIC_SPURIOUS_VECTOR, 0x1FF);
     
     /* TODO: use the HPET instead of the PIT to measure timer frequency */
     // set up the PIT to wait for 1/20 of a second
@@ -39,9 +43,10 @@ int apicTimerInit() {
     KDEBUG("using PIT to calibrate local APIC timer: starting counter 0x%04X\n", pitFrequency);
 
     // set up the APIC timer in one-shot mode with no interrupts
+    lapicWrite(LAPIC_TIMER_INITIAL, 0);     // disable timer so we can set it up
     lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_ONE_SHOT | LAPIC_LVT_MASK);
     lapicWrite(LAPIC_TIMER_DIVIDE, LAPIC_TIMER_DIVIDER_1);
-    lapicWrite(LAPIC_TIMER_INITIAL, 0xFFFFFFFF);
+    lapicWrite(LAPIC_TIMER_INITIAL, 0xFFFFFFFF);    // enable timer
 
     uint32_t apicInitial = lapicRead(LAPIC_TIMER_CURRENT);
 
@@ -61,9 +66,32 @@ int apicTimerInit() {
     }
 
     uint32_t apicFinal = lapicRead(LAPIC_TIMER_CURRENT);
+
+    // disable the APIC timer
+    lapicWrite(LAPIC_TIMER_INITIAL, 0);
     uint32_t apicTicks = apicFinal - apicInitial;
     uint64_t apicFrequency = apicTicks * 20;    // the PIT was set up to 20 Hz
 
     KDEBUG("local APIC frequency is %d MHz\n", apicFrequency / 1000 / 1000);
-    while(1);
+
+    // set up the local APIC timer in periodic mode and allocate interrupt 0xFE for it
+    lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_PERIODIC | LAPIC_LVT_MASK | LAPIC_TIMER_IRQ);
+    lapicWrite(LAPIC_TIMER_DIVIDE, LAPIC_TIMER_DIVIDER_1);
+    installInterrupt((uint64_t)timerHandlerStub, GDT_KERNEL_CODE, PRIVILEGE_KERNEL, INTERRUPT_TYPE_INT, LAPIC_TIMER_IRQ);
+
+    // unmask the IRQ and enable the timer
+    lapicWrite(LAPIC_LVT_TIMER, lapicRead(LAPIC_LVT_TIMER) & ~LAPIC_LVT_MASK);
+    lapicWrite(LAPIC_TIMER_INITIAL, apicFrequency / PLATFORM_TIMER_FREQUENCY);
+
+    while(1) {
+        asm volatile ("sti \n hlt");
+    }
+}
+
+/* timerIRQ(): timer IRQ handler 
+ * this is called PLATFORM_TIMER_FREQUENCY times per second */
+
+void timerIRQ() {
+    KDEBUG("sign of life from timer IRQ\n");
+    platformAcknowledgeIRQ(NULL);
 }

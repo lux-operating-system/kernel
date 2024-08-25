@@ -58,6 +58,7 @@
 #define LAPIC_TIMER_ONE_SHOT            (0 << 17)
 #define LAPIC_TIMER_PERIODIC            (1 << 17)
 #define LAPIC_TIMER_TSC_DEADLINE        (2 << 17)
+#define LAPIC_TIMER_IRQ                 0xFE        // use INT 0xFE for the timer
 
 #define LAPIC_TIMER_DIVIDER_2           0x00
 #define LAPIC_TIMER_DIVIDER_4           0x01
@@ -146,3 +147,4 @@ int apicInit();
 void lapicWrite(uint32_t, uint32_t);
 uint32_t lapicRead(uint32_t);
 int apicTimerInit();
+void timerHandlerStub();
