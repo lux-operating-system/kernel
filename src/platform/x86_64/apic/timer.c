@@ -60,7 +60,8 @@ int apicTimerInit() {
     uint16_t currentCounter = pitFrequency;
     uint16_t oldCurrentCounter = pitFrequency;
 
-    while(currentCounter <= oldCurrentCounter) {
+    // this way we correctly handle a zero counter, as well as an underflow
+    while(currentCounter <= oldCurrentCounter && currentCounter) {
         oldCurrentCounter = currentCounter;
 
         outb(0x43, 0x00);       // channel 0, latch command
