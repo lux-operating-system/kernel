@@ -190,3 +190,15 @@ writeMSR:
     shr rdx, 32
     wrmsr
     ret
+
+global enableIRQs
+align 16
+enableIRQs:
+    sti
+    ret
+
+global disableIRQs
+align 16
+disableIRQs:
+    cli
+    ret

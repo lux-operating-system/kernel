@@ -67,4 +67,6 @@ int platformCPUSetup() {
     idtr.base = (uint64_t)&idt;
     idtr.limit = (sizeof(IDTEntry) * 256) - 1;
     loadIDT(&idtr);
+
+    enableIRQs();
 }

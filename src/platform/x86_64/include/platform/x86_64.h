@@ -63,6 +63,8 @@ void resetSegments(uint64_t, uint8_t);
 uint32_t readCPUID(uint32_t, CPUIDRegisters *);
 uint64_t readMSR(uint32_t);
 void writeMSR(uint32_t, uint64_t);
+void enableIRQs();
+void disableIRQs();
 
 // other x86_64-specific routines
 extern GDTEntry gdt[];
