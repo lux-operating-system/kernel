@@ -58,6 +58,32 @@ void *platformGetCPU(int n) {
 /* apMain(): entry points for application processors */
 
 int apMain() {
+    enableIRQs();
+
+    // set up the local APIC
+    // on the bootstrap CPU this is done by apicTimerInit(), but we don't need
+    // to rerun it to not waste time recalibrating the APIC when we already did
+
+    // enable the local APIC (this should probably never be necessary because
+    // if the APIC wasn't enabled then how did we even boot to this point?)
+    uint64_t apic = readMSR(MSR_LAPIC);
+    if(!(apic & MSR_LAPIC_ENABLED)) {
+        writeMSR(MSR_LAPIC, apic | MSR_LAPIC_ENABLED);
+    }
+    lapicWrite(LAPIC_TPR, 0);
+    lapicWrite(LAPIC_DEST_FORMAT, 0);
+    lapicWrite(LAPIC_SPURIOUS_VECTOR, 0x1FF);
+
+    // APIC timer
+    lapicWrite(LAPIC_TIMER_INITIAL, 0);     // disable timer so we can set up
+    lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_PERIODIC | LAPIC_LVT_MASK | LAPIC_TIMER_IRQ);
+    lapicWrite(LAPIC_TIMER_DIVIDE, LAPIC_TIMER_DIVIDER_1);
+    lapicWrite(LAPIC_LVT_TIMER, lapicRead(LAPIC_LVT_TIMER) & ~LAPIC_LVT_MASK);
+    lapicWrite(LAPIC_TIMER_INITIAL, apicTimerFrequency() / PLATFORM_TIMER_FREQUENCY);
+
+    // we don't need to install an IRQ handler because all CPUs share the same
+    // GDT/IDT; the same IRQ handler is valid for both the boot CPU and APs
+
     while(1);
 }
 
