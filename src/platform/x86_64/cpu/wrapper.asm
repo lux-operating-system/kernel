@@ -168,3 +168,25 @@ readCPUID:
     pop rbx
 
     ret
+
+global readMSR
+align 16
+readMSR:
+    mov ecx, edi
+    rdmsr
+    xor rcx, rcx
+    not ecx         ; rcx = all zeroes high, all ones low
+    and rax, rcx
+    shr rdx, 32
+    or rax, rdx
+    ret
+
+global writeMSR
+align 16
+writeMSR:
+    mov ecx, edi
+    mov rax, rsi
+    mov rdx, rax
+    shr rdx, 32
+    wrmsr
+    ret
