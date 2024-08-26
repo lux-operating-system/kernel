@@ -27,6 +27,7 @@ int platformMain(KernelBootInfo *k) {
     vmmInit();
     acpiInit(k);
     apicInit();
+    platformInitialSeed();
 
     return main(0, NULL);
 }

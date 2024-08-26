@@ -34,3 +34,5 @@ void *platformGetCPU(int);
 int platformWhichCPU();
 uint64_t platformUptime();
 void platformAcknowledgeIRQ(void *);
+void platformInitialSeed();
+uint64_t platformRand();
