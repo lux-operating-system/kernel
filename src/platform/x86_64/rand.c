@@ -17,11 +17,6 @@ static uint64_t seed;
 void platformInitialSeed() {
     seed = (uint64_t)lapicRead(LAPIC_TIMER_CURRENT);
     seed *= platformCountCPU();
-    KDEBUG("initialized random number seed %d\n", seed);
-
-    for(int i = 0; i < 8; i++) {
-        KDEBUG("%d\n", platformRand());
-    }
 }
 
 /* platformRand(): generates a random number
@@ -39,4 +34,13 @@ uint64_t platformRand() {
     }
 
     return ~seed;
+}
+
+/* platformSeed(): seeds the random number generator
+ * params: s - the seed to use
+ * returns: nothing
+ */
+
+void platformSeed(uint64_t s) {
+    seed = s;
 }

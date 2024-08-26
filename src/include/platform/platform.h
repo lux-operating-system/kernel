@@ -36,3 +36,4 @@ uint64_t platformUptime();
 void platformAcknowledgeIRQ(void *);
 void platformInitialSeed();
 uint64_t platformRand();
+void platformSeed(uint64_t);

@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <kernel/memory.h>
+#include <platform/platform.h>
 
 struct mallocHeader {
     uint64_t byteSize;
@@ -143,4 +144,15 @@ void free(void *ptr) {
     base &= ~(PAGE_SIZE-1);
     struct mallocHeader *header = (struct mallocHeader *)base;
     vmmFree(base, header->pageSize);
+}
+
+int rand() {
+    uint64_t r = platformRand();
+    int v = r ^ (r >> 32);
+    if(v < 0) v *= -1;
+    return v % (RAND_MAX + 1);
+}
+
+void srand(unsigned int s) {
+    platformSeed((uint64_t)s);
 }
