@@ -213,3 +213,12 @@ int smpBoot() {
 
     return runningCpuCount;
 }
+
+/* platformWhichCPU(): platform-independent function to identify the running CPU
+ * params: none
+ * returns: index of the running CPU
+ */
+
+int platformWhichCPU() {
+    return getKernelCPUInfo()->cpuIndex;
+}

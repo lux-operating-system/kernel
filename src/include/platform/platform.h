@@ -31,5 +31,6 @@ int platformUnmapPage(uintptr_t);               // and vice versa
 int platformRegisterCPU(void *);
 int platformCountCPU();
 void *platformGetCPU(int);
+int platformWhichCPU();
 
 void platformAcknowledgeIRQ(void *);
