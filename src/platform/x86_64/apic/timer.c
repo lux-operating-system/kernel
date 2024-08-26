@@ -41,7 +41,7 @@ int apicTimerInit() {
     lapicWrite(LAPIC_SPURIOUS_VECTOR, 0x1FF);
     
     /* TODO: use the HPET instead of the PIT to measure timer frequency */
-    // set up the PIT to wait for 1/20 of a second
+    // set up the PIT to wait for a fraction of a second
     uint16_t pitFrequency = 1193180 / 100;      // PIT frequency divided by 100 Hz
     KDEBUG("using PIT to calibrate local APIC timer: starting counter 0x%04X\n", pitFrequency);
 
