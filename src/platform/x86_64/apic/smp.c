@@ -232,5 +232,6 @@ int platformWhichCPU() {
  */
 
 uint64_t platformUptime() {
+    if(!bootCPUInfo) return 0;
     return bootCPUInfo->uptime;
 }
