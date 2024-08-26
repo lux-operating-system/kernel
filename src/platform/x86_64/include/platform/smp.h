@@ -21,7 +21,19 @@ typedef struct PlatformCPU {
     struct PlatformCPU *next;
 } PlatformCPU;
 
+// per-CPU kernel information structure
+// this will be stored using the kernel GS segment
+
+typedef struct {
+    int cpuIndex;
+    PlatformCPU *cpu;
+    uint64_t uptime;
+    // more info will be added probably, but for now the kernel just needs to know
+} KernelCPUInfo;
+
+void smpCPUInfoSetup();
 int smpBoot();
+KernelCPUInfo *getKernelCPUInfo();
 
 /* entry point for non-boot CPUs */
 

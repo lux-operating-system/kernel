@@ -168,3 +168,57 @@ readCPUID:
     pop rbx
 
     ret
+
+global readMSR
+align 16
+readMSR:
+    mov ecx, edi
+    rdmsr
+    xor rcx, rcx
+    not ecx         ; rcx = all zeroes high, all ones low
+    and rax, rcx
+    shr rdx, 32
+    or rax, rdx
+    ret
+
+global writeMSR
+align 16
+writeMSR:
+    mov ecx, edi
+    mov rax, rsi
+    mov rdx, rax
+    shr rdx, 32
+    wrmsr
+    ret
+
+global enableIRQs
+align 16
+enableIRQs:
+    sti
+    ret
+
+global disableIRQs
+align 16
+disableIRQs:
+    cli
+    ret
+
+global getKernelCPUInfo
+align 16
+getKernelCPUInfo:
+    rdgsbase rax
+    and rax, rax
+    jnz .done
+
+    swapgs
+    rdgsbase rax
+
+.done:
+    swapgs          ; gs base should always be zero
+    ret
+
+global halt
+align 16
+halt:
+    hlt
+    ret
