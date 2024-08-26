@@ -110,7 +110,6 @@ int apicInit() {
     smpCPUInfoSetup();      // info structure for the boot CPU
     apicTimerInit();        // local APIC timer
     smpBoot();              // start up other non-boot CPUs
-    while(1);
 }
 
 /* Local APIC Read/Write */

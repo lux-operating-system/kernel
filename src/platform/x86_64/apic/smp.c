@@ -136,7 +136,9 @@ int apMain() {
     // we don't need to install an IRQ handler because all CPUs share the same
     // GDT/IDT; the same IRQ handler is valid for both the boot CPU and APs
 
-    while(1);
+    while(1) {
+        halt();     // wait for the scheduler to decide to do something
+    }
 }
 
 /* smpBoot(): boots all other processors in an SMP system
