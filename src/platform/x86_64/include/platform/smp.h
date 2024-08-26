@@ -31,6 +31,7 @@ typedef struct {
     // more info will be added probably, but for now the kernel just needs to know
 } KernelCPUInfo;
 
+void smpCPUInfoSetup();
 int smpBoot();
 KernelCPUInfo *getKernelCPUInfo();
 

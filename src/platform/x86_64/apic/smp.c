@@ -20,6 +20,7 @@ static PlatformCPU *cpus = NULL;
 static PlatformCPU *last = NULL;
 static size_t cpuCount = 0;
 static size_t runningCpuCount = 1;      // boot CPU
+static int bootCPUIndex;
 
 /* platformRegisterCPU(): registers a CPU so that the core OS code can know
  * params: cpu - pointer to a CPU structure (see smp.h for why the void type)
@@ -27,6 +28,9 @@ static size_t runningCpuCount = 1;      // boot CPU
  */
 
 int platformRegisterCPU(void *cpu) {
+    PlatformCPU *c = cpu;
+    if(c->bootCPU) bootCPUIndex = cpuCount;
+
     if(!cpus) cpus = cpu;
     last->next = cpu;
     last = cpu;
@@ -55,9 +59,52 @@ void *platformGetCPU(int n) {
     return cpu;
 }
 
+/* smpCPUInfoSetup(): constructs per-CPU kernel info structure and stores it in
+ * the kernel's GS base */
+
+void smpCPUInfoSetup() {
+    // enable FS/GS segmentation
+    writeCR4(readCR4() | CR4_FSGSBASE);
+
+    CPUIDRegisters regs;
+    readCPUID(1, &regs);
+    uint8_t apicID = regs.ebx >> 24;
+
+    // find the CPU with a matching local APIC ID
+    PlatformCPU *cpu = cpus;
+    int i = 0;
+    while(cpu) {
+        if(cpu->apicID == apicID) break;
+        cpu = cpu->next;
+        i++;
+    }
+
+    if(!cpu) {
+        KERROR("could not identify CPU with local APIC 0x%02X\n", apicID);
+        while(1);
+    }
+
+    KernelCPUInfo *info = calloc(1, sizeof(KernelCPUInfo));
+    if(!info) {
+        KERROR("could not allocate memory for per-CPU info struct for CPU %d\n", i);
+        while(1);
+    }
+
+    info->cpuIndex = i;
+    info->cpu = cpu;
+    
+    writeMSR(MSR_FS_BASE, 0);
+    writeMSR(MSR_GS_BASE, 0);
+    writeMSR(MSR_GS_BASE_KERNEL, (uint64_t)info);
+
+    //KDEBUG("per-CPU kernel info struct for CPU %d is at 0x%08X\n", info->cpuIndex, (uint64_t)info);
+}
+
 /* apMain(): entry points for application processors */
 
 int apMain() {
+    // set up per-kernel CPU info
+    smpCPUInfoSetup();
     enableIRQs();
 
     // set up the local APIC
@@ -73,6 +120,8 @@ int apMain() {
     lapicWrite(LAPIC_TPR, 0);       // enable all interrupts
     lapicWrite(LAPIC_DEST_FORMAT, lapicRead(LAPIC_DEST_FORMAT) | 0xF0000000);   // flat mode
     lapicWrite(LAPIC_SPURIOUS_VECTOR, 0x1FF);
+
+    // set up per-CPU kernel info structure
 
     // APIC timer
     lapicWrite(LAPIC_TIMER_INITIAL, 0);     // disable timer so we can set up
@@ -93,7 +142,9 @@ int apMain() {
  */
 
 int smpBoot() {
-    if(cpuCount < 2) return 1;
+    if(cpuCount < 2) {
+        return 1;
+    }
 
     KDEBUG("attempt to start %d application processors...\n", cpuCount - runningCpuCount);
 

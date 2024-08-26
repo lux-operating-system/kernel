@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <platform/apic.h>
 #include <platform/x86_64.h>
+#include <platform/smp.h>
 #include <platform/platform.h>
 #include <kernel/logger.h>
 
@@ -96,11 +97,9 @@ uint64_t apicTimerFrequency() {
 
 /* timerIRQ(): timer IRQ handler 
  * this is called PLATFORM_TIMER_FREQUENCY times per second */
-uint64_t timerTicks = 0;
+
 void timerIRQ() {
-    timerTicks++;
-    if(!(timerTicks % PLATFORM_TIMER_FREQUENCY)) {
-        KDEBUG("timer irq: one second has passed\n");
-    }
+    KernelCPUInfo *info = getKernelCPUInfo();
+    info->uptime++;
     platformAcknowledgeIRQ(NULL);
 }
