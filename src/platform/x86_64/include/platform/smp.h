@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <kernel/sched.h>
 
 // every platform must define some kind of structure that allows it to identify
 // different CPUs in a multiprocessing system
@@ -28,7 +29,10 @@ typedef struct {
     int cpuIndex;
     PlatformCPU *cpu;
     uint64_t uptime;
-    // more info will be added probably, but for now the kernel just needs to know
+
+    // currently running process and thread
+    Process *process;
+    Thread *thread;
 } KernelCPUInfo;
 
 void smpCPUInfoSetup();
