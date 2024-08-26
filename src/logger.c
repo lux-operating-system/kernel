@@ -8,13 +8,14 @@
 #include <stdio.h>
 #include <kernel/logger.h>
 #include <platform/lock.h>
+#include <platform/platform.h>
 
 static lock_t lock = LOCK_INITIAL;
 
-int kprintf(int level, uint64_t timestamp, const char *src, const char *f, ...) {
+int kprintf(int level, const char *src, const char *f, ...) {
     acquireLockBlocking(&lock);
 
-    int len = printf("\e[37m%08d ", timestamp);
+    int len = printf("\e[37m%08d ", platformUptime());
 
     switch(level) {
     case KPRINTF_LEVEL_DEBUG:
