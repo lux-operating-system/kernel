@@ -202,3 +202,17 @@ align 16
 disableIRQs:
     cli
     ret
+
+global getKernelCPUInfo
+align 16
+getKernelCPUInfo:
+    rdgsbase rax
+    and rax, rax
+    jnz .done
+
+    swapgs
+    rdgsbase rax
+
+.done:
+    swapgs          ; gs base should always be zero
+    ret
