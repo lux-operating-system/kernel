@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <platform/platform.h>
 #include <platform/apic.h>
 #include <platform/x86_64.h>
@@ -21,6 +22,17 @@ static uint64_t localAPICBase;
  * setting the stage for the scheduler and the platform-independent code */
 
 int apicInit() {
+    // check for FS/GS base
+    CPUIDRegisters regs;
+    memset(&regs, 0, sizeof(CPUIDRegisters));
+    readCPUID(7, &regs);
+
+    if(!(regs.ebx & 1)) {
+        // this is a required feature for the kernel to know which CPU it's running on
+        KERROR("CPU doesn't support 64-bit FS/GS segmentation\n");
+        while(1);
+    }
+
     ACPIMADT *madt = acpiFindTable("APIC", 0);
     if(!madt) {
         KERROR("ACPI MADT table is not present\n");
@@ -44,7 +56,6 @@ int apicInit() {
     size_t n = (size_t)(ptr - (uint8_t *)madt);
 
     // identify the BSP
-    CPUIDRegisters regs;
     readCPUID(1, &regs);
     uint8_t bspID = regs.ebx >> 24;
 

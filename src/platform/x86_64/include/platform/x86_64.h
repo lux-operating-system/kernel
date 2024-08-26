@@ -66,6 +66,8 @@ void writeMSR(uint32_t, uint64_t);
 void enableIRQs();
 void disableIRQs();
 
+#define CR4_FSGSBASE                0x0010000   // enable fs/gs segmentation
+
 // other x86_64-specific routines
 extern GDTEntry gdt[];
 extern IDTEntry idt[];
