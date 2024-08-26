@@ -21,6 +21,7 @@ static PlatformCPU *last = NULL;
 static size_t cpuCount = 0;
 static size_t runningCpuCount = 1;      // boot CPU
 static int bootCPUIndex;
+static KernelCPUInfo *bootCPUInfo;
 
 /* platformRegisterCPU(): registers a CPU so that the core OS code can know
  * params: cpu - pointer to a CPU structure (see smp.h for why the void type)
@@ -96,6 +97,8 @@ void smpCPUInfoSetup() {
     writeMSR(MSR_FS_BASE, 0);
     writeMSR(MSR_GS_BASE, 0);
     writeMSR(MSR_GS_BASE_KERNEL, (uint64_t)info);
+
+    if(cpu->bootCPU) bootCPUInfo = info;
 
     //KDEBUG("per-CPU kernel info struct for CPU %d is at 0x%08X\n", info->cpuIndex, (uint64_t)info);
 }
@@ -221,4 +224,13 @@ int smpBoot() {
 
 int platformWhichCPU() {
     return getKernelCPUInfo()->cpuIndex;
+}
+
+/* platformUptime(): global uptime, really the timer ticks for the boot CPU
+ * params: none
+ * returns: timer ticks elapsed on boot CPU
+ */
+
+uint64_t platformUptime() {
+    return bootCPUInfo->uptime;
 }
