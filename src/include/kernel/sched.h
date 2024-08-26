@@ -47,4 +47,8 @@ typedef struct Process {
 } Process;
 
 void schedInit();
-void schedCycle();
+uint64_t schedTimer();
+pid_t getPid();
+pid_t getTid();
+void *schedGetState(pid_t);
+void schedule(pid_t, void *);

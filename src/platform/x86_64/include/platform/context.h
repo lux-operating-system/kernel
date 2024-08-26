@@ -40,3 +40,5 @@ typedef struct {
     uint64_t rsp;
     uint64_t ss;
 }__attribute__((packed)) ThreadContext;
+
+#define PLATFORM_CONTEXT_SIZE       sizeof(ThreadContext)

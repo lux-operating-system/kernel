@@ -37,3 +37,4 @@ void platformAcknowledgeIRQ(void *);
 void platformInitialSeed();
 uint64_t platformRand();
 void platformSeed(uint64_t);
+void platformSwitchContext(void *);
