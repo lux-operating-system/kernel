@@ -5,9 +5,13 @@
  * Core Microkernel
  */
 
-#include <stdint.h>
+#include <kernel/sched.h>
 
-// true kernel entry point
+// the true kernel entry point is called after platform-specific initialization
+// platform-specific code is in platform/[PLATFORM]/main.c
+
 int main(int argc, char **argv) {
-    return 0;
+    schedInit();        // scheduler
+
+    while(1);
 }

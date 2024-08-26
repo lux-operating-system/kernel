@@ -21,11 +21,12 @@ typedef uint32_t pid_t;
 typedef uint32_t uid_t;
 typedef uint32_t gid_t;
 
-typedef struct {
+typedef struct Thread {
     int status;
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;
 
+    struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
 } Thread;
 
@@ -42,6 +43,7 @@ typedef struct Process {
 
     Thread **threads;
     struct Process **children;  // array of pointers of size childrenCount
+    struct Process *next;
 } Process;
 
 void schedInit();
