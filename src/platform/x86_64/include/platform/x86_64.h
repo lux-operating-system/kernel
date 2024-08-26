@@ -65,6 +65,7 @@ uint64_t readMSR(uint32_t);
 void writeMSR(uint32_t, uint64_t);
 void enableIRQs();
 void disableIRQs();
+void halt();
 
 #define CR4_FSGSBASE                0x0010000   // enable fs/gs segmentation
 

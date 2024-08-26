@@ -216,3 +216,9 @@ getKernelCPUInfo:
 .done:
     swapgs          ; gs base should always be zero
     ret
+
+global halt
+align 16
+halt:
+    hlt
+    ret
