@@ -38,6 +38,7 @@ char *ltoa(long n, char *buffer, int radix) {
     while(n) {
         // convert digit by digit and then reverse the string
         long digit = n % radix;
+        if(digit < 0) digit *= -1;
 
         if(digit >= 10) {
             buffer[length] = 'a' + digit - 10;
