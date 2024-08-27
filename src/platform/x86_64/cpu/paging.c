@@ -66,6 +66,18 @@ void *platformGetPagingRoot() {
     return kernelPagingRoot;
 }
 
+/* platformCloneKernelSpace(): creates a clone of the kernel's paging root
+ * params: none
+ * params: pointer to the new paging root, NULL on failure
+ */
+
+void *platformCloneKernelSpace() {
+    uintptr_t ptr = pmmAllocate();
+    if(!ptr) return NULL;
+
+    return memcpy((void *)ptr, kernelPagingRoot, PAGE_SIZE);
+}
+
 /* platformGetPage(): returns the physical address and flags of a logical address
  * params: flags - pointer to where to store the flags
  * params: addr - logical address

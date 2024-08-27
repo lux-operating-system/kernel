@@ -39,3 +39,5 @@ uint64_t platformRand();
 void platformSeed(uint64_t);
 void platformSwitchContext(void *);
 void platformHalt();
+void *platformGetPagingRoot();
+void *platformCloneKernelSpace();

@@ -47,3 +47,4 @@ void *platformCreateContext(void *, int, uintptr_t, uintptr_t);
 
 #define PLATFORM_CONTEXT_KERNEL     0
 #define PLATFORM_CONTEXT_USER       1
+#define PLATFORM_THREAD_STACK       65536

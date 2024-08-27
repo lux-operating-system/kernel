@@ -156,8 +156,23 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
             return 0;
         }
 
+        if(!platformCreateContext(first->threads[0]->context, PLATFORM_CONTEXT_KERNEL, (uintptr_t)entry, (uintptr_t)arg)) {
+            KERROR("failed to create kernel thread context\n");
+            free(first->threads[0]->context);
+            free(first->threads[0]);
+            free(first->threads);
+            free(first);
+            first = NULL;
+            releaseLock(&lock);
+            return 0;
+        }
+
         KDEBUG("spawned kernel thread with PID %d\n", tid);
-        platformCreateContext(first->threads[0]->context, PLATFORM_CONTEXT_KERNEL, (uintptr_t)entry, (uintptr_t)arg);
+        last = first;
+        processes++;
+        threads++;
+        releaseLock(&lock);
+        return tid;
     }
 
     releaseLock(&lock);
