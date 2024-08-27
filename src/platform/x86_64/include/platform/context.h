@@ -12,13 +12,6 @@
 /* Thread Context for x86_64 */
 
 typedef struct {
-    uint8_t sse[512];       // fxsave
-
-    // paging base will only be switched between processes
-    // threads under the same process will share the same address space
-    uint64_t cr3;
-
-    // these are in reverse order because of how the x86 stack works
     uint64_t r15;
     uint64_t r14;
     uint64_t r13;
@@ -39,7 +32,17 @@ typedef struct {
     uint64_t rflags;
     uint64_t rsp;
     uint64_t ss;
-}__attribute__((packed)) ThreadContext;
+} __attribute__((packed)) ThreadGPR;
+
+typedef struct {
+    uint8_t sse[512];       // fxsave
+
+    // paging base will only be switched between processes
+    // threads under the same process will share the same address space
+    uint64_t cr3;
+
+    ThreadGPR regs;
+} __attribute__((packed)) ThreadContext;
 
 void *platformCreateContext(void *, int, uintptr_t, uintptr_t);
 

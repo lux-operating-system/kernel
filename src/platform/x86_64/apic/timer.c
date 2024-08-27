@@ -98,8 +98,14 @@ uint64_t apicTimerFrequency() {
 /* timerIRQ(): timer IRQ handler 
  * this is called PLATFORM_TIMER_FREQUENCY times per second */
 
-void timerIRQ() {
+void timerIRQ(void *stack) {
     KernelCPUInfo *info = getKernelCPUInfo();
     info->uptime++;
+
+    // is it time for a context switch?
+    if(!schedTimer()) {
+        platformSaveContext(info->thread->context, stack);
+    }
+
     platformAcknowledgeIRQ(NULL);
 }
