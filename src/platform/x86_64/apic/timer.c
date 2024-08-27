@@ -16,6 +16,7 @@
 #include <platform/smp.h>
 #include <platform/platform.h>
 #include <kernel/logger.h>
+#include <kernel/sched.h>
 
 static uint64_t apicFrequency;
 
