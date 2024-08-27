@@ -51,7 +51,7 @@ uint64_t schedTimer();
 pid_t getPid();
 pid_t getTid();
 void *schedGetState(pid_t);
-void schedule(pid_t, void *);
+void schedule();
 Process *getProcess(pid_t);
 Thread *getThread(pid_t);
 

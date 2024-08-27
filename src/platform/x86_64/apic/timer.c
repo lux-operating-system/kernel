@@ -104,7 +104,12 @@ void timerIRQ(void *stack) {
 
     // is it time for a context switch?
     if(!schedTimer()) {
-        platformSaveContext(info->thread->context, stack);
+        if(info->thread && info->thread->context) {
+            platformSaveContext(info->thread->context, stack);
+        }
+
+        // now switch the context
+        schedule();
     }
 
     platformAcknowledgeIRQ(NULL);
