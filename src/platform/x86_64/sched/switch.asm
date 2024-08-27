@@ -45,7 +45,10 @@ platformLoadContext:
 
     fxrstor [rdi]
 
-    mov rax, [rdi+672]  ; stack segment
+    mov rax, [rdi+512]      ; paging
+    mov cr3, rax
+
+    mov rax, [rdi+672]      ; stack segment
     mov ds, rax
     mov es, rax
     mov fs, rax
