@@ -271,6 +271,7 @@ void schedule() {
     pid_t tid = getTid();
     Process *p = getProcess(pid);
     Thread *t = getThread(tid);
+    int tries = 0;
 
     if(!pid || !tid || !p || !t) {
         p = first;
@@ -303,5 +304,16 @@ search:
     // so start back at the very beginning
     p = first;
     t = p->threads[0];
-    goto search;
+    tries++;
+    if(tries < 2) goto search;
+    
+    // fail gracefully by renewing the time slice of the current process, if any
+    p = getProcess(pid);
+    t = getThread(tid);
+    if(p && t) {
+        t->status = THREAD_RUNNING;
+        t->time = PLATFORM_TIMER_FREQUENCY;
+    }
+
+    releaseLock(&lock);
 }
