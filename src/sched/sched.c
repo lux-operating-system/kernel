@@ -240,5 +240,19 @@ pid_t getTid() {
  */
 
 uint64_t schedTimer() {
-    pid_t tid = getTid();
+    if(!scheduling || !processes || !threads || !first || !last) {
+        return ~0;
+    }
+
+    acquireLockBlocking(&lock);
+
+    uint64_t time;
+    Thread *t = getThread(getTid());
+    if(!t) time = 0;
+
+    t->time--;
+    time = t->time;
+
+    releaseLock(&lock);
+    return time;
 }
