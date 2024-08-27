@@ -71,3 +71,18 @@ void *platformCreateContext(void *ptr, int level, uintptr_t entry, uintptr_t arg
         while(1);
     }
 }
+
+/* platformSwitchContext(): switches the current thread context 
+ * params: t - thread to switch to
+ * returns: doesn't return
+ */
+
+void platformSwitchContext(Thread *t) {
+    KernelCPUInfo *kinfo = getKernelCPUInfo();
+    //KDEBUG("switching to thread %d on CPU %d\n", t->tid, getKernelCPUInfo()->cpuIndex);
+
+    kinfo->thread = t;
+    kinfo->process = getProcess(t->pid);
+    
+    platformLoadContext(t->context);
+}

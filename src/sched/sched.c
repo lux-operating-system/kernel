@@ -258,3 +258,50 @@ uint64_t schedTimer() {
     releaseLock(&lock);
     return time;
 }
+
+/* schedule(): determines the next thread to run and performs a context switch
+ * params: none
+ * returns: nothing
+ */
+
+void schedule() {
+    acquireLockBlocking(&lock);
+
+    pid_t pid = getPid();
+    pid_t tid = getTid();
+    Process *p = getProcess(pid);
+    Thread *t = getThread(tid);
+
+    if(!pid || !tid || !p || !t) {
+        p = first;
+        t = p->threads[0];
+    } else {
+        t->status = THREAD_QUEUED;          // put the current thread back in the queue
+        t->time = PLATFORM_TIMER_FREQUENCY; // and reset its time slice
+    }
+
+search:
+    do {
+        do {
+            if(t->status == THREAD_QUEUED) {
+                // run this thread
+                t->status = THREAD_RUNNING;
+                releaseLock(&lock);
+                platformSwitchContext(t);
+            }
+
+            t = t->next;
+        } while(t);
+
+        p = p->next;
+        if(p && p->threadCount && p->threads) {
+            t = p->threads[0];
+        }
+    } while(p);
+
+    // if we make it here then we ran out of threads to schedule
+    // so start back at the very beginning
+    p = first;
+    t = p->threads[0];
+    goto search;
+}

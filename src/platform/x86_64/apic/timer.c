@@ -103,6 +103,8 @@ void timerIRQ(void *stack) {
     KernelCPUInfo *info = getKernelCPUInfo();
     info->uptime++;
 
+    platformAcknowledgeIRQ(NULL);
+
     // is it time for a context switch?
     if(!schedTimer()) {
         if(info->thread && info->thread->context) {
@@ -112,6 +114,4 @@ void timerIRQ(void *stack) {
         // now switch the context
         schedule();
     }
-
-    platformAcknowledgeIRQ(NULL);
 }
