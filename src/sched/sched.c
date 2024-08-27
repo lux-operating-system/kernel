@@ -178,3 +178,67 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
     releaseLock(&lock);
     return tid;
 }
+
+/* getProcess(): returns the process structure associated with a PID
+ * params: pid - process ID
+ * returns: pointer to the process structure, NULL on failure
+ */
+
+Process *getProcess(pid_t pid) {
+    if(!first) return NULL;
+
+    Process *p = first;
+    do {
+        if(p->pid == pid) return p;
+        p = p->next;
+    } while(p);
+}
+
+/* getThread(): returns the thread structure associated with a TID
+ * params: tid - thread ID
+ * returns: pointer to the thread structure, NULL on failure
+ */
+
+Thread *getThread(pid_t tid) {
+    if(!first) return NULL;
+
+    Process *p = first;
+    Thread *t;
+    do {
+        if(p->threadCount && p->threads) {
+            for(int i = 0; i < p->threadCount; i++) {
+                t = p->threads[i];
+                if(t && t->tid == tid) return t;
+            }
+        }
+
+        p = p->next;
+    } while(p);
+}
+
+/* getPid(): returns the current running process
+ * params: none
+ * returns: process ID
+ */
+
+pid_t getPid() {
+    return platformGetPid();
+}
+
+/* getTid(): returns the current running thread
+ * params: none
+ * returns: thread ID
+ */
+
+pid_t getTid() {
+    return platformGetTid();
+}
+
+/* schedTimer(): decrements and returns the time slice of the running thread
+ * params: none
+ * returns: remaining time in milliseconds
+ */
+
+uint64_t schedTimer() {
+    pid_t tid = getTid();
+}
