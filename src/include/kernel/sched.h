@@ -52,3 +52,5 @@ pid_t getPid();
 pid_t getTid();
 void *schedGetState(pid_t);
 void schedule(pid_t, void *);
+
+pid_t threadCreate(void *(*)(void *), void *);

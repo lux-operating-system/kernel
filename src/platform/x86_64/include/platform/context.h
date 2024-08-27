@@ -41,4 +41,9 @@ typedef struct {
     uint64_t ss;
 }__attribute__((packed)) ThreadContext;
 
+void *platformCreateContext(void *, int, uintptr_t, uintptr_t);
+
 #define PLATFORM_CONTEXT_SIZE       sizeof(ThreadContext)
+
+#define PLATFORM_CONTEXT_KERNEL     0
+#define PLATFORM_CONTEXT_USER       1
