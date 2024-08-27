@@ -6,6 +6,8 @@
 
 section .text
 
+%include "cpu/stack.asm"
+
 ; Context Switching for the Scheduler
 
 ; platformSaveContext(): saves the context of the current running thread
@@ -19,6 +21,10 @@ section .text
 global platformSaveContext
 align 16
 platformSaveContext:
+    cli         ; SENSITIVE AREA
+
+    fxsave [rdi]
+
     mov rax, cr3
     mov [rdi+512], rax
 
@@ -29,3 +35,24 @@ platformSaveContext:
 
     ret
 
+; platformLoadContext(): loads the new context
+; platformLoadContext(ThreadContext *)
+
+global platformLoadContext:
+align 16
+platformLoadContext:
+    cli         ;; SENSITIVE!!! this code can NOT be interrupted
+
+    fxrstor [rdi]
+
+    mov rax, [rdi+672]  ; stack segment
+    mov ds, rax
+    mov es, rax
+    mov fs, rax
+    mov gs, rax
+
+    mov rsp, rdi
+    add rsp, 520
+
+    popaq
+    iretq

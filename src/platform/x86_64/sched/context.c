@@ -15,6 +15,7 @@
 #include <platform/context.h>
 #include <platform/platform.h>
 #include <platform/smp.h>
+#include <platform/x86_64.h>
 #include <kernel/logger.h>
 
 /* platformGetPid(): returns the PID of the process running on the current CPU
@@ -53,12 +54,15 @@ void *platformCreateContext(void *ptr, int level, uintptr_t entry, uintptr_t arg
     ThreadContext *context = (ThreadContext *)ptr;
     context->regs.rip = entry;
     context->regs.rdi = arg;
+    context->regs.rflags = 0x202;
     context->cr3 = (uint64_t)platformCloneKernelSpace();
     if(!context->cr3) return NULL;
     void *stack;
 
     if(level == PLATFORM_CONTEXT_KERNEL) {
-        stack = malloc(PLATFORM_THREAD_STACK);
+        context->regs.cs = GDT_KERNEL_CODE << 3;
+        context->regs.ss = GDT_KERNEL_DATA << 3;
+        stack = calloc(1, PLATFORM_THREAD_STACK);
         if(!stack) return NULL;
         context->regs.rsp = (uint64_t)stack + PLATFORM_THREAD_STACK;
 
@@ -83,6 +87,5 @@ void platformSwitchContext(Thread *t) {
 
     kinfo->thread = t;
     kinfo->process = getProcess(t->pid);
-    
     platformLoadContext(t->context);
 }
