@@ -185,7 +185,7 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
  */
 
 Process *getProcess(pid_t pid) {
-    if(!first) return NULL;
+    if(!pid || !first) return NULL;
 
     Process *p = first;
     do {
@@ -200,7 +200,7 @@ Process *getProcess(pid_t pid) {
  */
 
 Thread *getThread(pid_t tid) {
-    if(!first) return NULL;
+    if(!tid || !first) return NULL;
 
     Process *p = first;
     Thread *t;
@@ -248,10 +248,12 @@ uint64_t schedTimer() {
 
     uint64_t time;
     Thread *t = getThread(getTid());
-    if(!t) time = 0;
-
-    t->time--;
-    time = t->time;
+    if(!t) {
+        time = 0;
+    } else {
+        t->time--;
+        time = t->time;
+    }
 
     releaseLock(&lock);
     return time;
