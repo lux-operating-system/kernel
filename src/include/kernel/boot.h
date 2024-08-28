@@ -84,3 +84,4 @@ typedef struct {
 #define MEMORY_ATTRIBUTES_VALID         0x01
 #define MEMORY_ATTRIBUTES_NV            0x02
 
+int parseBootArgs(char ***, char *);

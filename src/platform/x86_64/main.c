@@ -29,5 +29,7 @@ int platformMain(KernelBootInfo *k) {
     apicInit();
     platformInitialSeed();
 
-    return main(0, NULL);
+    char **argv;
+    int argc = parseBootArgs(&argv, k->arguments);
+    return main(argc, argv);
 }
