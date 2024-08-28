@@ -57,8 +57,10 @@ typedef struct {
     uint64_t ramdiskSize;
 
     uint8_t moduleCount;
-    uint64_t modules;           // pointer to pointers
-    uint64_t moduleSizes;       // pointer to array of uint64_t's
+    uint64_t modules[16];       // array of pointers
+    uint64_t moduleSizes[16];
+
+    uint64_t lowestFreeMemory;  // pointer to the end of highest ramdisk/module, aka lowest free memory
 
     char arguments[256];        // command-line arguments passed to the kernel
 } __attribute__((packed)) KernelBootInfo;
