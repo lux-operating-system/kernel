@@ -151,6 +151,9 @@ int smpBoot() {
         return 1;
     }
 
+    // disable caching temporarily
+    writeCR0(readCR0() | CR0_CACHE_DISABLE);
+
     KDEBUG("attempt to start %d application processors...\n", cpuCount - runningCpuCount);
 
     // set up the AP entry point
@@ -190,7 +193,7 @@ int smpBoot() {
 
         // send an INIT IPI
         lapicWrite(LAPIC_INT_COMMAND_HIGH, cpu->apicID << 24);
-        lapicWrite(LAPIC_INT_COMMAND_LOW, LAPIC_INT_CMD_INIT | LAPIC_INT_CMD_LEVEL_NORMAL);
+        lapicWrite(LAPIC_INT_COMMAND_LOW, LAPIC_INT_CMD_INIT | LAPIC_INT_CMD_LEVEL | LAPIC_INT_CMD_LEVEL_ASSERT);
 
         // wait for delivery
         while(lapicRead(LAPIC_INT_COMMAND_LOW) & LAPIC_INT_CMD_DELIVERY);
@@ -204,7 +207,7 @@ int smpBoot() {
 
         // startup IPI
         lapicWrite(LAPIC_INT_COMMAND_HIGH, cpu->apicID << 24);
-        lapicWrite(LAPIC_INT_COMMAND_LOW, LAPIC_INT_CMD_STARTUP | 0x01);    // the page we copied the AP entry to
+        lapicWrite(LAPIC_INT_COMMAND_LOW, LAPIC_INT_CMD_STARTUP | LAPIC_INT_CMD_LEVEL | 0x01);    // the page we copied the AP entry to
 
         while(lapicRead(LAPIC_INT_COMMAND_LOW) & LAPIC_INT_CMD_DELIVERY);
         
@@ -216,6 +219,7 @@ int smpBoot() {
         runningCpuCount++;
     }
 
+    writeCR0(readCR0() & ~CR0_CACHE_DISABLE);
     return runningCpuCount;
 }
 
