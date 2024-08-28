@@ -102,8 +102,9 @@ static void pmmInitMarkContiguous(uintptr_t phys, size_t count, bool use) {
 void pmmInit(KernelBootInfo *boot) {
     memset(&status, 0, sizeof(PhysicalMemoryStatus));
 
-    // TODO: change to moduleHighestAddress after boot modules are implemented
-    pmmBitmap = (uint8_t *)boot->kernelHighestAddress;
+    // this is set by the boot loader and is guaranteed to be page-aligned
+    // it accounts for modules, ramdisk, and other things loaded in memory
+    pmmBitmap = (uint8_t *)boot->lowestFreeMemory;
 
     status.highestPhysicalAddress = boot->highestPhysicalAddress;
     status.highestPage = (status.highestPhysicalAddress + PAGE_SIZE - 1) / PAGE_SIZE;
