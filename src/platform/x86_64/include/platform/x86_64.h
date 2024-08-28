@@ -67,7 +67,8 @@ void enableIRQs();
 void disableIRQs();
 void halt();
 
-#define CR4_FSGSBASE                0x0010000   // enable fs/gs segmentation
+#define CR0_CACHE_DISABLE           0x40000000  // caching
+#define CR4_FSGSBASE                0x00010000  // enable fs/gs segmentation
 
 // other x86_64-specific routines
 extern GDTEntry gdt[];

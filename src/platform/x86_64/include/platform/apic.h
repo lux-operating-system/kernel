@@ -73,8 +73,10 @@
 #define LAPIC_INT_CMD_INIT              (5 << 8)
 #define LAPIC_INT_CMD_STARTUP           (6 << 8)
 #define LAPIC_INT_CMD_DELIVERY          (1 << 12)   // set to ZERO on success
-#define LAPIC_INT_CMD_LEVEL_DEASSERT    (2 << 14)
-#define LAPIC_INT_CMD_LEVEL_NORMAL      (1 << 14)
+#define LAPIC_INT_CMD_LEVEL_DEASSERT    (0 << 14)
+#define LAPIC_INT_CMD_LEVEL_ASSERT      (1 << 14)
+#define LAPIC_INT_CMD_EDGE              (0 << 15)
+#define LAPIC_INT_CMD_LEVEL             (1 << 15)
 
 // Local APIC MSR
 #define MSR_LAPIC                       0x1B

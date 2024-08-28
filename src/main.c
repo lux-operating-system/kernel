@@ -5,9 +5,25 @@
  * Core Microkernel
  */
 
-#include <stdint.h>
+#include <kernel/logger.h>
+#include <kernel/sched.h>
+#include <platform/platform.h>
 
-// true kernel entry point
+void *kernelThread(void *args) {
+    KDEBUG("hello world from the kernel thread\n");
+    KDEBUG("my process ID is %d\n", getPid());
+    while(1);
+}
+
+// the true kernel entry point is called after platform-specific initialization
+// platform-specific code is in platform/[PLATFORM]/main.c
+
 int main(int argc, char **argv) {
-    return 0;
+    schedInit();        // scheduler
+
+    threadCreate(&kernelThread, NULL);
+
+    while(1) {
+        platformHalt();
+    }
 }

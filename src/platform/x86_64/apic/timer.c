@@ -16,6 +16,7 @@
 #include <platform/smp.h>
 #include <platform/platform.h>
 #include <kernel/logger.h>
+#include <kernel/sched.h>
 
 static uint64_t apicFrequency;
 
@@ -98,8 +99,19 @@ uint64_t apicTimerFrequency() {
 /* timerIRQ(): timer IRQ handler 
  * this is called PLATFORM_TIMER_FREQUENCY times per second */
 
-void timerIRQ() {
+void timerIRQ(void *stack) {
     KernelCPUInfo *info = getKernelCPUInfo();
     info->uptime++;
+
     platformAcknowledgeIRQ(NULL);
+
+    // is it time for a context switch?
+    if(!schedTimer()) {
+        if(info->thread && info->thread->context) {
+            platformSaveContext(info->thread->context, stack);
+        }
+
+        // now switch the context
+        schedule();
+    }
 }

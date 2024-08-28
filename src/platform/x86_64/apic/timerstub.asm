@@ -18,6 +18,7 @@ timerHandlerStub:
 
     cld
     extern timerIRQ     ; apic.c
+    mov rdi, rsp        ; pointer to the regs we just pushed
     call timerIRQ       ; IRQ is acknowledged in here
 
     popaq

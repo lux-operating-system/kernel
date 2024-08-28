@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <kernel/sched.h>
 
 /* routines that must be implemented and constants tha must be defined by any
  * platform-specific code, abstracting the difference between different platforms;
@@ -37,3 +38,11 @@ void platformAcknowledgeIRQ(void *);
 void platformInitialSeed();
 uint64_t platformRand();
 void platformSeed(uint64_t);
+void platformSaveContext(void *, void *);
+void platformLoadContext(void *);
+void platformSwitchContext(Thread *);
+void platformHalt();
+void *platformGetPagingRoot();
+void *platformCloneKernelSpace();
+pid_t platformGetPid();
+pid_t platformGetTid();
