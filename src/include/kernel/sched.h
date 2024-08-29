@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 // this gives us a maximum of over a million running processes
 #define MAX_PID                 0xFFFFF
@@ -16,10 +17,6 @@
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
 #define THREAD_BLOCKED          2   // waiting for I/O
-
-typedef uint32_t pid_t;
-typedef uint32_t uid_t;
-typedef uint32_t gid_t;
 
 typedef struct Thread {
     int status;
