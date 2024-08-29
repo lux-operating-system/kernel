@@ -11,6 +11,7 @@
 #include <kernel/memory.h>
 #include <kernel/tty.h>
 #include <kernel/acpi.h>
+#include <kernel/modules.h>
 #include <platform/platform.h>
 #include <platform/x86_64.h>
 #include <platform/exception.h>
@@ -28,6 +29,7 @@ int platformMain(KernelBootInfo *k) {
     acpiInit(k);
     apicInit();
     platformInitialSeed();
+    ramdiskInit(k);
 
     char **argv;
     int argc = parseBootArgs(&argv, k->arguments);
