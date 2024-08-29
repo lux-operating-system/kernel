@@ -100,3 +100,22 @@ int64_t ramdiskFileSize(const char *name) {
 
     else return parseOctal(metadata->size);
 }
+
+/* ramdiskRead(): reads a file from the ramdisk
+ * params: buffer - buffer to read file into
+ * params: name - file name
+ * params: n - number of bytes to read
+ * returns: number of bytes read
+ */
+
+size_t ramdiskRead(void *buffer, const char *name, size_t n) {
+    struct USTARMetadata *metadata = ramdiskFind(name);
+    if(!metadata) return 0;
+
+    size_t size = parseOctal(metadata->size);
+    if(n > size) n = size;
+
+    uint8_t *data = (uint8_t *)(metadata + 512);
+    memcpy(buffer, data, n);
+    return n;
+}

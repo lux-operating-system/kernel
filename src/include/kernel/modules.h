@@ -40,3 +40,4 @@ struct USTARMetadata {
 void ramdiskInit(KernelBootInfo *);
 struct USTARMetadata *ramdiskFind(const char *);
 int64_t ramdiskFileSize(const char *);
+size_t ramdiskRead(void *, const char *, size_t);
