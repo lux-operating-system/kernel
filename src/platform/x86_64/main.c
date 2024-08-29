@@ -30,6 +30,7 @@ int platformMain(KernelBootInfo *k) {
     apicInit();
     platformInitialSeed();
     ramdiskInit(k);
+    modulesInit(k);
 
     char **argv;
     int argc = parseBootArgs(&argv, k->arguments);
