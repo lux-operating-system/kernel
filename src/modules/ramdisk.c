@@ -6,9 +6,13 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include <kernel/modules.h>
 #include <kernel/boot.h>
 #include <kernel/logger.h>
+
+/* the ramdisk is really a USTAR archive that'll be used to load early files
+ * during early boot before the user space is set up */
 
 static uint8_t *ramdisk;
 static uint64_t ramdiskSize;
@@ -29,4 +33,70 @@ void ramdiskInit(KernelBootInfo *boot) {
         ramdisk = NULL;
         ramdiskSize = 0;
     }
+}
+
+/* parseOctal(): parses an octal number written in ASCII characters
+ * params: s - string containing octal number
+ * returns: integer
+ */
+
+static long parseOctal(const char *s) {
+    long v = 0;
+    int len = 0;
+
+    while(s[len] >= '0' && s[len] <= '7') {
+        len++;      // didn't use strlen so we can only account for numerical characters
+    }
+
+    if(!len) return 0;
+
+    long multiplier = 1;
+    for(int i = 1; i < len; i++) {
+        multiplier *= 8;
+    }
+
+    for(int i = 0; i < len; i++) {
+        long digit = s[i] - '0';
+        v += (digit * multiplier);
+        multiplier /= 8;
+    }
+
+    return v;
+}
+
+/* ramdiskFind(): returns pointer to a file on the ramdisk 
+ * params: name - file name
+ * returns: pointer to the metadata of the file, NULL if non-existent
+ */
+
+struct USTARMetadata *ramdiskFind(const char *name) {
+    if(!ramdisk) return NULL;
+
+    struct USTARMetadata *ptr = (struct USTARMetadata *)ramdisk;
+    size_t offset = 0;
+
+    while(offset < ramdiskSize && !strcmp(ptr->magic, "ustar")) {
+        KDEBUG("%s\n", ptr->name);
+        if(!strcmp(ptr->name, name)) return ptr;
+
+        size_t size = ((parseOctal(ptr->size) + 511) / 512) + 1;
+        size *= 512;
+
+        offset += size;
+        ptr = (struct USTARMetadata *)((uintptr_t)ptr + size);
+    }
+
+    return NULL;
+}
+
+/* ramdiskFileSize(): returns the size of a file on the ramdisk
+ * params: name - file name
+ * returns: file size in bytes, -1 if non-existent
+ */
+
+int64_t ramdiskFileSize(const char *name) {
+    struct USTARMetadata *metadata = ramdiskFind(name);
+    if(!metadata) return -1;
+
+    else return parseOctal(metadata->size);
 }
