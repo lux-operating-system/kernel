@@ -3,8 +3,8 @@ ASFLAGS=-f elf64 -i./src/platform/$(PLATFORM)
 CCFLAGS=-c -I./src/include -I./src/platform/$(PLATFORM)/include -mno-sse -ffreestanding -O3
 LDFLAGS=-T./src/platform/$(PLATFORM)/lux-$(PLATFORM).ld -nostdlib
 AS=nasm
-CC=x86_64-elf-gcc
-LD=x86_64-elf-ld
+CC=x86_64-lux-gcc
+LD=x86_64-lux-ld
 SRCC:=$(shell find ./src -type f -name "*.c")
 OBJC:=$(SRCC:.c=.o)
 SRCA:=$(shell find ./src -type f -name "*.asm")
