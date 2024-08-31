@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <platform/platform.h>
 #include <platform/context.h>
+#include <platform/x86_64.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
 #include <kernel/elf.h>

@@ -136,7 +136,7 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
 
     uintptr_t stack = vmmAllocate(base, limit, (PLATFORM_THREAD_STACK+PAGE_SIZE-1)/PAGE_SIZE, VMM_WRITE | VMM_USER);
     if(!stack) return -1;
-    //memset((void *)stack, 0, PLATFORM_THREAD_STACK);
+    memset((void *)stack, 0, PLATFORM_THREAD_STACK);
 
     stack += PLATFORM_THREAD_STACK;
     ctx->regs.rsp = stack;

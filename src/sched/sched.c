@@ -290,6 +290,17 @@ void schedule() {
     } else {
         t->status = THREAD_QUEUED;          // put the current thread back in the queue
         t->time = PLATFORM_TIMER_FREQUENCY; // and reset its time slice
+
+        t = t->next;
+        if(!t) {
+            p = p->next;
+            if(p && p->threadCount && p->threads) {
+                t = p->threads[0];
+            } else {
+                releaseLock(&lock);
+                return;
+            }
+        }
     }
 
 search:
@@ -297,6 +308,8 @@ search:
         do {
             if(t->status == THREAD_QUEUED) {
                 // run this thread
+                //KDEBUG("context switch from %d to %d\n", getPid(), t->tid);
+
                 t->status = THREAD_RUNNING;
                 releaseLock(&lock);
                 platformSwitchContext(t);
@@ -307,6 +320,7 @@ search:
 
         p = p->next;
         if(p && p->threadCount && p->threads) {
+            KDEBUG("moving to next process\n");
             t = p->threads[0];
         }
     } while(p);
@@ -327,7 +341,7 @@ search:
     }
 
     releaseLock(&lock);
-    //platformHalt();   // TODO: practically decide if this is actually a good idea
+    platformHalt();   // TODO: practically decide if this is actually a good idea
 }
 
 /* processCreate(): creates a blank process
