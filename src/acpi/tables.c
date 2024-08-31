@@ -10,6 +10,7 @@
 #include <kernel/boot.h>
 #include <kernel/acpi.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 static int acpiVersion = 0;
 static int tableCount = 0;
@@ -29,15 +30,15 @@ int acpiInit(KernelBootInfo *k) {
         return -1;
     }
 
-    ACPIRSDP *rsdp = (ACPIRSDP *)k->acpiRSDP;
+    ACPIRSDP *rsdp = (ACPIRSDP *)vmmMMIO(k->acpiRSDP, true);
     KDEBUG("'RSD PTR ' revision 0x%02X OEM ID '%c%c%c%c%c%c' at 0x%08X\n", 
         rsdp->revision, rsdp->oem[0], rsdp->oem[1], rsdp->oem[2], rsdp->oem[3], rsdp->oem[4], rsdp->oem[5], k->acpiRSDP);
 
     if(rsdp->revision >= 2) {
-        xsdt = (ACPIXSDT *)rsdp->xsdt;
+        xsdt = (ACPIXSDT *)vmmMMIO(rsdp->xsdt, true);
         acpiVersion = 2;        // preliminary, we'll make sure of this from the FADT
     } else {
-        rsdt = (ACPIRSDT *)(uintptr_t)rsdp->rsdt;
+        rsdt = (ACPIRSDT *)vmmMMIO(rsdp->rsdt, true);
         acpiVersion = 1;        // same as above
     }
 
@@ -53,9 +54,9 @@ int acpiInit(KernelBootInfo *k) {
     ACPIStandardHeader *h;
     for(int i = 0; i < tableCount; i++) {
         if(xsdt) {
-            h = (ACPIStandardHeader *)xsdt->tables[i];
+            h = (ACPIStandardHeader *)vmmMMIO(xsdt->tables[i], true);
         } else {
-            h = (ACPIStandardHeader *)(uintptr_t)rsdt->tables[i];
+            h = (ACPIStandardHeader *)vmmMMIO(rsdt->tables[i], true);
         }
 
         if(!memcmp(h->signature, "FACP", 4)) {
@@ -85,6 +86,8 @@ void *acpiFindTable(const char *sig, int index) {
         } else {
             h = (ACPIStandardHeader *)(uintptr_t)rsdt->tables[i];
         }
+
+        h = (ACPIStandardHeader *)vmmMMIO((uintptr_t)h, true);
 
         if(!memcmp(h->signature, sig, 4)) {
             c++;
