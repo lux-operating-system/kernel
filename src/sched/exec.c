@@ -7,6 +7,7 @@
 
 #include <kernel/sched.h>
 #include <kernel/logger.h>
+#include <kernel/elf.h>
 
 /* execveMemory(): executes a program from memory
  * params: ptr - pointer to the program in memory
@@ -16,7 +17,12 @@
  */
 
 int execveMemory(const void *ptr, const char **argv, const char **envp) {
-    return 0;    /* todo */
+    schedLock();
+
+    uint64_t highest;
+    uint64_t entry = loadELF(ptr, &highest);
+
+    schedRelease();
 }
 
 /* execve(): executes a program from a file
