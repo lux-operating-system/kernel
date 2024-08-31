@@ -11,8 +11,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-// this gives us a maximum of over a million running processes
-#define MAX_PID                 0xFFFFF
+#define MAX_PID                 80000
 
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
@@ -44,6 +43,8 @@ typedef struct Process {
 } Process;
 
 void schedInit();
+void schedLock();
+void schedRelease();
 uint64_t schedTimer();
 pid_t getPid();
 pid_t getTid();
@@ -53,7 +54,7 @@ Process *getProcess(pid_t);
 Thread *getThread(pid_t);
 
 pid_t threadCreate(void *(*)(void *), void *);
-pid_t processCreate(Process *);
+pid_t processCreate();
 
 int execveMemory(const void *, const char **argv, const char **envp);
 int execve(const char *, const char **argv, const char **envp);

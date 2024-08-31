@@ -40,6 +40,14 @@ void schedInit() {
     KDEBUG("scheduler enabled\n");
 }
 
+void schedLock() {
+    acquireLockBlocking(&lock);
+}
+
+void schedRelease() {
+    releaseLock(&lock);
+}
+
 /* pidIsUsed(): returns the use status of a PID
  * params: pid - process ID
  * returns: true/false
@@ -173,6 +181,9 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
         threads++;
         releaseLock(&lock);
         return tid;
+    } else {
+        KDEBUG("TODO: implement multithreading in non-kernel threads\n");
+        while(1);
     }
 
     releaseLock(&lock);
@@ -316,4 +327,60 @@ search:
     }
 
     releaseLock(&lock);
+    //platformHalt();   // TODO: practically decide if this is actually a good idea
+}
+
+/* processCreate(): creates a blank process
+ * params: none
+ * returns: process ID, zero on failure
+ */
+
+pid_t processCreate() {
+    /* IMPORTANT: here we do NOT lock because this is never directly called */
+    /* this will be called from fork(), exec(), etc, which will take care of
+     * the locking and preserving sanity */
+
+    pid_t pid = allocatePid();
+    if(!pid) {
+        return 0;
+    }
+
+    Process *process = first;
+    while(process->next) {
+        process = process->next;
+    }
+
+    process->next = calloc(1, sizeof(Process));
+    if(!process->next) {
+        KERROR("failed to allocate memory for new process\n");
+        return 0;
+    }
+
+    process = process->next;
+    Process *current = getProcess(getPid());
+    if(current) {
+        current->children = realloc(current->children, sizeof(Process *) * current->childrenCount+1);
+        if(!current->children) {
+            KERROR("failed to allocate memory for new process\n");
+            free(process);
+            return 0;
+        }
+
+        // add to the list of children processes
+        current->children[current->childrenCount] = process;
+        current->childrenCount++;
+    }
+
+    // identify the process
+    process->pid = pid;
+    process->parent = getPid();
+    process->user = 0;          // TODO
+    process->group = 0;         // TODO
+
+    // env and command line will be taken care of by fork() or exec()
+
+    process->threadCount = 0;
+    process->childrenCount = 0;
+
+    return pid;
 }
