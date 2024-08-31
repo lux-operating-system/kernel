@@ -17,6 +17,8 @@
 #include <platform/smp.h>
 #include <platform/x86_64.h>
 #include <kernel/logger.h>
+#include <kernel/sched.h>
+#include <kernel/memory.h>
 
 /* platformGetPid(): returns the PID of the process running on the current CPU
  * params: none
@@ -71,8 +73,14 @@ void *platformCreateContext(void *ptr, int level, uintptr_t entry, uintptr_t arg
 
         return ptr;
     } else {
-        KDEBUG("TODO: implement user-space threads\n");
-        while(1);
+        context->regs.cs = (GDT_USER_CODE << 3) | PRIVILEGE_USER;
+        context->regs.ss = (GDT_USER_DATA << 3) | PRIVILEGE_USER;
+
+        // stack will not be setup here for user processes because it depends
+        // on the process's size and location and etc
+        // same for entry point and args
+
+        return ptr;
     }
 }
 
@@ -88,4 +96,51 @@ void platformSwitchContext(Thread *t) {
     kinfo->thread = t;
     kinfo->process = getProcess(t->pid);
     platformLoadContext(t->context);
+}
+
+/* platformUseContext(): switches to the paging context of a thread
+ * params: ptr - thread context
+ * returns: zero
+ */
+
+int platformUseContext(void *ptr) {
+    ThreadContext *ctx = (ThreadContext *)ptr;
+    writeCR3(ctx->cr3);
+    return 0;
+}
+
+/* platformSetContext(): sets up the context for a user space thread
+ * params: t - thread
+ * params: entry - entry point
+ * params: highest - highest address loaded
+ * params: argv - arguments to be passed
+ * params: envp - environmental variables to be passed
+ * returns: zero on success
+ */
+
+int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char **argv, const char **envp) {
+    /* this sets up an entry point for the thread that's something like
+     * void _start(const char **argv, const char **envp) */
+
+    ThreadContext *ctx = (ThreadContext *)t->context;
+    ctx->regs.rip = entry;
+    ctx->regs.rdi = (uint64_t)argv;
+    ctx->regs.rsi = (uint64_t)envp;
+
+    // allocate a user stack
+    uintptr_t base = highest;
+    while(base % PAGE_SIZE) {
+        base++;
+    }
+    uintptr_t limit = base + PAGE_SIZE + PLATFORM_THREAD_STACK;
+
+    uintptr_t stack = vmmAllocate(base, limit, (PLATFORM_THREAD_STACK+PAGE_SIZE-1)/PAGE_SIZE, VMM_WRITE | VMM_USER);
+    if(!stack) return -1;
+    //memset((void *)stack, 0, PLATFORM_THREAD_STACK);
+
+    stack += PLATFORM_THREAD_STACK;
+    ctx->regs.rsp = stack;
+
+    t->highest = stack;     // requisite to sbrk() someday
+    return 0;
 }

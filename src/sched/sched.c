@@ -15,7 +15,7 @@
 #include <kernel/logger.h>
 
 static bool scheduling = false;
-static int processes, threads;
+int processes, threads;
 static lock_t lock = LOCK_INITIAL;
 static uint8_t *pidBitmap;
 static Process *first;       // first process in the linked list
@@ -383,4 +383,16 @@ pid_t processCreate() {
     process->childrenCount = 0;
 
     return pid;
+}
+
+/* threadUseContext(): switches to the paging context of a thread
+ * params: tid - thread ID
+ * returns: zero on success
+ */
+
+int threadUseContext(pid_t tid) {
+    Thread *t = getThread(tid);
+    if(!t) return -1;
+
+    return platformUseContext(t->context);
 }
