@@ -11,6 +11,7 @@
 #include <platform/platform.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/tty.h>
 
 static uint64_t *kernelPagingRoot;  // pml4
 
@@ -54,6 +55,18 @@ int platformPagingSetup() {
 
     // load the new paging roots
     writeCR3((uint64_t)pml4);
+
+    // now map memory at a high address
+    uintptr_t v = KERNEL_MMIO_BASE;
+    uintptr_t p = 0;
+    
+    for(size_t i = 0; i < (KERNEL_MMIO_GBS << 18); i++) {
+        platformMapPage(v, p, PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_WRITE);
+        v += PAGE_SIZE;
+        p += PAGE_SIZE;
+    }
+
+    ttyRemapFramebuffer();
     KDEBUG("kernel paging structures created, identity mapped %d GiB\n", IDENTITY_MAP_GBS);
     kernelPagingRoot = pml4;
     return 0;
