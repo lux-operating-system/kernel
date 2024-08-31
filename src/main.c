@@ -5,13 +5,31 @@
  * Core Microkernel
  */
 
+#include <stdlib.h>
 #include <kernel/logger.h>
 #include <kernel/sched.h>
+#include <kernel/modules.h>
 #include <platform/platform.h>
 
 void *kernelThread(void *args) {
-    KDEBUG("hello world from the kernel thread\n");
-    KDEBUG("my process ID is %d\n", getPid());
+    KDEBUG("spawned kernel thread with PID %d\n", getPid());
+
+    // spawn the router in user space
+    int64_t size = ramdiskFileSize("lumen");
+    if(size <= 9) {
+        KERROR("lumen not present on the ramdisk, halting because there's nothing to do\n");
+        while(1) platformHalt();
+    }
+
+    void *lumen = malloc(size);
+    if(!lumen) {
+        KERROR("failed to allocate memory for lumen, halting because there's nothing to do\n");
+        while(1) platformHalt();
+    }
+
+    // TODO: maybe pass boot arguments to lumen?
+    const char *argv[2] = [ "lumen", NULL ];
+    execveMemory(lumen, argv, NULL);
     while(1);
 }
 

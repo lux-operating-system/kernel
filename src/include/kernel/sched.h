@@ -53,3 +53,7 @@ Process *getProcess(pid_t);
 Thread *getThread(pid_t);
 
 pid_t threadCreate(void *(*)(void *), void *);
+pid_t processCreate(Process *);
+
+int execveMemory(const void *, const char **argv, const char **envp);
+int execve(const char *, const char **argv, const char **envp);
