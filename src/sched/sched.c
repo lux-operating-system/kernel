@@ -255,7 +255,7 @@ uint64_t schedTimer() {
         return ~0;
     }
 
-    acquireLockBlocking(&lock);
+    if(!acquireLock(&lock)) return ~0;
 
     uint64_t time;
     Thread *t = getThread(getTid());
@@ -276,7 +276,7 @@ uint64_t schedTimer() {
  */
 
 void schedule() {
-    acquireLockBlocking(&lock);
+    if(!acquireLock(&lock)) return;
 
     pid_t pid = getPid();
     pid_t tid = getTid();
