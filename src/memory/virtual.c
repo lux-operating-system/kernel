@@ -195,3 +195,17 @@ int vmmPageFault(uintptr_t addr, int access) {
     releaseLock(&lock);
     return returnValue;
 }
+
+/* vmmMMIO(): requests an MMIO mapping 
+ * params: phys - physical address
+ * params: cache - cache enable
+ * returns: pointer to virtual address, zero on fail
+ */
+
+uintptr_t vmmMMIO(uintptr_t phys, bool cache) {
+    if(cache && (phys < KERNEL_MMIO_LIMIT)) {
+        return phys + KERNEL_MMIO_BASE;
+    } else {
+        return 0;
+    }
+}
