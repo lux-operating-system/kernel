@@ -15,5 +15,6 @@
 #define KERNEL_HEAP_LIMIT       0x4FFFFFFFF000  // ~16 TiB of kernel heap 
 #define KERNEL_MMIO_BASE        0x600000000000  // 96 TiB
 #define KERNEL_MMIO_GBS         8               // 8 GB will be mapped at MMIO base
+#define KERNEL_MMIO_LIMIT       ((uint64_t)KERNEL_MMIO_GBS << 30)
 #define USER_BASE_ADDRESS       0x40000000      // 1 GB, user programs will be loaded here
 #define USER_LIMIT_ADDRESS      0x3FFFFFFFF000  // ~64 TiB, this leaves user programs almost 64 TiB

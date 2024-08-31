@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <kernel/boot.h>
 
 /* this must be defined on a platform-specific basis */
@@ -61,3 +62,4 @@ void vmmInit();
 uintptr_t vmmAllocate(uintptr_t, uintptr_t, size_t, int);
 int vmmFree(uintptr_t, size_t);
 int vmmPageFault(uintptr_t, int);       // the platform-specific page fault handler must call this
+uintptr_t vmmMMIO(uintptr_t, bool);

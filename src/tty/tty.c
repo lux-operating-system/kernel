@@ -8,10 +8,12 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <platform/lock.h>
 #include <kernel/boot.h>
 #include <kernel/font.h>
 #include <kernel/tty.h>
+#include <kernel/memory.h>
 #include <kernel/logger.h>
 
 KTTY ktty;
@@ -70,6 +72,12 @@ void ttyInit(KernelBootInfo *boot) {
     KDEBUG("kernel tty initialized\n");
     KDEBUG("screen resolution is %dx%dx%d bpp\n", ktty.w, ktty.h, ktty.bpp);
     KDEBUG("terminal resolution is %dx%d\n", ktty.wc, ktty.hc);
+}
+
+/* ttyRemapFramebuffer(): this is called after paging is initialized */
+
+void ttyRemapFramebuffer() {
+    ktty.fb = (uint32_t *)vmmMMIO((uintptr_t)ktty.fb, true);
 }
 
 /* ttyCheckBoundaries(): checks for the cursor position and scrolls
