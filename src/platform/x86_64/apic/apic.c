@@ -14,6 +14,7 @@
 #include <platform/smp.h>
 #include <kernel/acpi.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 static uint64_t localAPICBase;
 
@@ -115,12 +116,12 @@ int apicInit() {
 /* Local APIC Read/Write */
 
 void lapicWrite(uint32_t reg, uint32_t val) {
-    uint32_t volatile *ptr = (uint32_t volatile *)((uintptr_t)localAPICBase + reg);
+    uint32_t volatile *ptr = (uint32_t volatile *)((uintptr_t)vmmMMIO(localAPICBase + reg, true));
     *ptr = val;
 }
 
 uint32_t lapicRead(uint32_t reg) {
-    uint32_t volatile *ptr = (uint32_t volatile*)((uintptr_t)localAPICBase + reg);
+    uint32_t volatile *ptr = (uint32_t volatile*)((uintptr_t)vmmMMIO(localAPICBase + reg, true));
     return *ptr;
 }
 
