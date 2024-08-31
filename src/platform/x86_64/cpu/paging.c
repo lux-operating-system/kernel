@@ -34,7 +34,7 @@ int platformPagingSetup() {
     memset(pml4, 0, PAGE_SIZE);
     memset(pdp, 0, PAGE_SIZE);
 
-    pml4[0] = (uint64_t)pdp | PT_PAGE_PRESENT | PT_PAGE_RW;
+    pml4[0] = (uint64_t)pdp | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
     
     uint64_t addr = 0;
     uint64_t *pd;
@@ -45,7 +45,7 @@ int platformPagingSetup() {
             return -1;
         }
 
-        pdp[i] = (uint64_t)pd | PT_PAGE_PRESENT | PT_PAGE_RW;
+        pdp[i] = (uint64_t)pd | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
 
         for(int j = 0; j < 512; j++) {
             pd[j] = addr | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_SIZE_EXTENSION;
