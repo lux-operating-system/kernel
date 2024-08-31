@@ -76,7 +76,7 @@ struct USTARMetadata *ramdiskFind(const char *name) {
     size_t offset = 0;
 
     while(offset < ramdiskSize && !strcmp(ptr->magic, "ustar")) {
-        KDEBUG("%s\n", ptr->name);
+        //KDEBUG("%s\n", ptr->name);
         if(!strcmp(ptr->name, name)) return ptr;
 
         size_t size = ((parseOctal(ptr->size) + 511) / 512) + 1;
