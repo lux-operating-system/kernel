@@ -98,7 +98,7 @@ void *malloc(size_t size) {
     // allocate memory with kernel permissions, write permissions, and no execute
     // there's probably never a scenario where it's a good idea to execute code
     // in a block of memory allocated by malloc() or its derivatives
-    uintptr_t ptr = vmmAllocate(KERNEL_HEAP_BASE, USER_BASE_ADDRESS, pageSize, VMM_WRITE);
+    uintptr_t ptr = vmmAllocate(KERNEL_HEAP_BASE, KERNEL_HEAP_LIMIT, pageSize, VMM_WRITE);
     if(!ptr) return NULL;
 
     struct mallocHeader *header = (struct mallocHeader *)ptr;
