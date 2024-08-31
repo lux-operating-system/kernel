@@ -49,6 +49,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     }
 
     process->threads[0]->status = THREAD_QUEUED;
+    process->threads[0]->next = NULL;
     process->threads[0]->pid = pid;
     process->threads[0]->tid = pid;
     process->threads[0]->time = PLATFORM_TIMER_FREQUENCY;
@@ -76,6 +77,11 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     uint64_t entry = loadELF(ptr, &highest);
 
     platformSetContext(process->threads[0], entry, highest, argv, envp);
+
+    KDEBUG("created new process with pid %d\n", pid);
+
+    processes++;
+    threads++;
 
     threadUseContext(getTid());
     schedRelease();

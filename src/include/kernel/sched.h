@@ -18,7 +18,7 @@
 #define THREAD_BLOCKED          2   // waiting for I/O
 
 typedef struct Thread {
-    int status;
+    int status, cpu;
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;
 

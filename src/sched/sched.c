@@ -203,6 +203,8 @@ Process *getProcess(pid_t pid) {
         if(p->pid == pid) return p;
         p = p->next;
     } while(p);
+
+    return NULL;
 }
 
 /* getThread(): returns the thread structure associated with a TID
@@ -276,72 +278,60 @@ uint64_t schedTimer() {
  */
 
 void schedule() {
-    if(!acquireLock(&lock)) return;
+    acquireLockBlocking(&lock);
 
+    /* determine the next process to be run */
+    int cpu = platformWhichCPU();
     pid_t pid = getPid();
     pid_t tid = getTid();
     Process *p = getProcess(pid);
     Thread *t = getThread(tid);
-    int tries = 0;
 
     if(!pid || !tid || !p || !t) {
+        // special case for first process
         p = first;
         t = p->threads[0];
-    } else {
-        t->status = THREAD_QUEUED;          // put the current thread back in the queue
-        t->time = PLATFORM_TIMER_FREQUENCY; // and reset its time slice
 
-        t = t->next;
-        if(!t) {
-            p = p->next;
-            if(p && p->threadCount && p->threads) {
-                t = p->threads[0];
-            } else {
-                releaseLock(&lock);
-                return;
-            }
+        if(t->status == THREAD_QUEUED) {
+            KDEBUG("initial for %d on CPU %d\n", t->tid, cpu);
+            t->status = THREAD_RUNNING;
+            t->cpu = cpu;
+            releaseLock(&lock);
+            platformSwitchContext(t);
         }
     }
 
-search:
-    do {
-        do {
-            if(t->status == THREAD_QUEUED) {
-                // run this thread
-                //KDEBUG("context switch from %d to %d\n", getPid(), t->tid);
+    // nope, now we try to look for a process to run
+    KDEBUG("searching for queued threads on cpu %d\n", cpu);
+    Thread *current = getThread(getTid());
 
+    while(p) {
+        while(t) {
+            if(t->status == THREAD_QUEUED) {
+                if(current) {
+                    current->status = THREAD_QUEUED;
+                }
+
+                KDEBUG("switch to %d on %d\n", t->tid, cpu);
                 t->status = THREAD_RUNNING;
+                t->cpu = cpu;
                 releaseLock(&lock);
                 platformSwitchContext(t);
             }
 
+            //KDEBUG("checking TID %d\n", t->tid);
             t = t->next;
-        } while(t);
+        }
 
         p = p->next;
         if(p && p->threadCount && p->threads) {
-            KDEBUG("moving to next process\n");
+            //KDEBUG("checking PID %d\n", p->pid);
             t = p->threads[0];
         }
-    } while(p);
-
-    // if we make it here then we ran out of threads to schedule
-    // so start back at the very beginning
-    p = first;
-    t = p->threads[0];
-    tries++;
-    if(tries < 2) goto search;
-    
-    // fail gracefully by renewing the time slice of the current process, if any
-    p = getProcess(pid);
-    t = getThread(tid);
-    if(p && t) {
-        t->status = THREAD_RUNNING;
-        t->time = PLATFORM_TIMER_FREQUENCY;
     }
 
     releaseLock(&lock);
-    platformHalt();   // TODO: practically decide if this is actually a good idea
+    KDEBUG("didn't find any queued threads on %d\n", cpu);
 }
 
 /* processCreate(): creates a blank process
@@ -409,4 +399,14 @@ int threadUseContext(pid_t tid) {
     if(!t) return -1;
 
     return platformUseContext(t->context);
+}
+
+/* schedTimeslice(): allocates a time slice for a thread
+ * params: t - thread structure
+ * params: p - priority level (0 = highest, 3 = lowest)
+ * returns: time slice in milliseconds accounting for CPU count
+ */
+
+uint64_t schedTimeslice() {
+    
 }
