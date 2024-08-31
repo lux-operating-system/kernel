@@ -222,3 +222,28 @@ align 16
 halt:
     hlt
     ret
+
+global storeGDT
+align 16
+storeGDT:
+    sgdt [rdi]
+    ret
+
+global storeIDT
+align 16
+storeIDT:
+    sidt [rdi]
+    ret
+
+global loadTSS
+align 16
+loadTSS:
+    ltr di
+    ret
+
+global storeTSS
+align 16
+storeTSS:
+    xor rax, rax
+    str ax
+    ret
