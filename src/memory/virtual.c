@@ -61,6 +61,8 @@ uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) 
     acquireLockBlocking(&lock);
 
     // find free virtual memory
+    base &= ~(PAGE_SIZE-1);
+    limit &= ~(PAGE_SIZE-1);
     uintptr_t start = base;
     uintptr_t end = limit - (count * PAGE_SIZE);
     uintptr_t addr;
