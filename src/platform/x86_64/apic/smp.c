@@ -13,6 +13,7 @@
 #include <platform/platform.h>
 #include <platform/smp.h>
 #include <platform/x86_64.h>
+#include <platform/tss.h>
 #include <platform/apic.h>
 #include <kernel/logger.h>
 
@@ -61,7 +62,7 @@ void *platformGetCPU(int n) {
 }
 
 /* smpCPUInfoSetup(): constructs per-CPU kernel info structure and stores it in
- * the kernel's GS base */
+ * the kernel's GS base, also sets up a per-CPU GDT and TSS and stack */
 
 void smpCPUInfoSetup() {
     // enable FS/GS segmentation
@@ -101,6 +102,8 @@ void smpCPUInfoSetup() {
     if(cpu->bootCPU) bootCPUInfo = info;
 
     //KDEBUG("per-CPU kernel info struct for CPU %d is at 0x%08X\n", info->cpuIndex, (uint64_t)info);
+
+    tssSetup();
 }
 
 /* apMain(): entry points for application processors */

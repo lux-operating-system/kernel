@@ -36,6 +36,8 @@
 #define GDT_ACCESS_CODE_DATA    0x10
 #define GDT_ACCESS_PRESENT      0x80
 
+#define GDT_ACCESS_TSS          0x09
+
 #define GDT_ACCESS_DPL_SHIFT    5           // privilege level
 #define GDT_ACCESS_DPL_KERNEL   0
 #define GDT_ACCESS_DPL_USER     3

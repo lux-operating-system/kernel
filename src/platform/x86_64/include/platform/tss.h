@@ -9,6 +9,8 @@
 
 #pragma once
 
+#define KENREL_STACK_SIZE           32768
+
 typedef struct {
     uint32_t reserved1;
     uint64_t rsp0;
