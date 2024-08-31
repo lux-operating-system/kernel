@@ -24,6 +24,8 @@ typedef struct Thread {
 
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
+
+    uintptr_t highest;
 } Thread;
 
 typedef struct Process {
@@ -42,6 +44,7 @@ typedef struct Process {
     struct Process *next;
 } Process;
 
+extern int processes, threads;
 void schedInit();
 void schedLock();
 void schedRelease();
@@ -55,6 +58,7 @@ Thread *getThread(pid_t);
 
 pid_t threadCreate(void *(*)(void *), void *);
 pid_t processCreate();
+int threadUseContext(pid_t);
 
 int execveMemory(const void *, const char **argv, const char **envp);
 int execve(const char *, const char **argv, const char **envp);

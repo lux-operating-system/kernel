@@ -46,3 +46,4 @@ void *platformGetPagingRoot();
 void *platformCloneKernelSpace();
 pid_t platformGetPid();
 pid_t platformGetTid();
+int platformUseContext(void *);
