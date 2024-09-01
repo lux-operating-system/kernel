@@ -21,6 +21,7 @@
  */
 
 int execveMemory(const void *ptr, const char **argv, const char **envp) {
+    setScheduling(false);
     schedLock();
 
     pid_t pid = processCreate();
@@ -37,6 +38,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     if(!process->threadCount) {
         free(process);
         schedRelease();
+        setScheduling(true);
         return 0;
     }
 
@@ -45,6 +47,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads);
         free(process);
         schedRelease();
+        setScheduling(true);
         return 0;
     }
 
@@ -59,6 +62,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads);
         free(process);
         schedRelease();
+        setScheduling(true);
         return 0;
     }
 
@@ -68,6 +72,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads);
         free(process);
         schedRelease();
+        setScheduling(true);
         return 0;
     }
 
@@ -86,6 +91,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
 
     threadUseContext(getTid());
     schedRelease();
+    setScheduling(true);
     return 0;
 }
 

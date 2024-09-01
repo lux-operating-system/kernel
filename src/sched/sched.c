@@ -264,10 +264,10 @@ pid_t getTid() {
 
 uint64_t schedTimer() {
     if(!scheduling || !processes || !threads || !first || !last) {
-        return ~0;
+        return 1;
     }
 
-    if(!acquireLock(lock)) return ~0;
+    if(!acquireLock(lock)) return 1;
 
     uint64_t time;
     Thread *t = getThread(getTid());
@@ -288,6 +288,8 @@ uint64_t schedTimer() {
  */
 
 void schedule() {
+    if(!scheduling || !processes || !threads) return;
+
     acquireLockBlocking(lock);
 
     /* determine the next process to be run */
@@ -465,4 +467,8 @@ void schedAdjustTimeslice() {
             t = p->threads[0];
         }
     }
+}
+
+void setScheduling(bool s) {
+    scheduling = s;
 }
