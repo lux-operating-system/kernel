@@ -11,8 +11,14 @@
 #include <kernel/modules.h>
 #include <platform/platform.h>
 
+void *idleThread(void *args) {
+    while(1) {
+        platformHalt();
+    }
+}
+
 void *kernelThread(void *args) {
-    KDEBUG("kernel thread with PID %d\n", getPid());
+    KDEBUG("attempt to load lumen from ramdisk...\n");
 
     // spawn the router in user space
     int64_t size = ramdiskFileSize("lumen");
@@ -35,13 +41,7 @@ void *kernelThread(void *args) {
     // TODO: maybe pass boot arguments to lumen?
     execveMemory(lumen, NULL, NULL);
     free(lumen);
-    while(1);
-}
-
-void *idleThread(void *args) {
-    while(1) {
-        platformHalt();
-    }
+    idleThread(args);
 }
 
 // the true kernel entry point is called after platform-specific initialization
@@ -51,6 +51,10 @@ int main(int argc, char **argv) {
     schedInit();        // scheduler
 
     kthreadCreate(&kernelThread, NULL);
+
+    for(int i = 1; i < platformCountCPU(); i++) {
+        kthreadCreate(&idleThread, NULL);
+    }
 
     // now enable the scheduler
     setScheduling(true);
