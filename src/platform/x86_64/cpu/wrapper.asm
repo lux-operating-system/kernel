@@ -134,6 +134,7 @@ resetSegments:
     push rax        ; rip
     iretq
 
+align 16
 .next:
     ret
 
@@ -238,7 +239,11 @@ storeIDT:
 global loadTSS
 align 16
 loadTSS:
+    pushfq
+    cli
     ltr di
+    nop
+    popfq
     ret
 
 global storeTSS
