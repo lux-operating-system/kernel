@@ -24,3 +24,43 @@ void syscallHandle(void *ctx) {
         blockThread(t);     // block until we handle the syscall
     }
 }
+
+/* syscallEnqueue(): enqueues a syscall request
+ * params: request - pointer to the request
+ * returns: pointer to the request
+ */
+
+SyscallRequest *syscallEnqueue(SyscallRequest *request) {
+    schedLock();
+
+    if(!requests) {
+        requests = request;
+    } else {
+        SyscallRequest *q = request;
+        while(q->next) {
+            q = q->next;
+        }
+
+        q->next = request;
+    }
+
+    schedRelease();
+    return request;
+}
+
+/* syscallDequeue(): dequeues a syscall request
+ * params: none
+ * returns: pointer to the request, NULL if queue is empty
+ */
+
+SyscallRequest *syscallDequeue() {
+    if(!requests) return NULL;
+
+    schedLock();
+    SyscallRequest *request = requests;
+    requests = requests->next;
+
+    request->busy = true;   // prevent multiple CPUs accessing the same request
+    schedRelease();
+    return request;
+}

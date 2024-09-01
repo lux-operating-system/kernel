@@ -23,3 +23,5 @@ typedef struct SyscallRequest {
 } SyscallRequest;
 
 void syscallHandle();
+SyscallRequest *syscallEnqueue(SyscallRequest *);
+SyscallRequest *syscallDequeue();
