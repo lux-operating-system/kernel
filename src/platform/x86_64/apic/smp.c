@@ -75,6 +75,17 @@ void smpCPUInfoSetup() {
     readCPUID(1, &regs);
     uint8_t apicID = regs.ebx >> 24;
 
+    // enable NX
+    writeMSR(MSR_EFER, readMSR(MSR_EFER) | MSR_EFER_NX_ENABLE);
+
+    // enable fast fxsave/fxrstor if supported
+    memset(&regs, 0, sizeof(CPUIDRegisters));
+    readCPUID(0x80000001, &regs);
+
+    if(regs.edx & (1 << 25)) {
+        writeMSR(MSR_EFER, readMSR(MSR_EFER) | MSR_EFER_FFXSR);
+    }
+
     // find the CPU with a matching local APIC ID
     PlatformCPU *cpu = cpus;
     int i = 0;
