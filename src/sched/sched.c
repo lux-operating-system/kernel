@@ -451,10 +451,10 @@ int threadUseContext(pid_t tid) {
 
 uint64_t schedTimeslice(Thread *t, int p) {
     /* todo: actually interpret the priority value */
-    uint64_t schedFreq = PLATFORM_TIMER_FREQUENCY;// / 100;
+    uint64_t schedTime = PLATFORM_TIMER_FREQUENCY / SCHED_SWITCH_RATE;
 
     int cpus = platformCountCPU();
-    uint64_t time = schedFreq / threads;
+    uint64_t time = schedTime / threads;
     time *= cpus;
 
     t->priority = p;

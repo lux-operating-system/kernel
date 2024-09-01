@@ -12,11 +12,15 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#define MAX_PID                 80000
+// ideal number of context switches per second
+// still not sure of how to decide on this value so it'll probably change
+#define SCHED_SWITCH_RATE       200
+
+#define MAX_PID                 99999
 
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
-#define THREAD_BLOCKED          2   // waiting for I/O
+#define THREAD_BLOCKED          2       // waiting for I/O
 
 #define PRIORITY_HIGH           0
 #define PRIORITY_NORMAL         1
