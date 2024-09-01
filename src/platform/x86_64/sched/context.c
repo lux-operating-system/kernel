@@ -19,6 +19,7 @@
 #include <kernel/logger.h>
 #include <kernel/sched.h>
 #include <kernel/memory.h>
+#include <kernel/syscalls.h>
 
 /* platformGetPid(): returns the PID of the process running on the current CPU
  * params: none
@@ -145,4 +146,31 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
 
     t->highest = stack;     // requisite to sbrk() someday
     return 0;
+}
+
+/* platformCreateSyscallContext(): creates a structure with syscall params from thread context
+ * this is architecture-specific because of different registers and ABIs
+ * params: t - thread structure
+ * returns: pointer to syscall request
+ */
+
+SyscallRequest *platformCreateSyscallContext(Thread *t) {
+    ThreadContext *ctx = (ThreadContext *)t->context;
+
+    // syscall function is passed in RAX
+    // remaining parameters follow the SysV ABI with the exception of RCX
+    // because RCX is trashed by the SYSCALL instruction (see syscalls.asm)
+
+    // long story short, FOUR C-style params are in RDI, RSI, RDX, and R8
+    t->syscall.lock = LOCK_INITIAL;
+    t->syscall.next = NULL;
+    t->syscall.processed = false;
+    t->syscall.function = ctx->regs.rax;
+    t->syscall.params[0] = ctx->regs.rdi;
+    t->syscall.params[1] = ctx->regs.rsi;
+    t->syscall.params[2] = ctx->regs.rdx;
+    t->syscall.params[3] = ctx->regs.r8;
+    t->syscall.thread = t;      // back pointer to the thread
+
+    return &t->syscall;
 }
