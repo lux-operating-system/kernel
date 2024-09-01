@@ -44,8 +44,7 @@ void schedInit() {
     last = NULL;
 
     pidBitmap[0] = 1;   // PID zero is reserved and cannot be used
-    scheduling = true;
-    KDEBUG("scheduler enabled\n");
+    KDEBUG("scheduler initialized\n");
 }
 
 void schedLock() {
@@ -104,19 +103,21 @@ void releasePid(pid_t pid) {
     pidBitmap[byte] &= ~(1 << bit);
 }
 
-/* threadCreate(): spawns a new thread
+/* kthreadCreate(): spawns a new kernel thread
  * params: entry - entry point of the thread
  * params: arg - argument to be passed to the thread
  * returns: thread number, zero on failure
  */
 
-pid_t threadCreate(void *(*entry)(void *), void *arg) {
+pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
     acquireLockBlocking(lock);
     pid_t tid = allocatePid();
     if(!tid) {
         KWARN("unable to allocate a PID, maximum processes running?\n");
         return 0;
     }
+
+    Process *p;
 
     /* special case for the kernel idle thread
      * this is the ONLY thread that runs in kernel space */
@@ -129,73 +130,83 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
             return 0;
         }
 
-        first->pid = tid;
-        first->parent = 0;
-        first->user = 0;      // root
-        first->group = 0;
-        first->threadCount = 1;
-        first->childrenCount = 0;
-        first->children = NULL;
-
-        first->threads = calloc(1, sizeof(Thread *));
-        if(!first->threads) {
-            KERROR("failed to allocate memory for kernel thread\n");
-            free(first);
-            first = NULL;
-            releaseLock(lock);
-            return 0;
-        }
-
-        first->threads[0] = calloc(1, sizeof(Thread));
-        if(!first->threads[0]) {
-            KERROR("failed to allocate memory for kernel thread\n");
-            free(first->threads);
-            free(first);
-            first = NULL;
-            releaseLock(lock);
-            return 0;
-        }
-
-        first->threads[0]->status = THREAD_QUEUED;
-        first->threads[0]->pid = tid;
-        first->threads[0]->tid = tid;
-        //first->threads[0]->time = PLATFORM_TIMER_FREQUENCY;
-        first->threads[0]->next = NULL;
-        first->threads[0]->context = calloc(1, PLATFORM_CONTEXT_SIZE);
-        if(!first->threads[0]->context) {
-            KERROR("failed to allocate memory for thread context\n");
-            free(first->threads[0]);
-            free(first->threads);
-            free(first);
-            first = NULL;
-            releaseLock(lock);
-            return 0;
-        }
-
-        if(!platformCreateContext(first->threads[0]->context, PLATFORM_CONTEXT_KERNEL, (uintptr_t)entry, (uintptr_t)arg)) {
-            KERROR("failed to create kernel thread context\n");
-            free(first->threads[0]->context);
-            free(first->threads[0]);
-            free(first->threads);
-            free(first);
-            first = NULL;
-            releaseLock(lock);
-            return 0;
-        }
-
-        KDEBUG("spawned kernel thread with PID %d\n", tid);
-        last = first;
-        processes++;
-        threads++;
-
-        schedAdjustTimeslice();
-        releaseLock(lock);
-        return tid;
+        p = first;
     } else {
-        KDEBUG("TODO: implement multithreading in non-kernel threads\n");
-        while(1);
+        p = first;
+        while(p->next) {
+            p = p->next;
+        }
+
+        p->next = calloc(1, sizeof(Process));
+        p = p->next;
+        if(!p) {
+            KERROR("failed to allocate memory for kernel thread\n");
+            releaseLock(lock);
+            return 0;
+        }
     }
 
+    p->pid = tid;
+    p->parent = 0;
+    p->user = 0;      // root
+    p->group = 0;
+    p->threadCount = 1;
+    p->childrenCount = 0;
+    p->children = NULL;
+
+    p->threads = calloc(1, sizeof(Thread *));
+    if(!p->threads) {
+        KERROR("failed to allocate memory for kernel thread\n");
+        free(p);
+        if(!processes) first = NULL;
+        releaseLock(lock);
+        return 0;
+    }
+
+    p->threads[0] = calloc(1, sizeof(Thread));
+    if(!p->threads[0]) {
+        KERROR("failed to allocate memory for kernel thread\n");
+        free(p->threads);
+        free(p);
+        if(!processes) first = NULL;
+        releaseLock(lock);
+        return 0;
+    }
+
+    p->threads[0]->status = THREAD_QUEUED;
+    p->threads[0]->pid = tid;
+    p->threads[0]->tid = tid;
+    //p->threads[0]->time = PLATFORM_TIMER_FREQUENCY;
+    p->threads[0]->next = NULL;
+    p->threads[0]->context = calloc(1, PLATFORM_CONTEXT_SIZE);
+    if(!p->threads[0]->context) {
+        KERROR("failed to allocate memory for thread context\n");
+        free(p->threads[0]);
+        free(p->threads);
+        free(p);
+        if(!processes) first = NULL;
+        releaseLock(lock);
+        return 0;
+    }
+
+    if(!platformCreateContext(p->threads[0]->context, PLATFORM_CONTEXT_KERNEL, (uintptr_t)entry, (uintptr_t)arg)) {
+        KERROR("failed to create kernel thread context\n");
+        free(p->threads[0]->context);
+        free(p->threads[0]);
+        free(p->threads);
+        free(p);
+        if(!processes) first = NULL;
+        releaseLock(lock);
+        return 0;
+    }
+
+    KDEBUG("spawned kernel thread with PID %d\n", tid);
+    last = p;
+
+    processes++;
+    threads++;
+
+    schedAdjustTimeslice();
     releaseLock(lock);
     return tid;
 }
@@ -437,7 +448,7 @@ int threadUseContext(pid_t tid) {
 
 uint64_t schedTimeslice(Thread *t, int p) {
     /* todo: actually interpret the priority value */
-    uint64_t schedFreq = PLATFORM_TIMER_FREQUENCY / 100;
+    uint64_t schedFreq = PLATFORM_TIMER_FREQUENCY;// / 100;
 
     int cpus = platformCountCPU();
     uint64_t time = schedFreq / threads;

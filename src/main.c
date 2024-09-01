@@ -38,13 +38,22 @@ void *kernelThread(void *args) {
     while(1);
 }
 
+void *idleThread(void *args) {
+    while(1) {
+        platformHalt();
+    }
+}
+
 // the true kernel entry point is called after platform-specific initialization
 // platform-specific code is in platform/[PLATFORM]/main.c
 
 int main(int argc, char **argv) {
     schedInit();        // scheduler
 
-    threadCreate(&kernelThread, NULL);
+    kthreadCreate(&kernelThread, NULL);
+
+    // now enable the scheduler
+    setScheduling(true);
 
     while(1) {
         platformHalt();

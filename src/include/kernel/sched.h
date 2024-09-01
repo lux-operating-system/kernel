@@ -64,7 +64,7 @@ uint64_t schedTimeslice(Thread *, int);
 void schedAdjustTimeslice();
 void setScheduling(bool);
 
-pid_t threadCreate(void *(*)(void *), void *);
+pid_t kthreadCreate(void *(*)(void *), void *);
 pid_t processCreate();
 int threadUseContext(pid_t);
 
