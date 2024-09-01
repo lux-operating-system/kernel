@@ -210,7 +210,7 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
     if(flags & PLATFORM_PAGE_WRITE) parsedFlags |= PT_PAGE_RW;
     if(flags & PLATFORM_PAGE_USER) parsedFlags |= PT_PAGE_USER;
     if(!flags & PLATFORM_PAGE_EXEC) parsedFlags |= PT_PAGE_NXE;
-    if(flags & PLATFORM_PAGE_NO_CACHE) parsedFlags |= PT_PAGE_NO_CACHE;
+    if(flags & PLATFORM_PAGE_NO_CACHE) parsedFlags |= PT_PAGE_NO_CACHE | PT_PAGE_WRITE_THROUGH;
 
     pt[ptIndex] = physical | parsedFlags;
     return logical;
