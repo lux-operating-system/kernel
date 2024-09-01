@@ -42,6 +42,7 @@
 #define GDT_ACCESS_DPL_KERNEL   0
 #define GDT_ACCESS_DPL_USER     3
 
+#define GDT_FLAGS_AVAILABLE     0x10
 #define GDT_FLAGS_64_BIT        0x20
 #define GDT_FLAGS_32_BIT        0x40
 #define GDT_FLAGS_PAGE_GRAN     0x80

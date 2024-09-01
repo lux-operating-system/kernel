@@ -43,16 +43,21 @@ void tssSetup() {
     tss->rsp1 = (uint64_t)stack + KENREL_STACK_SIZE;
     tss->rsp2 = (uint64_t)stack + KENREL_STACK_SIZE;
 
-    gdt[GDT_TSS_LOW].baseLo = (uint16_t)tss;
-    gdt[GDT_TSS_LOW].baseMi = (uint8_t)tss >> 16;
-    gdt[GDT_TSS_LOW].baseHi = (uint8_t)tss >> 24;
+    for(int i = 0; i < 7; i++) {
+        tss->ist[i] = (uint64_t)stack + KENREL_STACK_SIZE-16;
+    }
+
+    // store the TSS pointer in the GDT so the CPU knows where to find it
+    gdt[GDT_TSS_LOW].baseLo = (uintptr_t)tss;
+    gdt[GDT_TSS_LOW].baseMi = (uintptr_t)tss >> 16;
+    gdt[GDT_TSS_LOW].baseHi = (uintptr_t)tss >> 24;
     gdt[GDT_TSS_LOW].limit = sizeof(TSS);
     gdt[GDT_TSS_LOW].access = GDT_ACCESS_TSS | GDT_ACCESS_PRESENT;
-    gdt[GDT_TSS_LOW].access |= (GDT_ACCESS_DPL_USER << GDT_ACCESS_DPL_SHIFT);
 
     uint64_t *high = (uint64_t *)&gdt[GDT_TSS_HIGH];
-    *high = (uint64_t)tss >> 32;
+    *high = (uintptr_t)tss >> 32;
 
     loadGDT(&gdtr);
-    loadTSS((GDT_TSS_LOW << 3) | PRIVILEGE_USER);
+    resetSegments(GDT_KERNEL_CODE, PRIVILEGE_KERNEL);
+    loadTSS(GDT_TSS_LOW << 3);
 }

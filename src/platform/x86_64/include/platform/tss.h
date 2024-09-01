@@ -21,6 +21,6 @@ typedef struct {
     uint64_t reserved3;
     uint16_t reserved4;
     uint16_t ioports;
-}__attribute__((packed)) TSS;
+} __attribute__((packed)) TSS;
 
 void tssSetup();
