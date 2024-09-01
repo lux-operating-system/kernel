@@ -16,7 +16,7 @@
 
 static bool scheduling = false;
 int processes, threads;
-static lock_t lock = LOCK_INITIAL;
+static lock_t *lock;
 static uint8_t *pidBitmap;
 static Process *first;       // first process in the linked list
 static Process *last;
@@ -24,16 +24,24 @@ static Process *last;
 /* schedInit(): initializes the scheduler */
 
 void schedInit() {
+    // IMPORTANT: allocate a lock in an uncacheable memory region
+    // this is to force all processes and CPUs to always have access to an up-
+    // to-date copy of the lock, which prevents crashing by having multiple
+    // CPUs attempt to run the same thread at the same time
+    
+    lock = mallocUC(sizeof(lock_t));
+    pidBitmap = calloc(1, (MAX_PID + 7) / 8);
+    if(!lock || !pidBitmap) {
+        KERROR("could not allocate memory for scheduler\n");
+        while(1);
+    }
+
+    *lock = LOCK_INITIAL;
+
     processes = 0;
     threads = 0;
     first = NULL;
     last = NULL;
-
-    pidBitmap = calloc(1, (MAX_PID + 7) / 8);
-    if(!pidBitmap) {
-        KERROR("could not allocate memory for scheduler\n");
-        while(1);
-    }
 
     pidBitmap[0] = 1;   // PID zero is reserved and cannot be used
     scheduling = true;
@@ -41,11 +49,11 @@ void schedInit() {
 }
 
 void schedLock() {
-    acquireLockBlocking(&lock);
+    acquireLockBlocking(lock);
 }
 
 void schedRelease() {
-    releaseLock(&lock);
+    releaseLock(lock);
 }
 
 /* pidIsUsed(): returns the use status of a PID
@@ -103,7 +111,7 @@ void releasePid(pid_t pid) {
  */
 
 pid_t threadCreate(void *(*entry)(void *), void *arg) {
-    acquireLockBlocking(&lock);
+    acquireLockBlocking(lock);
     pid_t tid = allocatePid();
     if(!tid) {
         KWARN("unable to allocate a PID, maximum processes running?\n");
@@ -117,7 +125,7 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
         first = calloc(1, sizeof(Process));
         if(!first) {
             KERROR("failed to allocate memory for kernel thread\n");
-            releaseLock(&lock);
+            releaseLock(lock);
             return 0;
         }
 
@@ -134,7 +142,7 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
             KERROR("failed to allocate memory for kernel thread\n");
             free(first);
             first = NULL;
-            releaseLock(&lock);
+            releaseLock(lock);
             return 0;
         }
 
@@ -144,7 +152,7 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
             free(first->threads);
             free(first);
             first = NULL;
-            releaseLock(&lock);
+            releaseLock(lock);
             return 0;
         }
 
@@ -160,7 +168,7 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
             free(first->threads);
             free(first);
             first = NULL;
-            releaseLock(&lock);
+            releaseLock(lock);
             return 0;
         }
 
@@ -171,7 +179,7 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
             free(first->threads);
             free(first);
             first = NULL;
-            releaseLock(&lock);
+            releaseLock(lock);
             return 0;
         }
 
@@ -181,14 +189,14 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
         threads++;
 
         schedAdjustTimeslice();
-        releaseLock(&lock);
+        releaseLock(lock);
         return tid;
     } else {
         KDEBUG("TODO: implement multithreading in non-kernel threads\n");
         while(1);
     }
 
-    releaseLock(&lock);
+    releaseLock(lock);
     return tid;
 }
 
@@ -259,7 +267,7 @@ uint64_t schedTimer() {
         return ~0;
     }
 
-    if(!acquireLock(&lock)) return ~0;
+    if(!acquireLock(lock)) return ~0;
 
     uint64_t time;
     Thread *t = getThread(getTid());
@@ -270,7 +278,7 @@ uint64_t schedTimer() {
         time = t->time;
     }
 
-    releaseLock(&lock);
+    releaseLock(lock);
     return time;
 }
 
@@ -280,7 +288,7 @@ uint64_t schedTimer() {
  */
 
 void schedule() {
-    acquireLockBlocking(&lock);
+    acquireLockBlocking(lock);
 
     /* determine the next process to be run */
     int cpu = platformWhichCPU();
@@ -298,7 +306,7 @@ void schedule() {
             //KDEBUG("initial for %d on CPU %d\n", t->tid, cpu);
             t->status = THREAD_RUNNING;
             t->cpu = cpu;
-            releaseLock(&lock);
+            releaseLock(lock);
             platformSwitchContext(t);
         }
     }
@@ -322,7 +330,7 @@ void schedule() {
                     //KDEBUG("switch to %d on %d\n", t->tid, cpu);
                     t->status = THREAD_RUNNING;
                     t->cpu = cpu;
-                    releaseLock(&lock);
+                    releaseLock(lock);
                     platformSwitchContext(t);
                 }
 
@@ -349,7 +357,7 @@ void schedule() {
         current->status = THREAD_RUNNING;
         current->time = schedTimeslice(current, current->priority);
     }
-    releaseLock(&lock);
+    releaseLock(lock);
 }
 
 /* processCreate(): creates a blank process
