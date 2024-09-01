@@ -301,7 +301,10 @@ uint64_t schedTimer() {
 void schedule() {
     if(!scheduling || !processes || !threads) return;
 
-    acquireLockBlocking(lock);
+    // we probably should not be locking the bus in a spinlock in a routine
+    // that's called hundreds of times per second
+    //acquireLockBlocking(lock);
+    if(!acquireLock(lock)) return;
 
     /* determine the next process to be run */
     int cpu = platformWhichCPU();
