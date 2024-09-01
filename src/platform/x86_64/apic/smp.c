@@ -23,6 +23,7 @@ static size_t cpuCount = 0;
 static size_t runningCpuCount = 1;      // boot CPU
 static int bootCPUIndex;
 static KernelCPUInfo *bootCPUInfo;
+static uint32_t apBooted = 0;
 
 /* platformRegisterCPU(): registers a CPU so that the core OS code can know
  * params: cpu - pointer to a CPU structure (see smp.h for why the void type)
@@ -65,6 +66,8 @@ void *platformGetCPU(int n) {
  * the kernel's GS base, also sets up a per-CPU GDT and TSS and stack */
 
 void smpCPUInfoSetup() {
+    tssSetup();
+    
     // enable FS/GS segmentation
     writeCR4(readCR4() | CR4_FSGSBASE);
 
@@ -102,16 +105,14 @@ void smpCPUInfoSetup() {
     if(cpu->bootCPU) bootCPUInfo = info;
 
     //KDEBUG("per-CPU kernel info struct for CPU %d is at 0x%08X\n", info->cpuIndex, (uint64_t)info);
-
-    tssSetup();
 }
 
 /* apMain(): entry points for application processors */
 
 int apMain() {
     // set up per-kernel CPU info
+    disableIRQs();
     smpCPUInfoSetup();
-    enableIRQs();
 
     // set up the local APIC
     // on the bootstrap CPU this is done by apicTimerInit(), but we don't need
@@ -139,7 +140,11 @@ int apMain() {
     // we don't need to install an IRQ handler because all CPUs share the same
     // GDT/IDT; the same IRQ handler is valid for both the boot CPU and APs
 
+    uint32_t volatile *complete = (uint32_t volatile *)&apBooted;
+    *complete = 1;
+
     while(1) {
+        enableIRQs();
         halt();     // wait for the scheduler to decide to do something
     }
 }
@@ -160,19 +165,28 @@ int smpBoot() {
     KDEBUG("attempt to start %d application processors...\n", cpuCount - runningCpuCount);
 
     // set up the AP entry point
-    apEntryVars[AP_ENTRY_GDTR] = (uint32_t)&gdtr;
-    apEntryVars[AP_ENTRY_IDTR] = (uint32_t)&idtr;
+    // copy the GDTR and IDTR into low memory temporarily
+    GDTR *lowGDTR = (GDTR *)0x2000;
+    IDTR *lowIDTR = (IDTR *)0x2010;
+    memcpy(lowGDTR, &gdtr, sizeof(GDTR));
+    memcpy(lowIDTR, &idtr, sizeof(IDTR));
+
+    apEntryVars[AP_ENTRY_GDTR] = (uint32_t)lowGDTR;
+    apEntryVars[AP_ENTRY_IDTR] = (uint32_t)lowIDTR;
     apEntryVars[AP_ENTRY_CR3] = readCR3();
     apEntryVars[AP_ENTRY_NEXT_LOW] = (uint32_t)&apMain;
     apEntryVars[AP_ENTRY_NEXT_HIGH] = (uint32_t)((uintptr_t)&apMain >> 32);
 
     PlatformCPU *cpu;
+    uint32_t volatile *complete = (uint32_t volatile *)&apBooted;
 
     for(int i = 0; i < cpuCount; i++) {
         cpu = platformGetCPU(i);
         if(!cpu || cpu->bootCPU || cpu->running) continue;
 
         KDEBUG("starting CPU with local APIC ID 0x%02X\n", cpu->apicID);
+
+        *complete = 0;
 
         // allocate a stack for the AP
         // NOTE: we're using calloc() and not malloc() here to force a write to
@@ -216,13 +230,13 @@ int smpBoot() {
         
         // check that the CPU actually started
         uint32_t volatile *life = (uint32_t volatile *)0x1FE0;    // the AP will set this flag to one when it boots
-        while(!*life);
+        while(!*life || !*complete);
 
         cpu->running = true;
         runningCpuCount++;
     }
 
-    writeCR0(readCR0() & ~CR0_CACHE_DISABLE);
+    writeCR0(readCR0() & ~(CR0_CACHE_DISABLE | CR0_NOT_WRITE_THROUGH));
     return runningCpuCount;
 }
 
