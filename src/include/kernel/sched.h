@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <kernel/syscalls.h>
 
 // ideal number of context switches per second
 // still not sure of how to decide on this value so it'll probably change
@@ -29,7 +30,9 @@
 typedef struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
-    uint64_t time;
+    uint64_t time;          //.timeslice
+
+    SyscallRequest syscall; // for when the thread is blocked
 
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
@@ -67,6 +70,8 @@ Thread *getThread(pid_t);
 uint64_t schedTimeslice(Thread *, int);
 void schedAdjustTimeslice();
 void setScheduling(bool);
+void blockThread(Thread *);
+void unblockThread(Thread *);
 
 pid_t kthreadCreate(void *(*)(void *), void *);
 pid_t processCreate();

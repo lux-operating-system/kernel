@@ -483,6 +483,30 @@ void schedAdjustTimeslice() {
     }
 }
 
+/* setScheduling(): enables or disables the scheduler
+ * params: s - true/false
+ * returns: nothing
+ */
+
 void setScheduling(bool s) {
     scheduling = s;
+}
+
+/* blockThread(): blocks a thread until a syscall request is handled
+ * params: t - thread structure
+ * returns: nothing
+ */
+
+void blockThread(Thread *t) {
+    t->status = THREAD_BLOCKED;
+    t->time = schedTimeslice(t, t->priority);
+}
+
+/* unblockThread(): unblocks a thread after a syscall was handled
+ * params: t - thread structure
+ * returns: nothing
+ */
+
+void unblockThread(Thread *t) {
+    t->status = THREAD_QUEUED;      // the scheduler will eventually run it
 }
