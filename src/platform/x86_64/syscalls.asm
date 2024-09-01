@@ -44,6 +44,7 @@ syscallEntry:
 
     ;xor r9, r9
     ;xor r11, r11
+    xor r10, r10                    ; zero out pointer to kernel structures
     pushaq
 
     extern syscallHandle
