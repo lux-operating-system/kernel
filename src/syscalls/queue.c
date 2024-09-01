@@ -23,6 +23,8 @@ void syscallHandle(void *ctx) {
         syscallEnqueue(platformCreateSyscallContext(t));    // queue the request
         blockThread(t);     // block until we handle the syscall
     }
+
+    for(;;) schedule();  // force context switch!
 }
 
 /* syscallEnqueue(): enqueues a syscall request
