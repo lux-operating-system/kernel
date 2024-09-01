@@ -162,9 +162,8 @@ SyscallRequest *platformCreateSyscallContext(Thread *t) {
     // because RCX is trashed by the SYSCALL instruction (see syscalls.asm)
 
     // long story short, FOUR C-style params are in RDI, RSI, RDX, and R8
-    t->syscall.lock = LOCK_INITIAL;
     t->syscall.next = NULL;
-    t->syscall.processed = false;
+    t->syscall.busy = false;
     t->syscall.function = ctx->regs.rax;
     t->syscall.params[0] = ctx->regs.rdi;
     t->syscall.params[1] = ctx->regs.rsi;

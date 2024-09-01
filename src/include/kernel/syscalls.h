@@ -9,18 +9,15 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <platform/lock.h>
 
 typedef struct SyscallRequest {
-    lock_t lock;
-    bool processed;
+    bool busy;
 
-    void *thread;
-    
     uint64_t function;
     uint64_t params[4];
     uint64_t ret;           // return value from the kernel to the program
 
+    void *thread;
     struct SyscallRequest *next;
 } SyscallRequest;
 
