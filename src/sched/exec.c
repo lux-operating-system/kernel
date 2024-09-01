@@ -21,11 +21,12 @@
  */
 
 int execveMemory(const void *ptr, const char **argv, const char **envp) {
-    setScheduling(false);
     schedLock();
+    setScheduling(false);
 
     pid_t pid = processCreate();
     if(!pid) {
+        setScheduling(true);
         schedRelease();
         return 0;
     }
@@ -37,8 +38,8 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     process->threads = calloc(process->threadCount, sizeof(Thread *));
     if(!process->threadCount) {
         free(process);
-        schedRelease();
         setScheduling(true);
+        schedRelease();
         return 0;
     }
 
@@ -46,8 +47,8 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     if(!process->threads[0]) {
         free(process->threads);
         free(process);
-        schedRelease();
         setScheduling(true);
+        schedRelease();
         return 0;
     }
 
@@ -61,8 +62,8 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads[0]);
         free(process->threads);
         free(process);
-        schedRelease();
         setScheduling(true);
+        schedRelease();
         return 0;
     }
 
@@ -71,8 +72,8 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads[0]);
         free(process->threads);
         free(process);
-        schedRelease();
         setScheduling(true);
+        schedRelease();
         return 0;
     }
 
@@ -90,8 +91,8 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     schedAdjustTimeslice();
 
     threadUseContext(getTid());
-    schedRelease();
     setScheduling(true);
+    schedRelease();
     return 0;
 }
 
