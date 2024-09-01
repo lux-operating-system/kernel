@@ -12,7 +12,7 @@
 #include <platform/platform.h>
 
 void *kernelThread(void *args) {
-    KDEBUG("spawned kernel thread with PID %d\n", getPid());
+    KDEBUG("kernel thread with PID %d\n", getPid());
 
     // spawn the router in user space
     int64_t size = ramdiskFileSize("lumen");
@@ -27,9 +27,14 @@ void *kernelThread(void *args) {
         while(1) platformHalt();
     }
 
+    if(ramdiskRead(lumen, "lumen", size) != size) {
+        KERROR("failed to read lumen into memory, halting because there's nothing to do\n");
+        while(1) platformHalt();
+    }
+
     // TODO: maybe pass boot arguments to lumen?
-    const char *argv[2] = [ "lumen", NULL ];
-    execveMemory(lumen, argv, NULL);
+    execveMemory(lumen, NULL, NULL);
+    free(lumen);
     while(1);
 }
 
