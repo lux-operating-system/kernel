@@ -71,6 +71,7 @@ void enableIRQs();
 void disableIRQs();
 void halt();
 
+#define CR0_NOT_WRITE_THROUGH       0x20000000
 #define CR0_CACHE_DISABLE           0x40000000  // caching
 #define CR4_FSGSBASE                0x00010000  // enable fs/gs segmentation
 
