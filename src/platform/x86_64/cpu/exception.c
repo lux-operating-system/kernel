@@ -7,6 +7,7 @@
 
 #include <platform/x86_64.h>
 #include <platform/exception.h>
+#include <platform/platform.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
 
@@ -80,7 +81,7 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     }
 
     // TODO: implement a separate kernel panic and userspace exception handling
-    KERROR("%d - %s with error code %d\n", number, exceptions[number], code);
+    KERROR("cpu %d: %d - %s with error code %d\n", platformWhichCPU(), number, exceptions[number], code);
     KERROR(" rip: 0x%016X  cs:  0x%02X\n", r->rip, r->cs);
     KERROR(" rax: 0x%016X  rbx: 0x%016X  rcx: 0x%016X\n", r->rax, r->rbx, r->rcx);
     KERROR(" rdx: 0x%016X  rsi: 0x%016X  rdi: 0x%016X\n", r->rdx, r->rsi, r->rdi);
