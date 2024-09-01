@@ -28,13 +28,11 @@ lockStatus:
 global acquireLock
 align 16
 acquireLock:
-    call lockStatus
-    and rax, rax
-    jnz .fail           ; lock is busy
+    bt word[rdi], 0
+    jc .fail
 
-    lock or byte[rdi], 1
-    call lockStatus
-    jz .fail
+    lock bts word[rdi], 0
+    jc .fail
 
     mov rax, 1
     ret
@@ -48,13 +46,11 @@ acquireLock:
 global acquireLockBlocking
 align 16
 acquireLockBlocking:
-    call lockStatus
-    and rax, rax
-    jnz .wait               ; lock is busy
+    bt word[rdi], 0
+    jc .wait
 
-    lock or byte[rdi], 1
-    call lockStatus
-    jz .wait
+    lock bts word[rdi], 0
+    jc .wait
 
     mov rax, 1
     ret
@@ -68,6 +64,6 @@ acquireLockBlocking:
 global releaseLock
 align 16
 releaseLock:
-    lock and byte[rdi], 0
+    btr word[rdi], 0
     xor rax, rax
     ret
