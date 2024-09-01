@@ -88,9 +88,18 @@ void installInterrupt(uint64_t, uint16_t, int, int, int);
 #define INTERRUPT_TYPE_INT      0x0E
 #define INTERRUPT_TYPE_TRAP     0x0F
 
+#define MSR_EFER                0xC0000080
 #define MSR_FS_BASE             0xC0000100
 #define MSR_GS_BASE             0xC0000101
 #define MSR_GS_BASE_KERNEL      0xC0000102  // for swapgs
+#define MSR_STAR                0xC0000081  // CS and SS
+#define MSR_LSTAR               0xC0000082  // syscall 64-bit entry point
+#define MSR_CSTAR               0xC0000083  // syscall 32-bit entry point, probably never gonna use this
+#define MSR_SFMASK              0xC0000084  // 32-bit EFLAGS mask, upper 32 bits reserved
+
+#define MSR_EFER_SYSCALL        0x00000001  // syscall/sysret instructions
+#define MSR_EFER_NX_ENABLE      0x00000800  // PAE/NX
+#define MSR_EFER_FFXSR          0x00004000  // fast FXSAVE/FXRSTOR
 
 // paging
 #define PT_PAGE_PRESENT         0x0001
