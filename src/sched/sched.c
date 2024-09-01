@@ -151,7 +151,7 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
         first->threads[0]->status = THREAD_QUEUED;
         first->threads[0]->pid = tid;
         first->threads[0]->tid = tid;
-        first->threads[0]->time = PLATFORM_TIMER_FREQUENCY;
+        //first->threads[0]->time = PLATFORM_TIMER_FREQUENCY;
         first->threads[0]->next = NULL;
         first->threads[0]->context = calloc(1, PLATFORM_CONTEXT_SIZE);
         if(!first->threads[0]->context) {
@@ -179,6 +179,8 @@ pid_t threadCreate(void *(*entry)(void *), void *arg) {
         last = first;
         processes++;
         threads++;
+
+        schedAdjustTimeslice();
         releaseLock(&lock);
         return tid;
     } else {
@@ -293,7 +295,7 @@ void schedule() {
         t = p->threads[0];
 
         if(t->status == THREAD_QUEUED) {
-            KDEBUG("initial for %d on CPU %d\n", t->tid, cpu);
+            //KDEBUG("initial for %d on CPU %d\n", t->tid, cpu);
             t->status = THREAD_RUNNING;
             t->cpu = cpu;
             releaseLock(&lock);
@@ -302,36 +304,52 @@ void schedule() {
     }
 
     // nope, now we try to look for a process to run
-    KDEBUG("searching for queued threads on cpu %d\n", cpu);
+    //KDEBUG("searching for queued threads on cpu %d\n", cpu);
     Thread *current = getThread(getTid());
 
-    while(p) {
-        while(t) {
-            if(t->status == THREAD_QUEUED) {
-                if(current) {
-                    current->status = THREAD_QUEUED;
+    int tries = 0;
+
+    while(tries < 2) {
+        while(p) {
+            while(t) {
+                if(t->status == THREAD_QUEUED) {
+                    if(current) {
+                        //KDEBUG("marking %d as queued\n", current->tid);
+                        current->status = THREAD_QUEUED;
+                        current->time = schedTimeslice(current, current->priority);
+                    }
+
+                    //KDEBUG("switch to %d on %d\n", t->tid, cpu);
+                    t->status = THREAD_RUNNING;
+                    t->cpu = cpu;
+                    releaseLock(&lock);
+                    platformSwitchContext(t);
                 }
 
-                KDEBUG("switch to %d on %d\n", t->tid, cpu);
-                t->status = THREAD_RUNNING;
-                t->cpu = cpu;
-                releaseLock(&lock);
-                platformSwitchContext(t);
+                //KDEBUG("checking TID %d\n", t->tid);
+                t = t->next;
             }
 
-            //KDEBUG("checking TID %d\n", t->tid);
-            t = t->next;
+            p = p->next;
+            if(p && p->threadCount && p->threads) {
+                //KDEBUG("checking PID %d\n", p->pid);
+                t = p->threads[0];
+            }
         }
 
-        p = p->next;
-        if(p && p->threadCount && p->threads) {
-            //KDEBUG("checking PID %d\n", p->pid);
-            t = p->threads[0];
-        }
+        /* if we're here then attempt to try again but from the start */
+        p = first;
+        t = first->threads[0];
+        tries++;
     }
 
+    // if we're here then we truly failed to load something, so just renew the
+    // time slice of the current thread
+    if(current) {
+        current->status = THREAD_RUNNING;
+        current->time = schedTimeslice(current, current->priority);
+    }
     releaseLock(&lock);
-    KDEBUG("didn't find any queued threads on %d\n", cpu);
 }
 
 /* processCreate(): creates a blank process
@@ -407,6 +425,36 @@ int threadUseContext(pid_t tid) {
  * returns: time slice in milliseconds accounting for CPU count
  */
 
-uint64_t schedTimeslice() {
-    
+uint64_t schedTimeslice(Thread *t, int p) {
+    /* todo: actually interpret the priority value */
+    uint64_t schedFreq = PLATFORM_TIMER_FREQUENCY / 100;
+
+    int cpus = platformCountCPU();
+    uint64_t time = schedFreq / threads;
+    time *= cpus;
+
+    t->priority = p;
+    return time;
+}
+
+/* schedAdjustTimeslice(): adjusts the timeslices of all queued threads */
+
+void schedAdjustTimeslice() {
+    Process *p = first;
+    Thread *t = first->threads[0];
+
+    while(p) {
+        while(t) {
+            if(t->status == THREAD_QUEUED) {
+                t->time = schedTimeslice(t, t->priority);
+            }
+
+            t = t->next;
+        }
+
+        p = p->next;
+        if(p && p->threadCount && p->threads) {
+            t = p->threads[0];
+        }
+    }
 }

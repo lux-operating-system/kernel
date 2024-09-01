@@ -52,7 +52,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     process->threads[0]->next = NULL;
     process->threads[0]->pid = pid;
     process->threads[0]->tid = pid;
-    process->threads[0]->time = PLATFORM_TIMER_FREQUENCY;
+    //process->threads[0]->time = PLATFORM_TIMER_FREQUENCY;
     process->threads[0]->context = calloc(1, PLATFORM_CONTEXT_SIZE);
     if(!process->threads[0]->context) {
         free(process->threads[0]);
@@ -82,6 +82,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
 
     processes++;
     threads++;
+    schedAdjustTimeslice();
 
     threadUseContext(getTid());
     schedRelease();

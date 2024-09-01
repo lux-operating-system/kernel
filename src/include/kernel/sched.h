@@ -17,8 +17,12 @@
 #define THREAD_RUNNING          1
 #define THREAD_BLOCKED          2   // waiting for I/O
 
+#define PRIORITY_HIGH           0
+#define PRIORITY_NORMAL         1
+#define PRIORITY_LOW            2
+
 typedef struct Thread {
-    int status, cpu;
+    int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;
 
@@ -55,6 +59,8 @@ void *schedGetState(pid_t);
 void schedule();
 Process *getProcess(pid_t);
 Thread *getThread(pid_t);
+uint64_t schedTimeslice(Thread *, int);
+void schedAdjustTimeslice();
 
 pid_t threadCreate(void *(*)(void *), void *);
 pid_t processCreate();
