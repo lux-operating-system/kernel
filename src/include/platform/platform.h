@@ -21,6 +21,7 @@
 #define PLATFORM_PAGE_USER                  0x0004      // user-kernel toggle
 #define PLATFORM_PAGE_EXEC                  0x0008
 #define PLATFORM_PAGE_WRITE                 0x0010
+#define PLATFORM_PAGE_NO_CACHE              0x0020
 #define PLATFORM_PAGE_ERROR                 0x8000
 
 int platformCPUSetup();         // very early setup for one CPU
