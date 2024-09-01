@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -61,6 +62,7 @@ Process *getProcess(pid_t);
 Thread *getThread(pid_t);
 uint64_t schedTimeslice(Thread *, int);
 void schedAdjustTimeslice();
+void setScheduling(bool);
 
 pid_t threadCreate(void *(*)(void *), void *);
 pid_t processCreate();
