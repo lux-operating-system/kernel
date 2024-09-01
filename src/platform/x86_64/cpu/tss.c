@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <platform/x86_64.h>
 #include <platform/tss.h>
+#include <platform/smp.h>
 #include <kernel/logger.h>
 
 /* tssSetup(): sets up a task state segment in the GDT for each CPU */
@@ -60,4 +61,8 @@ void tssSetup() {
     loadGDT(&gdtr);
     resetSegments(GDT_KERNEL_CODE, PRIVILEGE_KERNEL);
     loadTSS(GDT_TSS_LOW << 3);
+
+    // store the stack pointer in the per-CPU info structure as well
+    KernelCPUInfo *info = getKernelCPUInfo();
+    info->kernelStack = (void *)tss->rsp0;
 }

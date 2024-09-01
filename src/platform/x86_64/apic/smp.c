@@ -66,8 +66,6 @@ void *platformGetCPU(int n) {
  * the kernel's GS base, also sets up a per-CPU GDT and TSS and stack */
 
 void smpCPUInfoSetup() {
-    tssSetup();
-    
     // enable FS/GS segmentation
     writeCR4(readCR4() | CR4_FSGSBASE);
 
@@ -116,6 +114,8 @@ void smpCPUInfoSetup() {
     if(cpu->bootCPU) bootCPUInfo = info;
 
     //KDEBUG("per-CPU kernel info struct for CPU %d is at 0x%08X\n", info->cpuIndex, (uint64_t)info);
+
+    tssSetup();
 }
 
 /* apMain(): entry points for application processors */
