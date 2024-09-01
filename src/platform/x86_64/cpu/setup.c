@@ -33,7 +33,7 @@ int platformCPUSetup() {
     gdt[GDT_KERNEL_DATA].baseMi = 0;
     gdt[GDT_KERNEL_DATA].baseHi = 0;
     gdt[GDT_KERNEL_DATA].limit = 0xFFFF;
-    gdt[GDT_KERNEL_DATA].flagsLimitHi = GDT_FLAGS_64_BIT | GDT_FLAGS_PAGE_GRAN | 0x0F;  // limit high
+    gdt[GDT_KERNEL_DATA].flagsLimitHi = GDT_FLAGS_PAGE_GRAN | 0x0F;  // limit high
     gdt[GDT_KERNEL_DATA].access = GDT_ACCESS_PRESENT | GDT_ACCESS_CODE_DATA | GDT_ACCESS_RW;
 
     // user code descriptor
@@ -50,7 +50,7 @@ int platformCPUSetup() {
     gdt[GDT_USER_DATA].baseMi = 0;
     gdt[GDT_USER_DATA].baseHi = 0;
     gdt[GDT_USER_DATA].limit = 0xFFFF;
-    gdt[GDT_USER_DATA].flagsLimitHi = GDT_FLAGS_64_BIT | GDT_FLAGS_PAGE_GRAN | 0x0F;  // limit high
+    gdt[GDT_USER_DATA].flagsLimitHi = GDT_FLAGS_PAGE_GRAN | 0x0F;  // limit high
     gdt[GDT_USER_DATA].access = GDT_ACCESS_PRESENT | GDT_ACCESS_CODE_DATA | GDT_ACCESS_RW;
     gdt[GDT_USER_DATA].access |= (GDT_ACCESS_DPL_USER << GDT_ACCESS_DPL_SHIFT);
 
