@@ -25,6 +25,8 @@ static int bootCPUIndex;
 static KernelCPUInfo *bootCPUInfo;
 static uint32_t apBooted = 0;
 
+extern void syscallEntry();
+
 /* platformRegisterCPU(): registers a CPU so that the core OS code can know
  * params: cpu - pointer to a CPU structure (see smp.h for why the void type)
  * returns: number of CPUs present including the one just registered
@@ -83,6 +85,23 @@ void smpCPUInfoSetup() {
     if(regs.edx & (1 << 25)) {
         writeMSR(MSR_EFER, readMSR(MSR_EFER) | MSR_EFER_FFXSR);
     }
+
+    // enable fast syscall/sysret instructions
+    // CS = kernelSegmentBase; SS = kernelSegmentBase+8
+    uint16_t kernelSegmentBase = (GDT_KERNEL_CODE << 3);
+
+    // CS = userSegmentBase+16; SS = userSegmentBase+8
+    // genuine question what the fuck they were smoking when they made this and
+    // swapped the order between kernel and user mode?
+    uint16_t userSegmentBase = (GDT_USER_DATA << 3) - 8;
+    uint64_t syscallSegments = ((uint64_t)userSegmentBase << 48) | ((uint64_t)kernelSegmentBase << 32);
+
+    writeMSR(MSR_STAR, syscallSegments);            // kernel/user segments
+    writeMSR(MSR_LSTAR, (uint64_t)syscallEntry);    // 64-bit entry point
+    writeMSR(MSR_CSTAR, 0);                         // non-existent 32-bit entry point
+    writeMSR(MSR_SFMASK, ~0x202);
+
+    writeMSR(MSR_EFER, readMSR(MSR_EFER) | MSR_EFER_SYSCALL);
 
     // find the CPU with a matching local APIC ID
     PlatformCPU *cpu = cpus;
