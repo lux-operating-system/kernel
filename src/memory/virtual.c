@@ -73,6 +73,7 @@ uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) 
     if(flags & VMM_USER) platformFlags |= PLATFORM_PAGE_USER;
     if(flags & VMM_WRITE) platformFlags |= PLATFORM_PAGE_WRITE;
     if(flags & VMM_EXEC) platformFlags |= PLATFORM_PAGE_EXEC;
+    if(flags & VMM_NO_CACHE) platformFlags |= PLATFORM_PAGE_NO_CACHE;
 
     do {
         for(addr = start; addr < (start + (count*PAGE_SIZE)); addr += PAGE_SIZE) {

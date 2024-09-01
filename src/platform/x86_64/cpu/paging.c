@@ -139,6 +139,7 @@ uintptr_t platformGetPage(int *flags, uintptr_t addr) {
     if(ptEntry & PT_PAGE_RW) *flags |= PLATFORM_PAGE_WRITE;
     if(ptEntry & PT_PAGE_USER) *flags |= PLATFORM_PAGE_USER;
     if(!(ptEntry & PT_PAGE_NXE)) *flags |= PLATFORM_PAGE_EXEC;
+    if(ptEntry & PT_PAGE_NO_CACHE) *flags |= PLATFORM_PAGE_NO_CACHE;
     
     return (ptEntry & ~(PAGE_SIZE-1)) | offset;
 }
@@ -209,6 +210,7 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
     if(flags & PLATFORM_PAGE_WRITE) parsedFlags |= PT_PAGE_RW;
     if(flags & PLATFORM_PAGE_USER) parsedFlags |= PT_PAGE_USER;
     if(!flags & PLATFORM_PAGE_EXEC) parsedFlags |= PT_PAGE_NXE;
+    if(flags & PLATFORM_PAGE_NO_CACHE) parsedFlags |= PT_PAGE_NO_CACHE;
 
     pt[ptIndex] = physical | parsedFlags;
     return logical;
