@@ -10,6 +10,7 @@
 #include <kernel/modules.h>
 #include <kernel/boot.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 /* the ramdisk is really a USTAR archive that'll be used to load early files
  * during early boot before the user space is set up */
@@ -27,7 +28,7 @@ void ramdiskInit(KernelBootInfo *boot) {
         KDEBUG("ramdisk is at 0x%08X\n", boot->ramdisk);
         KDEBUG("ramdisk size is %d KiB\n", boot->ramdiskSize/1024);
 
-        ramdisk = (uint8_t *)boot->ramdisk;
+        ramdisk = (uint8_t *)vmmMMIO(boot->ramdisk, true);
         ramdiskSize = boot->ramdiskSize;
     } else {
         ramdisk = NULL;

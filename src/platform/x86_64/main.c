@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include <kernel/boot.h>
 #include <kernel/memory.h>
 #include <kernel/tty.h>
@@ -18,21 +19,23 @@
 #include <platform/apic.h>
 
 extern int main(int, char **);
+KernelBootInfo boot;
 
 // x86_64-specific kernel entry point
 int platformMain(KernelBootInfo *k) {
+    memcpy(&boot, k, sizeof(KernelBootInfo));
     platformCPUSetup();
-    ttyInit(k);
+    ttyInit(&boot);
     installExceptions();
-    pmmInit(k);
+    pmmInit(&boot);
     vmmInit();
-    acpiInit(k);
+    acpiInit(&boot);
     apicInit();
     platformInitialSeed();
-    ramdiskInit(k);
-    modulesInit(k);
+    ramdiskInit(&boot);
+    modulesInit(&boot);
 
     char **argv;
-    int argc = parseBootArgs(&argv, k->arguments);
+    int argc = parseBootArgs(&argv, boot.arguments);
     return main(argc, argv);
 }

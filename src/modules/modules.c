@@ -10,6 +10,7 @@
 #include <kernel/modules.h>
 #include <kernel/boot.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 static uint8_t *modules[MAX_MODULES];
 static uint64_t moduleSizes[MAX_MODULES];
@@ -27,7 +28,7 @@ void modulesInit(KernelBootInfo *boot) {
         KDEBUG("enumerating boot modules...\n");
 
         for(int i = 0; i < boot->moduleCount; i++) {
-            modules[i] = (uint8_t *)boot->modules[i];
+            modules[i] = (uint8_t *)vmmMMIO(boot->modules[i], true);
             moduleSizes[i] = boot->moduleSizes[i];
 
             KDEBUG(" %d of %d: %s loaded at 0x%08X\n", i+1, boot->moduleCount, modules[i], modules[i]);
