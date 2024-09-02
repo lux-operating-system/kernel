@@ -37,7 +37,7 @@ int platformRegisterCPU(void *cpu) {
     if(c->bootCPU) bootCPUIndex = cpuCount;
 
     if(!cpus) cpus = cpu;
-    last->next = cpu;
+    if(last) last->next = cpu;
     last = cpu;
     return cpuCount++;
 }
