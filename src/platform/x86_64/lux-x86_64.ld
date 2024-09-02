@@ -3,24 +3,24 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x200000;
+    . = 0xFFFF800000200000;
 
-    .text BLOCK(8) : ALIGN(8)
+    .text BLOCK(16) : ALIGN(16)
     {
         *(.text)
     }
 
-    .rodata BLOCK(8) : ALIGN(8)
+    .rodata BLOCK(16) : ALIGN(16)
     {
         *(.rodata)
     }
 
-    .data BLOCK(8) : ALIGN(8)
+    .data BLOCK(16) : ALIGN(16)
     {
         *(.data)
     }
 
-    .bss BLOCK(8) : ALIGN(8)
+    .bss BLOCK(16) : ALIGN(16)
     {
         *(.bss)
     }
