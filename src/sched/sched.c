@@ -510,3 +510,17 @@ void blockThread(Thread *t) {
 void unblockThread(Thread *t) {
     t->status = THREAD_QUEUED;      // the scheduler will eventually run it
 }
+
+/* yield(): gives up control of a thread and puts it back in the queue
+ * params: t - thread in question
+ * returns: nothing
+ */
+
+void yield(Thread *t) {
+    acquireLockBlocking(lock);
+
+    t->status = THREAD_QUEUED;
+    t->time = schedTimeslice(t, t->priority);
+
+    releaseLock(lock);
+}

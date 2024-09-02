@@ -79,3 +79,4 @@ int threadUseContext(pid_t);
 
 int execveMemory(const void *, const char **argv, const char **envp);
 int execve(const char *, const char **argv, const char **envp);
+void yield(Thread *t);
