@@ -57,6 +57,7 @@ int pmmMark(uintptr_t phys, bool use) {
  */
 
 int pmmMarkContiguous(uintptr_t phys, size_t count, bool use) {
+    KDEBUG("marking contigiuous at 0x%X\n", phys);
     int status = 0;
     for(size_t i = 0; i < count; i++) {
         status |= pmmMark(phys, use);
@@ -104,7 +105,7 @@ void pmmInit(KernelBootInfo *boot) {
 
     // this is set by the boot loader and is guaranteed to be page-aligned
     // it accounts for modules, ramdisk, and other things loaded in memory
-    pmmBitmap = (uint8_t *)boot->lowestFreeMemory;
+    pmmBitmap = (uint8_t *)boot->lowestFreeMemory + KERNEL_BASE_ADDRESS;
 
     status.highestPhysicalAddress = boot->highestPhysicalAddress;
     status.highestPage = (status.highestPhysicalAddress + PAGE_SIZE - 1) / PAGE_SIZE;
@@ -160,10 +161,11 @@ void pmmInit(KernelBootInfo *boot) {
     // now reserve all the kernel's memory including ramdisks, modules
     // this is reserving until the end of the pmm bitmap
     uintptr_t pmmBitmapEnd = (uintptr_t)pmmBitmap + pmmBitmapSize + PAGE_SIZE - 1;
-    size_t kernelPages = pmmBitmapEnd / PAGE_SIZE;
+    size_t kernelPages = (boot->lowestFreeMemory + pmmBitmapSize + PAGE_SIZE - 1) / PAGE_SIZE;
+
     pmmMarkContiguous(0, kernelPages, true);
 
-    status.lowestUsableAddress = (uintptr_t)(pmmBitmap + pmmBitmapSize + PAGE_SIZE) & ~(PAGE_SIZE-1);
+    status.lowestUsableAddress = (uintptr_t)kernelPages * PAGE_SIZE;
 
     KDEBUG("highest kernel address is 0x%08X\n", boot->kernelHighestAddress);
     KDEBUG("highest physical address is 0x%08X\n", boot->highestPhysicalAddress);
