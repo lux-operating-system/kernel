@@ -8,6 +8,7 @@
 #include <platform/platform.h>
 #include <kernel/syscalls.h>
 #include <kernel/sched.h>
+#include <kernel/logger.h>
 
 static SyscallRequest *requests = NULL;    // sort of a linked list in a sense
 
@@ -56,13 +57,29 @@ SyscallRequest *syscallEnqueue(SyscallRequest *request) {
  */
 
 SyscallRequest *syscallDequeue() {
-    if(!requests) return NULL;
-
     schedLock();
+    if(!requests) {
+        schedRelease();
+        return NULL;
+    }
+
     SyscallRequest *request = requests;
     requests = requests->next;
+    request->busy = true;
 
-    request->busy = true;   // prevent multiple CPUs accessing the same request
     schedRelease();
     return request;
+}
+
+/* syscallProcess(): processes syscalls in the queue from the kernel threads
+ * params: none
+ * returns: zero if syscall queue is empty
+ */
+
+int syscallProcess() {
+    SyscallRequest *syscall = syscallDequeue();
+    if(!syscall) return 0;
+
+    /* stub */
+    return 1;
 }

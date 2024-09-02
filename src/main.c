@@ -12,8 +12,10 @@
 #include <platform/platform.h>
 
 void *idleThread(void *args) {
-    while(1) {
-        platformHalt();
+    for(;;) {
+        if(!syscallProcess()) {
+            platformHalt();     // only halt the cpu if there's nothing to do
+        }
     }
 }
 
