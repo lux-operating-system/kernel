@@ -72,11 +72,19 @@ void schedAdjustTimeslice();
 void setScheduling(bool);
 void blockThread(Thread *);
 void unblockThread(Thread *);
+Process *getProcessQueue();
 
 pid_t kthreadCreate(void *(*)(void *), void *);
 pid_t processCreate();
 int threadUseContext(pid_t);
 
 int execveMemory(const void *, const char **argv, const char **envp);
-int execve(const char *, const char **argv, const char **envp);
-void yield(Thread *t);
+
+// these functions are exposed as system calls, but some will need to take
+// the thread as an argument from the system call handler - the actual user
+// application does not need to be aware of which thread is running for
+// Unix compatibility
+void yield(Thread *);
+pid_t fork(Thread *);
+void exit(Thread *, int);
+int execve(Thread *, const char *, const char **argv, const char **envp);
