@@ -158,7 +158,7 @@ readCPUID:
 
     mov eax, edi        ; leaf
     push rsi            ; regs
-    mov ecx, [esi+8]
+    mov ecx, [rsi+8]
     cpuid
     pop rsi
     mov [rsi], eax
