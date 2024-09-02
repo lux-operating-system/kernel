@@ -36,7 +36,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     // this is a blank process, so we need to create a thread for it
     process->threadCount = 1;
     process->threads = calloc(process->threadCount, sizeof(Thread *));
-    if(!process->threadCount) {
+    if(!process->threads) {
         free(process);
         setScheduling(true);
         schedRelease();
@@ -97,12 +97,13 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
 }
 
 /* execve(): executes a program from a file
+ * params: t - parent thread structure
  * params: name - file name of the program
  * params: argv - arguments to be passed to the program
  * params: envp - environmental variables to be passed
  * returns: should not return on success
  */
 
-int execve(const char *name, const char **argv, const char **envp) {
+int execve(Thread *t, const char *name, const char **argv, const char **envp) {
     return 0;    /* todo */
 }
