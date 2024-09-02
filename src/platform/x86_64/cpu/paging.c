@@ -227,3 +227,71 @@ int platformUnmapPage(uintptr_t addr) {
     addr &= ~(PAGE_SIZE-1);
     return !(platformMapPage(addr, 0, 0) == addr);
 }
+
+/* clonePagingLayer(): helper recursive function that clones a single paging layer
+ * this works for PDPs, PDs, and PTs
+ * params: ptr - physical pointer to the paging structure
+ * params: layer - 0 for PDPs, 1 for PDs, and 2 for PTs
+ * returns: physical pointer to the clone, zero on fail
+ */
+
+uint64_t clonePagingLayer(uint64_t ptr, int layer) {
+    if(!ptr || layer < 0 || layer > 2) return 0;
+
+    uint64_t *parent = (uint64_t *)vmmMMIO(ptr & ~(PAGE_SIZE-1), true);
+    uint64_t cloneBase = pmmAllocate();
+    if(!cloneBase) return 0;
+    uint64_t *clone = (uint64_t *)vmmMMIO(cloneBase, true);
+
+    uint64_t newPhys, oldPhys;
+
+    for(int i = 0; i < 512; i++) {
+        if(parent[i] & PT_PAGE_PRESENT) {
+            // are we working with the PT?
+            if(layer == 2) {
+                newPhys = pmmAllocate();
+                if(!newPhys) return 0;
+
+                oldPhys = parent[i] & ~(PAGE_SIZE-1);
+                memcpy((void *)vmmMMIO(newPhys, true), (const void *)vmmMMIO(oldPhys, true), PAGE_SIZE);
+
+                clone[i] = newPhys | (parent[i] & (PAGE_SIZE-1));   // copy the parent's permissions
+            } else {
+                // here we're working with either the PDP or PD that is also present
+                newPhys = pmmAllocate();
+                if(!newPhys) return 0;
+
+                oldPhys = parent[i] & ~(PAGE_SIZE-1);
+                clone[i] = clonePagingLayer(oldPhys, layer+1);
+                clone[i] |= parent[i] & (PAGE_SIZE-1);  // copy permissions again
+            }
+        }
+    }
+
+    return cloneBase;
+}
+
+/* platformCloneUserSpace(): deep clones the user address space
+ * params: parent - physical pointer to the PML4 of the parent
+ * returns: physical pointer to the child PML4, NULL on fail
+ */
+
+void *platformCloneUserSpace(uintptr_t parent) {
+    uint64_t base = pmmAllocate();
+    if(!base) return NULL;
+
+    uint64_t *newPML4 = (uint64_t *)vmmMMIO(base, true);
+    uint64_t *oldPML4 = (uint64_t *)vmmMMIO(parent & ~(PAGE_SIZE-1), true);
+
+    for(int i = 0; i < 256; i++) {
+        uint64_t ptr = oldPML4[i] & ~(PAGE_SIZE-1);
+        uint64_t flags = oldPML4[i] & (PAGE_SIZE-1);
+        if(oldPML4[i]) {
+            newPML4[i] = clonePagingLayer(ptr, 1) | flags;
+        }
+    }
+
+    KDEBUG("cloned PML4 at 0x%08X into 0x%08X\n", parent, base);
+
+    return (void *) base;
+}
