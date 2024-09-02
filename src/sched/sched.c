@@ -524,3 +524,12 @@ void yield(Thread *t) {
 
     releaseLock(lock);
 }
+
+/* getProcessQueue(): returns the process queue 
+ * params: none
+ * returns: linked list to the processes
+ */
+
+Process *getProcessQueue() {
+    return first;
+}
