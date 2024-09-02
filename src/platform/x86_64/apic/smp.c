@@ -16,6 +16,7 @@
 #include <platform/tss.h>
 #include <platform/apic.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 static PlatformCPU *cpus = NULL;
 static PlatformCPU *last = NULL;
@@ -140,8 +141,15 @@ void smpCPUInfoSetup() {
 /* apMain(): entry points for application processors */
 
 int apMain() {
-    // set up per-kernel CPU info
-    disableIRQs();
+    // reload the higher half GDT and IDT
+    loadGDT(&gdtr);
+    loadIDT(&idtr);
+
+    // reset the segments
+    resetSegments(GDT_KERNEL_CODE, PRIVILEGE_KERNEL);
+
+    // reset paging
+    writeCR3((uint64_t)platformGetPagingRoot());
     smpCPUInfoSetup();
 
     // set up the local APIC
@@ -196,14 +204,36 @@ int smpBoot() {
 
     // set up the AP entry point
     // copy the GDTR and IDTR into low memory temporarily
-    GDTR *lowGDTR = (GDTR *)0x2000;
-    IDTR *lowIDTR = (IDTR *)0x2010;
+    GDTR *lowGDTR = (GDTR *)vmmMMIO(0x2000, true);
+    IDTR *lowIDTR = (IDTR *)vmmMMIO(0x2010, true);
     memcpy(lowGDTR, &gdtr, sizeof(GDTR));
     memcpy(lowIDTR, &idtr, sizeof(IDTR));
 
-    apEntryVars[AP_ENTRY_GDTR] = (uint32_t)lowGDTR;
-    apEntryVars[AP_ENTRY_IDTR] = (uint32_t)lowIDTR;
-    apEntryVars[AP_ENTRY_CR3] = readCR3();
+    // the AP will not be able to read a full 64-bit address immediately on startup, so account for that
+    // we will reload the GDT and IDT after reaching 64-bit long mode
+    lowGDTR->base -= KERNEL_BASE_ADDRESS;
+    lowIDTR->base -= KERNEL_BASE_ADDRESS;
+
+    // create a temporary mapping of low memory
+    uintptr_t tempCR3 = pmmAllocate();
+    if(!tempCR3) {
+        KERROR("unable to allocate memory for temporary AP boot paging\n");
+        while(1);
+    }
+
+    memcpy((void *)vmmMMIO(tempCR3, true), (const void *)vmmMMIO(readCR3() & ~(PAGE_SIZE-1), true), PAGE_SIZE);
+
+    writeCR3(tempCR3);      // temporarily use this instead
+
+    // identity map first 8 MB for the AP
+    // this will give it access to (most of) the kernel's physical memory
+    for(int i = 0; i < 2048; i++) {
+        platformMapPage(i * PAGE_SIZE, i * PAGE_SIZE, PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_EXEC | PLATFORM_PAGE_WRITE);
+    }
+
+    apEntryVars[AP_ENTRY_GDTR] = (uint32_t)lowGDTR - KERNEL_BASE_ADDRESS;
+    apEntryVars[AP_ENTRY_IDTR] = (uint32_t)lowIDTR - KERNEL_BASE_ADDRESS;
+    apEntryVars[AP_ENTRY_CR3] = tempCR3;
     apEntryVars[AP_ENTRY_NEXT_LOW] = (uint32_t)&apMain;
     apEntryVars[AP_ENTRY_NEXT_HIGH] = (uint32_t)((uintptr_t)&apMain >> 32);
 
@@ -236,7 +266,7 @@ int smpBoot() {
         apEntryVars[AP_ENTRY_STACK_HIGH] = (uint32_t)((uintptr_t)stackPtr >> 32);
 
         // copy the AP entry into low memory
-        memcpy((void *)0x1000, apEntry, AP_ENTRY_SIZE);
+        memcpy((void *)vmmMMIO(0x1000, true), apEntry, AP_ENTRY_SIZE);
 
         // send an INIT IPI
         lapicWrite(LAPIC_INT_COMMAND_HIGH, cpu->apicID << 24);
@@ -267,6 +297,7 @@ int smpBoot() {
     }
 
     writeCR0(readCR0() & ~(CR0_CACHE_DISABLE | CR0_NOT_WRITE_THROUGH));
+    writeCR3((uint64_t)platformGetPagingRoot());
     return runningCpuCount;
 }
 
