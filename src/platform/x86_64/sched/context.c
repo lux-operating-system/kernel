@@ -54,12 +54,14 @@ pid_t platformGetTid() {
 void *platformCreateContext(void *ptr, int level, uintptr_t entry, uintptr_t arg) {
     memset(ptr, 0, PLATFORM_CONTEXT_SIZE);
 
+    int flags;  // unused
+
     ThreadContext *context = (ThreadContext *)ptr;
     context->regs.rip = entry;
     context->regs.rdi = arg;
     context->regs.rflags = 0x202;
-    context->cr3 = (uint64_t)platformCloneKernelSpace();
-    if(!context->cr3) return NULL;
+    context->cr3 = (uint64_t)platformCloneKernelSpace() - KERNEL_BASE_ADDRESS;
+    //if(!context->cr3) return NULL;
     void *stack;
 
     if(level == PLATFORM_CONTEXT_KERNEL) {
