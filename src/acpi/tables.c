@@ -17,11 +17,11 @@ static int tableCount = 0;
 static ACPIRSDT *rsdt = NULL;
 static ACPIXSDT *xsdt = NULL;
 
-void acpiDumpHeader(ACPIStandardHeader *h) {
+void acpiDumpHeader(ACPIStandardHeader *h, uint64_t phys) {
     KDEBUG("'%c%c%c%c' revision 0x%02X OEM ID '%c%c%c%c%c%c' at 0x%08X len %d\n",
         h->signature[0], h->signature[1], h->signature[2], h->signature[3],
         h->revision, h->oem[0], h->oem[1], h->oem[2], h->oem[3], h->oem[4], h->oem[5],
-        (uint64_t)h, h->length);
+        phys, h->length);
 }
 
 int acpiInit(KernelBootInfo *k) {
@@ -34,28 +34,32 @@ int acpiInit(KernelBootInfo *k) {
     KDEBUG("'RSD PTR ' revision 0x%02X OEM ID '%c%c%c%c%c%c' at 0x%08X\n", 
         rsdp->revision, rsdp->oem[0], rsdp->oem[1], rsdp->oem[2], rsdp->oem[3], rsdp->oem[4], rsdp->oem[5], k->acpiRSDP);
 
+    rsdt = (ACPIRSDT *)vmmMMIO(rsdp->rsdt, true);
+
     if(rsdp->revision >= 2) {
         xsdt = (ACPIXSDT *)vmmMMIO(rsdp->xsdt, true);
         acpiVersion = 2;        // preliminary, we'll make sure of this from the FADT
     } else {
-        rsdt = (ACPIRSDT *)vmmMMIO(rsdp->rsdt, true);
         acpiVersion = 1;        // same as above
     }
 
     // now dump the ACPI tables starting with the RSDT/XSDT
+    acpiDumpHeader(&rsdt->header, rsdp->rsdt);
+    tableCount = (rsdt->header.length - sizeof(ACPIStandardHeader)) / 4;
+
     if(xsdt) {
-        acpiDumpHeader(&xsdt->header);
+        acpiDumpHeader(&xsdt->header, rsdp->xsdt);
         tableCount = (xsdt->header.length - sizeof(ACPIStandardHeader)) / 8;
-    } else {
-        acpiDumpHeader(&rsdt->header);
-        tableCount = (rsdt->header.length - sizeof(ACPIStandardHeader)) / 4;
     }
 
     ACPIStandardHeader *h;
+    uint64_t phys;
     for(int i = 0; i < tableCount; i++) {
         if(xsdt) {
+            phys = xsdt->tables[i];
             h = (ACPIStandardHeader *)vmmMMIO(xsdt->tables[i], true);
         } else {
+            phys = rsdt->tables[i];
             h = (ACPIStandardHeader *)vmmMMIO(rsdt->tables[i], true);
         }
 
@@ -63,7 +67,7 @@ int acpiInit(KernelBootInfo *k) {
             acpiVersion = h->revision;
         }
 
-        acpiDumpHeader(h);
+        acpiDumpHeader(h, phys);
     }
 
     KDEBUG("total of %d tables directly listed in the %s\n", tableCount, xsdt ? "XSDT" : "RSDT");
