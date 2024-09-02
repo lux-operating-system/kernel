@@ -79,7 +79,7 @@ void *platformCloneKernelSpace() {
     uintptr_t ptr = pmmAllocate();
     if(!ptr) return NULL;
 
-    return memcpy((void *)vmmMMIO(ptr, true), kernelPagingRoot, PAGE_SIZE);
+    return memcpy((void *)vmmMMIO(ptr, true), (const void *)vmmMMIO((uintptr_t)kernelPagingRoot, true), PAGE_SIZE);
 }
 
 /* platformGetPage(): returns the physical address and flags of a logical address
