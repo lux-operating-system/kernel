@@ -108,25 +108,25 @@ uintptr_t platformGetPage(int *flags, uintptr_t addr) {
     uintptr_t offset = addr & (PAGE_SIZE-1);
 
     // TODO: account for inconsistencies between virtual and physical addresses here
-    uint64_t *pml4 = (uint64_t *)readCR3();
+    uint64_t *pml4 = (uint64_t *)vmmMMIO(readCR3() & ~(PAGE_SIZE-1), true);
     uint64_t pml4Entry = pml4[pml4Index];
     if(!pml4Entry & PT_PAGE_PRESENT) {
         return 0;
     }
 
-    uint64_t *pdp = (uint64_t *)(pml4Entry & ~(PAGE_SIZE-1));
+    uint64_t *pdp = (uint64_t *)vmmMMIO((pml4Entry & ~(PAGE_SIZE-1)), true);
     uint64_t pdpEntry = pdp[pdpIndex];
     if(!pdpEntry & PT_PAGE_PRESENT) {
         return 0;
     }
 
-    uint64_t *pd = (uint64_t *)(pdpEntry & ~(PAGE_SIZE-1));
+    uint64_t *pd = (uint64_t *)vmmMMIO((pdpEntry & ~(PAGE_SIZE-1)), true);
     uint64_t pdEntry = pd[pdIndex];
     if(!pdEntry & PT_PAGE_PRESENT) {
         return 0;
     }
 
-    uint64_t *pt = (uint64_t *)(pdEntry & ~(PAGE_SIZE-1));
+    uint64_t *pt = (uint64_t *)vmmMMIO((pdEntry & ~(PAGE_SIZE-1)), true);
     uint64_t ptEntry = pt[ptIndex];
     
     if(ptEntry & PT_PAGE_PRESENT) *flags |= PLATFORM_PAGE_PRESENT;
@@ -157,7 +157,7 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
     int pdIndex = (logical >> 21) & 511;   // 2 MiB * 512 = 1 GiB per PD
     int ptIndex = (logical >> 12) & 511;   // 4 KiB * 512 = 2 MiB per PT
 
-    uint64_t *pml4 = (uint64_t *)readCR3();
+    uint64_t *pml4 = (uint64_t *)vmmMMIO(readCR3(), true);
     uint64_t pml4Entry = pml4[pml4Index];
     if(!pml4Entry & PT_PAGE_PRESENT) {
         pml4Entry = pmmAllocate();
@@ -167,11 +167,11 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
             return 0;
         }
 
-        memset((void *)pml4Entry, 0, PAGE_SIZE);
+        memset((void *)vmmMMIO(pml4Entry, true), 0, PAGE_SIZE);
         pml4[pml4Index] = pml4Entry | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
     }
 
-    uint64_t *pdp = (uint64_t *)(pml4Entry & ~(PAGE_SIZE-1));
+    uint64_t *pdp = (uint64_t *)vmmMMIO((pml4Entry & ~(PAGE_SIZE-1)), true);
     uint64_t pdpEntry = pdp[pdpIndex];
     if(!pdpEntry & PT_PAGE_PRESENT) {
         pdpEntry = pmmAllocate();
@@ -181,11 +181,11 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
             return 0;
         }
 
-        memset((void *)pdpEntry, 0, PAGE_SIZE);
+        memset((void *)vmmMMIO(pdpEntry, true), 0, PAGE_SIZE);
         pdp[pdpIndex] = pdpEntry | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
     }
 
-    uint64_t *pd = (uint64_t *)(pdpEntry & ~(PAGE_SIZE-1));
+    uint64_t *pd = (uint64_t *)vmmMMIO((pdpEntry & ~(PAGE_SIZE-1)), true);
     uint64_t pdEntry = pd[pdIndex];
     if(!pdEntry & PT_PAGE_PRESENT) {
         pdEntry = pmmAllocate();
@@ -195,11 +195,11 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
             return 0;
         }
 
-        memset((void *)pdEntry, 0, PAGE_SIZE);
+        memset((void *)vmmMMIO(pdEntry, true), 0, PAGE_SIZE);
         pd[pdIndex] = pdEntry | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
     }
 
-    uint64_t *pt = (uint64_t *)(pdEntry & ~(PAGE_SIZE-1));
+    uint64_t *pt = (uint64_t *)vmmMMIO((pdEntry & ~(PAGE_SIZE-1)), true);
     uint64_t parsedFlags = 0;
 
     if(flags & PLATFORM_PAGE_PRESENT) parsedFlags |= PT_PAGE_PRESENT;
@@ -209,6 +209,9 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
     if(flags & PLATFORM_PAGE_NO_CACHE) parsedFlags |= PT_PAGE_NO_CACHE | PT_PAGE_WRITE_THROUGH;
 
     pt[ptIndex] = physical | parsedFlags;
+
+    // maintain canonical addresses
+    if(logical & ((uint64_t)1 << 47)) return logical | 0xFFF0000000000000;
     return logical;
 }
 
