@@ -13,7 +13,7 @@
 #include <kernel/memory.h>
 #include <kernel/tty.h>
 
-static uint64_t *kernelPagingRoot;  // pml4
+static uint64_t *kernelPagingRoot;  // pml4 -- PHYSICAL ADDRESS
 
 /* platformPagingSetup(): sets up the kernel's paging structures
  * this is called by the virtual memory manager early in the boot process
@@ -63,7 +63,7 @@ int platformPagingSetup() {
     return 0;
 }
 
-/* platformGetPagingRoot(): returns a pointer to the base paging structure
+/* platformGetPagingRoot(): returns a PHYSICAL pointer to the base paging structure
  * this is of type void * for platform-independence */
 
 void *platformGetPagingRoot() {
@@ -79,7 +79,7 @@ void *platformCloneKernelSpace() {
     uintptr_t ptr = pmmAllocate();
     if(!ptr) return NULL;
 
-    return memcpy((void *)ptr, kernelPagingRoot, PAGE_SIZE);
+    return memcpy((void *)vmmMMIO(ptr, true), kernelPagingRoot, PAGE_SIZE);
 }
 
 /* platformGetPage(): returns the physical address and flags of a logical address
