@@ -76,7 +76,7 @@ struct USTARMetadata *ramdiskFind(const char *name) {
     size_t offset = 0;
 
     while(offset < ramdiskSize && !strcmp(ptr->magic, "ustar")) {
-        KDEBUG("%s\n", ptr->name);
+        //KDEBUG("%s\n", ptr->name);
         if(!strcmp(ptr->name, name)) return ptr;
 
         size_t size = ((parseOctal(ptr->size) + 511) / 512) + 1;
@@ -115,7 +115,7 @@ size_t ramdiskRead(void *buffer, const char *name, size_t n) {
     size_t size = parseOctal(metadata->size);
     if(n > size) n = size;
 
-    uint8_t *data = (uint8_t *)(metadata + 512);
+    uint8_t *data = (uint8_t *)((uintptr_t)metadata + 512);
     memcpy(buffer, data, n);
     return n;
 }

@@ -61,6 +61,8 @@ uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) 
     acquireLockBlocking(&lock);
 
     // find free virtual memory
+    base &= ~(PAGE_SIZE-1);
+    limit &= ~(PAGE_SIZE-1);
     uintptr_t start = base;
     uintptr_t end = limit - (count * PAGE_SIZE);
     uintptr_t addr;
@@ -71,6 +73,7 @@ uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) 
     if(flags & VMM_USER) platformFlags |= PLATFORM_PAGE_USER;
     if(flags & VMM_WRITE) platformFlags |= PLATFORM_PAGE_WRITE;
     if(flags & VMM_EXEC) platformFlags |= PLATFORM_PAGE_EXEC;
+    if(flags & VMM_NO_CACHE) platformFlags |= PLATFORM_PAGE_NO_CACHE;
 
     do {
         for(addr = start; addr < (start + (count*PAGE_SIZE)); addr += PAGE_SIZE) {
@@ -194,4 +197,18 @@ int vmmPageFault(uintptr_t addr, int access) {
 
     releaseLock(&lock);
     return returnValue;
+}
+
+/* vmmMMIO(): requests an MMIO mapping 
+ * params: phys - physical address
+ * params: cache - cache enable
+ * returns: pointer to virtual address, zero on fail
+ */
+
+uintptr_t vmmMMIO(uintptr_t phys, bool cache) {
+    if(cache && (phys < KERNEL_MMIO_LIMIT)) {
+        return phys + KERNEL_MMIO_BASE;
+    } else {
+        return 0;
+    }
 }

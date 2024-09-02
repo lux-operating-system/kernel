@@ -11,6 +11,7 @@
 #include <platform/platform.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/tty.h>
 
 static uint64_t *kernelPagingRoot;  // pml4
 
@@ -33,7 +34,7 @@ int platformPagingSetup() {
     memset(pml4, 0, PAGE_SIZE);
     memset(pdp, 0, PAGE_SIZE);
 
-    pml4[0] = (uint64_t)pdp | PT_PAGE_PRESENT | PT_PAGE_RW;
+    pml4[0] = (uint64_t)pdp | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
     
     uint64_t addr = 0;
     uint64_t *pd;
@@ -44,7 +45,7 @@ int platformPagingSetup() {
             return -1;
         }
 
-        pdp[i] = (uint64_t)pd | PT_PAGE_PRESENT | PT_PAGE_RW;
+        pdp[i] = (uint64_t)pd | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER;
 
         for(int j = 0; j < 512; j++) {
             pd[j] = addr | PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_SIZE_EXTENSION;
@@ -54,6 +55,18 @@ int platformPagingSetup() {
 
     // load the new paging roots
     writeCR3((uint64_t)pml4);
+
+    // now map memory at a high address
+    uintptr_t v = KERNEL_MMIO_BASE;
+    uintptr_t p = 0;
+    
+    for(size_t i = 0; i < (KERNEL_MMIO_GBS << 18); i++) {
+        platformMapPage(v, p, PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_WRITE);
+        v += PAGE_SIZE;
+        p += PAGE_SIZE;
+    }
+
+    ttyRemapFramebuffer();
     KDEBUG("kernel paging structures created, identity mapped %d GiB\n", IDENTITY_MAP_GBS);
     kernelPagingRoot = pml4;
     return 0;
@@ -126,6 +139,7 @@ uintptr_t platformGetPage(int *flags, uintptr_t addr) {
     if(ptEntry & PT_PAGE_RW) *flags |= PLATFORM_PAGE_WRITE;
     if(ptEntry & PT_PAGE_USER) *flags |= PLATFORM_PAGE_USER;
     if(!(ptEntry & PT_PAGE_NXE)) *flags |= PLATFORM_PAGE_EXEC;
+    if(ptEntry & PT_PAGE_NO_CACHE) *flags |= PLATFORM_PAGE_NO_CACHE;
     
     return (ptEntry & ~(PAGE_SIZE-1)) | offset;
 }
@@ -196,6 +210,7 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
     if(flags & PLATFORM_PAGE_WRITE) parsedFlags |= PT_PAGE_RW;
     if(flags & PLATFORM_PAGE_USER) parsedFlags |= PT_PAGE_USER;
     if(!flags & PLATFORM_PAGE_EXEC) parsedFlags |= PT_PAGE_NXE;
+    if(flags & PLATFORM_PAGE_NO_CACHE) parsedFlags |= PT_PAGE_NO_CACHE | PT_PAGE_WRITE_THROUGH;
 
     pt[ptIndex] = physical | parsedFlags;
     return logical;

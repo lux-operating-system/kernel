@@ -9,5 +9,6 @@
 #include <platform/platform.h>
 
 void platformHalt() {
+    enableIRQs();
     halt();
 }

@@ -14,6 +14,7 @@
 #include <platform/smp.h>
 #include <kernel/acpi.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 static uint64_t localAPICBase;
 
@@ -30,6 +31,20 @@ int apicInit() {
     if(!(regs.ebx & 1)) {
         // this is a required feature for the kernel to know which CPU it's running on
         KERROR("CPU doesn't support 64-bit FS/GS segmentation\n");
+        while(1);
+    }
+
+    // check for PAE/NX
+    memset(&regs, 0, sizeof(CPUIDRegisters));
+    readCPUID(0x80000001, &regs);
+    if(!(regs.edx & (1 << 20))) {
+        KERROR("CPU doesn't support PAE/NX\n");
+        while(1);
+    }
+
+    // and syscall/sysret instructions
+    if(!(regs.edx & (1 << 11))) {
+        KERROR("CPU doesn't support fast syscall/sysret\n");
         while(1);
     }
 
@@ -115,12 +130,12 @@ int apicInit() {
 /* Local APIC Read/Write */
 
 void lapicWrite(uint32_t reg, uint32_t val) {
-    uint32_t volatile *ptr = (uint32_t volatile *)((uintptr_t)localAPICBase + reg);
+    uint32_t volatile *ptr = (uint32_t volatile *)((uintptr_t)vmmMMIO(localAPICBase + reg, true));
     *ptr = val;
 }
 
 uint32_t lapicRead(uint32_t reg) {
-    uint32_t volatile *ptr = (uint32_t volatile*)((uintptr_t)localAPICBase + reg);
+    uint32_t volatile *ptr = (uint32_t volatile*)((uintptr_t)vmmMMIO(localAPICBase + reg, true));
     return *ptr;
 }
 

@@ -21,8 +21,8 @@
 #define GDT_NULL                0
 #define GDT_KERNEL_CODE         1
 #define GDT_KERNEL_DATA         2
-#define GDT_USER_CODE           3
-#define GDT_USER_DATA           4
+#define GDT_USER_DATA           3
+#define GDT_USER_CODE           4
 #define GDT_TSS_LOW             5
 #define GDT_TSS_HIGH            6
 
@@ -36,10 +36,13 @@
 #define GDT_ACCESS_CODE_DATA    0x10
 #define GDT_ACCESS_PRESENT      0x80
 
+#define GDT_ACCESS_TSS          0x09
+
 #define GDT_ACCESS_DPL_SHIFT    5           // privilege level
 #define GDT_ACCESS_DPL_KERNEL   0
 #define GDT_ACCESS_DPL_USER     3
 
+#define GDT_FLAGS_AVAILABLE     0x10
 #define GDT_FLAGS_64_BIT        0x20
 #define GDT_FLAGS_32_BIT        0x40
 #define GDT_FLAGS_PAGE_GRAN     0x80

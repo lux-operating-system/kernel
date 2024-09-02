@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <kernel/boot.h>
 
 /* this must be defined on a platform-specific basis */
@@ -21,6 +22,7 @@
 #define VMM_USER                0x01        // kernel-user toggle
 #define VMM_EXEC                0x02
 #define VMM_WRITE               0x04
+#define VMM_NO_CACHE            0x08
 
 // these flags are used as platform-independent status codes after page faults
 #define VMM_PAGE_FAULT_PRESENT  0x01        // caused by a present page
@@ -61,3 +63,4 @@ void vmmInit();
 uintptr_t vmmAllocate(uintptr_t, uintptr_t, size_t, int);
 int vmmFree(uintptr_t, size_t);
 int vmmPageFault(uintptr_t, int);       // the platform-specific page fault handler must call this
+uintptr_t vmmMMIO(uintptr_t, bool);

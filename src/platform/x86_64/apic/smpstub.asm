@@ -14,19 +14,26 @@ align 16
 apEntry:
     ; this code will actually start running at 0x1000; the kernel will copy it
     ; into low memory for accessibility from 16-bit mode
+    cli
+    cld
     xor ax, ax
     mov ds, ax
+    mov es, ax
 
-    mov eax, [0x1FE4]
-    lgdt [eax]
-    mov eax, [0x1FE8]
-    lidt [eax]
-    mov eax, [0x1FEC]
+    mov esi, 0x1FE4     ; GDT
+    mov esi, [esi]
+    lgdt [esi]
+
+    mov esi, 0x1FE8     ; IDT
+    mov esi, [esi]
+    lidt [esi]
+
+    mov eax, [0x1FEC]   ; pml4
     mov cr3, eax
 
     ; configure the CPU for long mode - this is the same sequence we followed
     ; in the boot loader
-    mov eax, 0x6A0          ; enable SSE, PAE, and global pages
+    mov eax, 0x620          ; enable SSE, PAE, and global pages
     mov cr4, eax
 
     mov ecx, 0xC0000080
@@ -39,9 +46,9 @@ apEntry:
     or eax, 0x80010001      ; enable paging, write-protection, and protected mode
     mov cr0, eax
 
-    jmp 0x08:0x1080
+    jmp 0x08:0x1100
 
-times 0x80 - ($-$$) nop
+times 0x100 - ($-$$) nop
 [bits 64]
 
     ; now we're in 64-bit long mode
@@ -70,12 +77,18 @@ times 0x80 - ($-$$) nop
 
     ; this should never return
 
-    times 0x100 - ($-$$) nop
+    times 0x200 - ($-$$) nop
 
 .hang:
     cli
     hlt
-    jmp 0x1100
+    jmp 0x1200
+
+    times 0x300 - ($-$$) nop
+
+TR:     ; 0x1300
+    .limit:     dw 0
+    .base:      dq 0
 
 times 0xFE0 - ($-$$) nop
 

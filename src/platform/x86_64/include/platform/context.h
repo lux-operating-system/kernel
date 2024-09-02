@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <kernel/sched.h>
 
 /* Thread Context for x86_64 */
 
@@ -45,6 +46,7 @@ typedef struct {
 } __attribute__((packed)) ThreadContext;
 
 void *platformCreateContext(void *, int, uintptr_t, uintptr_t);
+int platformSetContext(Thread *, uintptr_t, uintptr_t, const char **, const char **);
 
 #define PLATFORM_CONTEXT_SIZE       sizeof(ThreadContext)
 

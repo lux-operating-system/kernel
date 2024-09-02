@@ -26,13 +26,15 @@ typedef struct PlatformCPU {
 // this will be stored using the kernel GS segment
 
 typedef struct {
-    int cpuIndex;
+    void *kernelStack;
     PlatformCPU *cpu;
     uint64_t uptime;
 
     // currently running process and thread
     Process *process;
     Thread *thread;
+
+    int cpuIndex;
 } KernelCPUInfo;
 
 void smpCPUInfoSetup();
