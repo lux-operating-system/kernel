@@ -14,12 +14,10 @@
  * params: t - thread to exit
  * params: status - exit code
  * params: normal - normal vs abnormal termination
- * retuns: nothing
+ * returns: nothing
  */
 
 void terminateThread(Thread *t, int status, bool normal) {
-    schedLock();
-
     t->status = THREAD_ZOMBIE;  // zombie status until the exit status is read
     t->normalExit = normal;
     t->exitStatus = status;     // this should technically only be valid for normal exit
@@ -28,7 +26,6 @@ void terminateThread(Thread *t, int status, bool normal) {
     Process *p = getProcess(t->pid);
     if(!p) {
         KWARN("pid %d from tid %d returned null pointer\n", t->pid, t->tid);
-        schedRelease();
         return;
     }
 
@@ -54,7 +51,9 @@ void terminateThread(Thread *t, int status, bool normal) {
         }
     }
 
-    schedRelease();
+    if(!normal) {
+        KWARN("killed tid %d from pid %d abnormally\n", t->tid, t->pid);
+    }
 }
 
 /* exit(): normally terminates the current running thread
@@ -66,5 +65,26 @@ void terminateThread(Thread *t, int status, bool normal) {
 void exit(Thread *t, int status) {
     // this is really a wrapper around a helper function to allow for normal
     // and abnormal termination in one place
+    schedLock();
     terminateThread(t, status, true);
+    schedRelease();
+}
+
+/* schedException(): exception handler for when a process causes a fault
+ * params: pid - faulting process ID
+ * params: tid - faulting thread ID
+ * returns: 0 if the thread can be returned to, 1 if it was terminated
+ */
+
+int schedException(pid_t pid, pid_t tid) {
+    // TODO: implement custom process exception handlers after signals and
+    // allow them a chance at their own recovery
+    Thread *t = getThread(tid);
+    if(!t) {
+        KERROR("faulting pid %d tid %d returned null pointer when trying to terminate\n");
+        return 1;
+    }
+
+    terminateThread(t, -1, false);
+    return 1;
 }

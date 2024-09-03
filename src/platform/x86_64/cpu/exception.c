@@ -90,20 +90,38 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     pid_t pid = getPid();
     if(pid > 0) {
         pid_t tid = getTid();
-        KERROR("cpu %d (pid %d, tid %d): %d - %s with error code %d\n", platformWhichCPU(), pid, tid, number, exceptions[number], code);
-    } else {
-        KERROR("cpu %d: %d - %s with error code %d\n", platformWhichCPU(), number, exceptions[number], code);
+        if(number == 14) {
+            // for unresolved page faults, print out the faulting logical address
+            KWARN("cpu %d (pid %d, tid %d): %d - %s with error code %d address 0x%X\n", platformWhichCPU(), pid, tid, number, exceptions[number], code, readCR2());
+        } else {
+            // for everything but page faults
+            KWARN("cpu %d (pid %d, tid %d): %d - %s with error code %d\n", platformWhichCPU(), pid, tid, number, exceptions[number], code);
+        }
+
+        // and let the scheduler handle it
+        if(schedException(pid, tid)) {
+            // here the faulty thread was terminated
+            releaseLock(&lock);
+            schedRelease();
+            for(;;) schedule();
+        } else {
+            // handled and can continue
+            releaseLock(&lock);
+            schedRelease();
+            return;
+        }
     }
-    
-    KERROR(" rip: 0x%016X  cs:  0x%02X\n", r->rip, r->cs);
-    KERROR(" rax: 0x%016X  rbx: 0x%016X  rcx: 0x%016X\n", r->rax, r->rbx, r->rcx);
-    KERROR(" rdx: 0x%016X  rsi: 0x%016X  rdi: 0x%016X\n", r->rdx, r->rsi, r->rdi);
-    KERROR(" r8:  0x%016X  r9:  0x%016X  r10: 0x%016X\n", r->r8, r->r9, r->r10);
-    KERROR(" r11: 0x%016X  r12: 0x%016X  r13: 0x%016X\n", r->r11, r->r12, r->r13);
-    KERROR(" r14: 0x%016X  r15: 0x%016X\n", r->r14, r->r15);
-    KERROR(" rsp: 0x%016X  rbp: 0x%016X  ss: 0x%02X\n", r->rsp, r->rbp, r->ss);
-    KERROR(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
-    KERROR(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
+
+    KPANIC("kernel panic: cpu %d: %d - %s with error code %d\n", platformWhichCPU(), number, exceptions[number], code);
+    KPANIC(" rip: 0x%016X  cs:  0x%02X\n", r->rip, r->cs);
+    KPANIC(" rax: 0x%016X  rbx: 0x%016X  rcx: 0x%016X\n", r->rax, r->rbx, r->rcx);
+    KPANIC(" rdx: 0x%016X  rsi: 0x%016X  rdi: 0x%016X\n", r->rdx, r->rsi, r->rdi);
+    KPANIC(" r8:  0x%016X  r9:  0x%016X  r10: 0x%016X\n", r->r8, r->r9, r->r10);
+    KPANIC(" r11: 0x%016X  r12: 0x%016X  r13: 0x%016X\n", r->r11, r->r12, r->r13);
+    KPANIC(" r14: 0x%016X  r15: 0x%016X\n", r->r14, r->r15);
+    KPANIC(" rsp: 0x%016X  rbp: 0x%016X  ss: 0x%02X\n", r->rsp, r->rbp, r->ss);
+    KPANIC(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
+    KPANIC(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
 
     schedRelease();
     releaseLock(&lock);
