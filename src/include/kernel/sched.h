@@ -84,7 +84,7 @@ int execveMemory(const void *, const char **argv, const char **envp);
 // the thread as an argument from the system call handler - the actual user
 // application does not need to be aware of which thread is running for
 // Unix compatibility
-void yield(Thread *);
+int yield(Thread *);
 pid_t fork(Thread *);
 void exit(Thread *, int);
 int execve(Thread *, const char *, const char **argv, const char **envp);
