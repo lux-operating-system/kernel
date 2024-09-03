@@ -6,6 +6,7 @@
  */
 
 #include <platform/platform.h>
+#include <platform/context.h>
 #include <kernel/syscalls.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
@@ -80,6 +81,15 @@ int syscallProcess() {
     SyscallRequest *syscall = syscallDequeue();
     if(!syscall) return 0;
 
-    /* stub */
+    // essentially just dispatch the syscall and store the return value
+    // in the thread's context so it can get it back
+    if(syscall->function > MAX_SYSCALL) {
+        platformSetContextStatus(syscall->thread->context, (int64_t)-1);
+    } else {
+        syscallDispatchTable[syscall->function](syscall);
+        platformSetContextStatus(syscall->thread->context, syscall->ret);
+    }
+
+    syscall->busy = false;
     return 1;
 }
