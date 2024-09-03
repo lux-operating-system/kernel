@@ -358,6 +358,8 @@ void schedule() {
             if(p && p->threadCount && p->threads) {
                 //KDEBUG("checking PID %d\n", p->pid);
                 t = p->threads[0];
+            } else {
+                t = NULL;
             }
         }
 
@@ -455,7 +457,9 @@ uint64_t schedTimeslice(Thread *t, int p) {
 
     int cpus = platformCountCPU();
     uint64_t time = schedTime / threads;
+    if(time < 5) time = 5;      // minimum threshold
     time *= cpus;
+    if(time < 10) time = 10;
 
     t->priority = p;
     return time;
