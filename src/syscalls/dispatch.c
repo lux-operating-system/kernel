@@ -15,10 +15,20 @@
 
 void syscallDispatchFork(SyscallRequest *req) {
     req->ret = fork(req->thread);
-    req->thread->time = schedTimeslice(req->thread, req->thread->priority);
-    req->thread->status = THREAD_QUEUED;
+}
+
+void syscallDispatchYield(SyscallRequest *req) {
+    req->ret = yield(req->thread);
 }
 
 void (*syscallDispatchTable[])(SyscallRequest *) = {
-    syscallDispatchFork,       // 0
+    // group 1: scheduler functions
+    NULL,                       // 0 - exit()
+    syscallDispatchFork,        // 1 - fork()
+    syscallDispatchYield,       // 2 - yield()
+    NULL,                       // 3 - execve()
+    NULL,                       // 4 - execrd()
+    //syscallDispatchGetPID,      // 5 - getpid()
+    //syscallDispatchGetUID,      // 6 - getuid()
+    //syscallDispatchGetGID,      // 7 - getgid()
 };

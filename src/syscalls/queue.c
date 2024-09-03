@@ -90,6 +90,8 @@ int syscallProcess() {
         platformSetContextStatus(syscall->thread->context, syscall->ret);
     }
 
+    syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);
+    syscall->thread->status = THREAD_QUEUED;
     syscall->busy = false;
     return 1;
 }

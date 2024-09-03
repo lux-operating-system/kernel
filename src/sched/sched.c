@@ -519,16 +519,17 @@ void unblockThread(Thread *t) {
 
 /* yield(): gives up control of a thread and puts it back in the queue
  * params: t - thread in question
- * returns: nothing
+ * returns: zero
  */
 
-void yield(Thread *t) {
+int yield(Thread *t) {
     acquireLockBlocking(lock);
 
     t->status = THREAD_QUEUED;
     t->time = schedTimeslice(t, t->priority);
 
     releaseLock(lock);
+    return 0;
 }
 
 /* getProcessQueue(): returns the process queue 
