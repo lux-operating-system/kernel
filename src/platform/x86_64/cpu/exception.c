@@ -8,8 +8,11 @@
 #include <platform/x86_64.h>
 #include <platform/exception.h>
 #include <platform/platform.h>
+#include <platform/lock.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+
+static lock_t lock = LOCK_INITIAL;
 
 static const char *exceptions[] = {
     "Divide error",             // 0x00
@@ -81,6 +84,7 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     }
 
     // TODO: implement a separate kernel panic and userspace exception handling
+    acquireLockBlocking(&lock);
     pid_t pid = getPid();
     if(pid) {
         pid_t tid = getTid();
@@ -98,5 +102,7 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     KERROR(" rsp: 0x%016X  rbp: 0x%016X  ss: 0x%02X\n", r->rsp, r->rbp, r->ss);
     KERROR(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
     KERROR(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
+
+    releaseLock(&lock);
     while(1);
 }
