@@ -17,6 +17,7 @@ extern exception
 global %1
 align 16
 %1:
+    cli
     push 0                  ; fake code
     pushaq
     mov rdi, %2
@@ -33,6 +34,7 @@ align 16
 global %1
 align 16
 %1:
+    cli
     pushaq
     mov rdi, %2
     mov rsi, [rsp+120]      ; error code
