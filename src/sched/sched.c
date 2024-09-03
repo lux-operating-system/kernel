@@ -48,11 +48,11 @@ void schedInit() {
 }
 
 void schedLock() {
-    acquireLockBlocking(lock);
+    if(lock) acquireLockBlocking(lock);
 }
 
 void schedRelease() {
-    releaseLock(lock);
+    if(lock) releaseLock(lock);
 }
 
 /* pidIsUsed(): returns the use status of a PID
@@ -336,7 +336,7 @@ void schedule() {
     while(tries < 2) {
         while(p) {
             while(t) {
-                if(t->status == THREAD_QUEUED) {
+                if(t != current && t->status == THREAD_QUEUED) {
                     if(current) {
                         //KDEBUG("marking %d as queued\n", current->tid);
                         current->status = THREAD_QUEUED;
@@ -457,9 +457,9 @@ uint64_t schedTimeslice(Thread *t, int p) {
 
     int cpus = platformCountCPU();
     uint64_t time = schedTime / threads;
-    if(time < 5) time = 5;      // minimum threshold
+    if(time < 6) time = 6;      // minimum threshold
     time *= cpus;
-    if(time < 10) time = 10;
+    if(time < 12) time = 12;
 
     t->priority = p;
     return time;
