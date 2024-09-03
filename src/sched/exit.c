@@ -22,6 +22,13 @@ void terminateThread(Thread *t, int status, bool normal) {
     t->normalExit = normal;
     t->exitStatus = status;     // this should technically only be valid for normal exit
 
+    // lumen can never terminate
+    if(t->pid == getLumenPID() || t->tid == getLumenPID()) {
+        KPANIC("kernel panic: lumen (pid %d) terminated %snormally with exit status %d\n", getLumenPID(), normal ? "" : "ab", status);
+        KPANIC("halting because there is nothing to do\n");
+        while(1);
+    }
+
     // check if this was the last thread in its process
     Process *p = getProcess(t->pid);
     if(!p) {
