@@ -92,7 +92,7 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
             return 0;
         }
 
-        prhdr = (ELFProgramHeader *)(prhdr + header->headerEntrySize);
+        prhdr = (ELFProgramHeader *)((uintptr_t)prhdr + header->headerEntrySize);
     }
 
     *highest = addr;
