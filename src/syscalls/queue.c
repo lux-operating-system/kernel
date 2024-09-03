@@ -37,6 +37,8 @@ void syscallHandle(void *ctx) {
 SyscallRequest *syscallEnqueue(SyscallRequest *request) {
     schedLock();
 
+    request->queued = true;
+
     if(!requests) {
         requests = request;
     } else {
@@ -67,6 +69,7 @@ SyscallRequest *syscallDequeue() {
     SyscallRequest *request = requests;
     requests = requests->next;
     request->busy = true;
+    request->queued = false;
 
     schedRelease();
     return request;
