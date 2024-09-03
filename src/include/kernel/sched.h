@@ -33,7 +33,6 @@ typedef struct Thread {
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;          //.timeslice
 
-    bool orphan;            // true when the parent process exits or is killed
     bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
 
     SyscallRequest syscall; // for when the thread is blocked
@@ -49,6 +48,8 @@ typedef struct Process {
     pid_t pid, parent;
     uid_t user;
     gid_t group;
+
+    bool orphan;            // true when the parent process exits or is killed
 
     char *env;              // environmental variables
     char *command;          // command line with arguments
