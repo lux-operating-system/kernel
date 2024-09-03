@@ -90,8 +90,12 @@ int syscallProcess() {
         platformSetContextStatus(syscall->thread->context, syscall->ret);
     }
 
-    syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);
-    syscall->thread->status = THREAD_QUEUED;
+    if(syscall->thread->status == THREAD_BLOCKED) {
+        // this way we prevent accidentally running threads that exit()
+        syscall->thread->status = THREAD_QUEUED;
+        syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);
+    }
+
     syscall->busy = false;
     return 1;
 }
