@@ -41,8 +41,15 @@ void *kernelThread(void *args) {
     }
 
     // TODO: maybe pass boot arguments to lumen?
-    execveMemory(lumen, NULL, NULL);
+    pid_t pid = execveMemory(lumen, NULL, NULL);
     free(lumen);
+
+    if(!pid) {
+        KERROR("failed to start lumen, halting because there's nothing to do\n");
+        while(1) platformHalt();
+    }
+
+    setLumenPID(pid);
     idleThread(args);
 }
 

@@ -17,10 +17,10 @@
  * params: ptr - pointer to the program in memory
  * params: argv - arguments to be passed to the program
  * params: envp - environmental variables to be passed
- * returns: should not return on success
+ * returns: PID, zero on fail
  */
 
-int execveMemory(const void *ptr, const char **argv, const char **envp) {
+pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     schedLock();
     setScheduling(false);
 
@@ -93,7 +93,7 @@ int execveMemory(const void *ptr, const char **argv, const char **envp) {
     threadUseContext(getTid());
     setScheduling(true);
     schedRelease();
-    return 0;
+    return pid;
 }
 
 /* execve(): executes a program from a file

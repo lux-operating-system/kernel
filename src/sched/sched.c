@@ -20,6 +20,7 @@ static lock_t *lock;
 static uint8_t *pidBitmap;
 static Process *first;       // first process in the linked list
 static Process *last;
+static pid_t lumen;          // we'll need this to adopt orphaned processes
 
 /* schedInit(): initializes the scheduler */
 
@@ -539,4 +540,23 @@ int yield(Thread *t) {
 
 Process *getProcessQueue() {
     return first;
+}
+
+/* setLumenPID(): saves the PID of lumen 
+ * params: pid - process ID
+ * returns: nothing
+ */
+
+void setLumenPID(pid_t pid) {
+    lumen = pid;
+    KDEBUG("started lumen with pid %d\n", pid);
+}
+
+/* getLumenPID(): returns the PID of lumen
+ * params: none
+ * returns: process ID
+ */
+
+pid_t getLumenPID() {
+    return lumen;
 }
