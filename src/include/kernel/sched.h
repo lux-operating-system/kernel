@@ -22,6 +22,7 @@
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
 #define THREAD_BLOCKED          2       // waiting for I/O
+#define THREAD_ZOMBIE           3
 
 #define PRIORITY_HIGH           0
 #define PRIORITY_NORMAL         1
@@ -32,7 +33,11 @@ typedef struct Thread {
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;          //.timeslice
 
+    bool orphan;            // true when the parent process exits or is killed
+    bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
+
     SyscallRequest syscall; // for when the thread is blocked
+    int exitStatus;         // for zombie threads
 
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
