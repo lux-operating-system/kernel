@@ -11,6 +11,7 @@
 #include <platform/lock.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/sched.h>
 
 static lock_t lock = LOCK_INITIAL;
 
@@ -85,8 +86,9 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
 
     // TODO: implement a separate kernel panic and userspace exception handling
     acquireLockBlocking(&lock);
+    schedLock();
     pid_t pid = getPid();
-    if(pid) {
+    if(pid > 0) {
         pid_t tid = getTid();
         KERROR("cpu %d (pid %d, tid %d): %d - %s with error code %d\n", platformWhichCPU(), pid, tid, number, exceptions[number], code);
     } else {
@@ -103,6 +105,7 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     KERROR(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
     KERROR(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
 
+    schedRelease();
     releaseLock(&lock);
     while(1);
 }
