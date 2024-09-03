@@ -285,7 +285,7 @@ uint64_t schedTimer() {
     if(!t) {
         time = 0;
     } else {
-        t->time--;
+        if(t->time) t->time--;  // prevent underflows
         time = t->time;
     }
 
