@@ -11,9 +11,7 @@
 #include <stdbool.h>
 #include <kernel/sched.h>
 
-#define MAX_SYSCALL                     1       // for now
-
-#define LUX_SYSCALL_FORK                0
+#define MAX_SYSCALL                     9       // for now
 
 typedef struct SyscallRequest {
     bool busy;

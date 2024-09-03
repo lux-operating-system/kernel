@@ -61,7 +61,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchYield,       // 2 - yield()
     NULL,                       // 3 - waitpid()
     NULL,                       // 4 - execve()
-    NULL,                       // 5 - execrd()
+    NULL,                       // 5 - execrdv()
     syscallDispatchGetPID,      // 6 - getpid()
     syscallDispatchGetTID,      // 7 - gettid()
     syscallDispatchGetUID,      // 8 - getuid()
