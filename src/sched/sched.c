@@ -338,7 +338,7 @@ void schedule() {
         while(p) {
             while(t) {
                 if(t != current && t->status == THREAD_QUEUED) {
-                    if(current) {
+                    if(current && current->status != THREAD_ZOMBIE) {
                         //KDEBUG("marking %d as queued\n", current->tid);
                         current->status = THREAD_QUEUED;
                         current->time = schedTimeslice(current, current->priority);
