@@ -89,6 +89,7 @@ pid_t execveMemory(const void *, const char **argv, const char **envp);
 pid_t getLumenPID();
 void setLumenPID(pid_t);
 int schedException(pid_t, pid_t);
+void terminateThread(Thread *, int, bool);
 
 // these functions are exposed as system calls, but some will need to take
 // the thread as an argument from the system call handler - the actual user

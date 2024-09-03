@@ -83,8 +83,11 @@ int syscallProcess() {
 
     // essentially just dispatch the syscall and store the return value
     // in the thread's context so it can get it back
-    if(syscall->function > MAX_SYSCALL) {
-        platformSetContextStatus(syscall->thread->context, (int64_t)-1);
+    if(syscall->function > MAX_SYSCALL || !syscallDispatchTable[syscall->function]) {
+        KWARN("undefined syscall request %d from tid %d, killing thread...\n", syscall->function, syscall->thread->tid);
+        schedLock();
+        terminateThread(syscall->thread, -1, false);
+        schedRelease();
     } else {
         syscallDispatchTable[syscall->function](syscall);
         platformSetContextStatus(syscall->thread->context, syscall->ret);
