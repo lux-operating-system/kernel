@@ -32,6 +32,7 @@ pid_t fork(Thread *t) {
     // we now have a blank slate process, so we need to create a thread in it
     // and deep clone the parent into the child
     Process *p = getProcess(pid);
+    p->parent = t->pid;     // NOTICE: not sure if we should be using the PID or TID of the parent
     p->threadCount = 1;
     p->threads = calloc(p->threadCount, sizeof(Thread *));
     if(!p->threads) {
@@ -74,6 +75,15 @@ pid_t fork(Thread *t) {
         setScheduling(true);
         schedRelease();
         return -1;
+    }
+
+    // if we made this far then the creation was successful
+    // list the child process as a child of the parent
+    Process *parent = getProcess(t->pid);
+    if(parent) {
+        parent->childrenCount++;
+        parent->children = realloc(parent->children, parent->childrenCount);
+        if(parent->children) parent->children[parent->childrenCount-1] = p;
     }
 
     processes++;
