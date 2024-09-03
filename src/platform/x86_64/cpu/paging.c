@@ -291,7 +291,11 @@ void *platformCloneUserSpace(uintptr_t parent) {
         }
     }
 
-    KDEBUG("cloned PML4 at 0x%08X into 0x%08X\n", parent, base);
+    for(int i = 256; i < 512; i++) {
+        newPML4[i] = oldPML4[i];    // the kernel is in every address space
+    }
+
+    //KDEBUG("cloned PML4 at 0x%08X into 0x%08X\n", parent, base);
 
     return (void *) base;
 }
