@@ -50,6 +50,7 @@ typedef struct Process {
     gid_t group;
 
     bool orphan;            // true when the parent process exits or is killed
+    bool zombie;            // true when all threads are zombies
 
     char *env;              // environmental variables
     char *command;          // command line with arguments
