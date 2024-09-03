@@ -479,6 +479,8 @@ void schedAdjustTimeslice() {
         p = p->next;
         if(p && p->threadCount && p->threads) {
             t = p->threads[0];
+        } else {
+            t = NULL;
         }
     }
 }
