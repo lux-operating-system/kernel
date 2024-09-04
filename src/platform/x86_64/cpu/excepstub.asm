@@ -17,10 +17,11 @@ extern exception
 global %1
 align 16
 %1:
-    push 0                  ; fake code
+    cli
+    push qword 0            ; fake code
     pushaq
     mov rdi, %2
-    mov rsi, 0              ; fake code
+    xor rsi, rsi            ; fake code
     mov rdx, rsp            ; registers we just pushed
     cld
     call exception
@@ -33,6 +34,7 @@ align 16
 global %1
 align 16
 %1:
+    cli
     pushaq
     mov rdi, %2
     mov rsi, [rsp+120]      ; error code

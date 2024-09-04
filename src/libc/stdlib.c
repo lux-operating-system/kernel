@@ -36,10 +36,11 @@ char *ltoa(long n, char *buffer, int radix) {
 
     int length = 0;
 
-    while(n) {
+    uint64_t un = (uint64_t)n;
+
+    while(un) {
         // convert digit by digit and then reverse the string
-        long digit = n % radix;
-        if(digit < 0) digit *= -1;
+        uint64_t digit = un % radix;
 
         if(digit >= 10) {
             buffer[length] = 'a' + digit - 10;
@@ -48,7 +49,7 @@ char *ltoa(long n, char *buffer, int radix) {
         }
 
         length++;
-        n /= radix;
+        un /= radix;
     }
 
     buffer[length] = 0;   // null terminator

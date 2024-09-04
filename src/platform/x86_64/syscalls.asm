@@ -49,6 +49,7 @@ syscallEntry:
 
     extern syscallHandle
     mov rdi, rsp                    ; pass the context we just created
+    cld
     call syscallHandle
 
     ; this should never return as it will force a context switch

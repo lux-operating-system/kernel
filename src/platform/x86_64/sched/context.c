@@ -175,3 +175,39 @@ SyscallRequest *platformCreateSyscallContext(Thread *t) {
 
     return &t->syscall;
 }
+
+/* platformCloneContext(): creates a deep clone of a thread's context
+ * params: cctx - pointer to child context
+ * params: pctx - pointer to parent context
+ * returns: pointer to child context on success, NULL on failure
+ */
+
+void *platformCloneContext(void *cctx, const void *pctx) {
+    ThreadContext *child = (ThreadContext *)cctx;
+    ThreadContext *parent = (ThreadContext *)pctx;
+
+    // first copy the register states
+    memcpy(child, parent, sizeof(ThreadContext));
+
+    // now create a deep clone of the LOWER HALF of the paging structures
+    // the kernel is always present in the higher half of every address space
+    // and is unchanging, so it doesn't need cloning
+    child->cr3 = (uint64_t)platformCloneUserSpace(parent->cr3);
+    if(!child->cr3) return NULL;
+    return child;
+}
+
+/* platformSetContextStatus(): sets the return value after a syscall
+ * this is a platform-specific function because the register used to store the
+ * return value differs by ABI and thus by platform
+ * params: ctx - pointer to thread context
+ * params: value - return value to be passed
+ * returns: nothing
+ */
+
+void platformSetContextStatus(void *ctx, uint64_t value) {
+    // again on x86_64 we're following the System V ABI
+    // so return values will simply be passed in the RAX register
+    ThreadContext *context = (ThreadContext *)ctx;
+    context->regs.rax = value;
+}

@@ -22,6 +22,8 @@
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
 #define THREAD_BLOCKED          2       // waiting for I/O
+#define THREAD_ZOMBIE           3
+#define THREAD_SLEEP            4
 
 #define PRIORITY_HIGH           0
 #define PRIORITY_NORMAL         1
@@ -30,9 +32,12 @@
 typedef struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
-    uint64_t time;          //.timeslice
+    uint64_t time;          // timeslice OR sleep time if sleeping thread
+
+    bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
 
     SyscallRequest syscall; // for when the thread is blocked
+    int exitStatus;         // for zombie threads
 
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
@@ -44,6 +49,9 @@ typedef struct Process {
     pid_t pid, parent;
     uid_t user;
     gid_t group;
+
+    bool orphan;            // true when the parent process exits or is killed
+    bool zombie;            // true when all threads are zombies
 
     char *env;              // environmental variables
     char *command;          // command line with arguments
@@ -72,11 +80,25 @@ void schedAdjustTimeslice();
 void setScheduling(bool);
 void blockThread(Thread *);
 void unblockThread(Thread *);
+Process *getProcessQueue();
 
 pid_t kthreadCreate(void *(*)(void *), void *);
 pid_t processCreate();
 int threadUseContext(pid_t);
 
-int execveMemory(const void *, const char **argv, const char **envp);
-int execve(const char *, const char **argv, const char **envp);
-void yield(Thread *t);
+pid_t execveMemory(const void *, const char **argv, const char **envp);
+pid_t getLumenPID();
+void setLumenPID(pid_t);
+int schedException(pid_t, pid_t);
+void terminateThread(Thread *, int, bool);
+void schedSleepTimer();
+
+// these functions are exposed as system calls, but some will need to take
+// the thread as an argument from the system call handler - the actual user
+// application does not need to be aware of which thread is running for
+// Unix compatibility
+int yield(Thread *);
+pid_t fork(Thread *);
+void exit(Thread *, int);
+int execve(Thread *, const char *, const char **argv, const char **envp);
+unsigned long msleep(Thread *, unsigned long);

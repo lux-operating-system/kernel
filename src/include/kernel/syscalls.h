@@ -11,8 +11,10 @@
 #include <stdbool.h>
 #include <kernel/sched.h>
 
+#define MAX_SYSCALL                     12       // for now
+
 typedef struct SyscallRequest {
-    bool busy;
+    bool busy, queued;
 
     uint64_t function;
     uint64_t params[4];
@@ -26,3 +28,6 @@ void syscallHandle();
 SyscallRequest *syscallEnqueue(SyscallRequest *);
 SyscallRequest *syscallDequeue();
 int syscallProcess();
+
+/* dispatch table */
+extern void (*syscallDispatchTable[])(SyscallRequest *);

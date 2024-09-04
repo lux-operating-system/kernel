@@ -20,6 +20,7 @@ static lock_t *lock;
 static uint8_t *pidBitmap;
 static Process *first;       // first process in the linked list
 static Process *last;
+static pid_t lumen;          // we'll need this to adopt orphaned processes
 
 /* schedInit(): initializes the scheduler */
 
@@ -48,11 +49,11 @@ void schedInit() {
 }
 
 void schedLock() {
-    acquireLockBlocking(lock);
+    if(lock) acquireLockBlocking(lock);
 }
 
 void schedRelease() {
-    releaseLock(lock);
+    if(lock) releaseLock(lock);
 }
 
 /* pidIsUsed(): returns the use status of a PID
@@ -268,7 +269,7 @@ pid_t getTid() {
     return platformGetTid();
 }
 
-/* schedTimer(): decrements and returns the time slice of the running thread
+/* schedTimer(): scheduler timer main function
  * params: none
  * returns: remaining time in milliseconds
  */
@@ -280,14 +281,18 @@ uint64_t schedTimer() {
 
     if(!acquireLock(lock)) return 1;
 
+    // decrement the time slice of the current thread
     uint64_t time;
     Thread *t = getThread(getTid());
     if(!t) {
         time = 0;
     } else {
-        t->time--;
+        if(t->time) t->time--;  // prevent underflows
         time = t->time;
     }
+
+    // and that of sleeping threads too
+    schedSleepTimer();
 
     releaseLock(lock);
     return time;
@@ -336,8 +341,8 @@ void schedule() {
     while(tries < 2) {
         while(p) {
             while(t) {
-                if(t->status == THREAD_QUEUED) {
-                    if(current) {
+                if(t != current && t->status == THREAD_QUEUED) {
+                    if(current && current->status == THREAD_RUNNING) {
                         //KDEBUG("marking %d as queued\n", current->tid);
                         current->status = THREAD_QUEUED;
                         current->time = schedTimeslice(current, current->priority);
@@ -358,6 +363,8 @@ void schedule() {
             if(p && p->threadCount && p->threads) {
                 //KDEBUG("checking PID %d\n", p->pid);
                 t = p->threads[0];
+            } else {
+                t = NULL;
             }
         }
 
@@ -455,7 +462,9 @@ uint64_t schedTimeslice(Thread *t, int p) {
 
     int cpus = platformCountCPU();
     uint64_t time = schedTime / threads;
+    if(time < 6) time = 6;      // minimum threshold
     time *= cpus;
+    if(time < 12) time = 12;
 
     t->priority = p;
     return time;
@@ -469,7 +478,7 @@ void schedAdjustTimeslice() {
 
     while(p) {
         while(t) {
-            if(t->status == THREAD_QUEUED) {
+            if(t->status == THREAD_QUEUED || t->status == THREAD_BLOCKED) {
                 t->time = schedTimeslice(t, t->priority);
             }
 
@@ -479,6 +488,8 @@ void schedAdjustTimeslice() {
         p = p->next;
         if(p && p->threadCount && p->threads) {
             t = p->threads[0];
+        } else {
+            t = NULL;
         }
     }
 }
@@ -513,14 +524,43 @@ void unblockThread(Thread *t) {
 
 /* yield(): gives up control of a thread and puts it back in the queue
  * params: t - thread in question
- * returns: nothing
+ * returns: zero
  */
 
-void yield(Thread *t) {
+int yield(Thread *t) {
     acquireLockBlocking(lock);
 
     t->status = THREAD_QUEUED;
     t->time = schedTimeslice(t, t->priority);
 
     releaseLock(lock);
+    return 0;
+}
+
+/* getProcessQueue(): returns the process queue 
+ * params: none
+ * returns: linked list to the processes
+ */
+
+Process *getProcessQueue() {
+    return first;
+}
+
+/* setLumenPID(): saves the PID of lumen 
+ * params: pid - process ID
+ * returns: nothing
+ */
+
+void setLumenPID(pid_t pid) {
+    lumen = pid;
+    KDEBUG("started lumen with pid %d\n", pid);
+}
+
+/* getLumenPID(): returns the PID of lumen
+ * params: none
+ * returns: process ID
+ */
+
+pid_t getLumenPID() {
+    return lumen;
 }

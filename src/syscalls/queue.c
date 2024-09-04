@@ -6,6 +6,7 @@
  */
 
 #include <platform/platform.h>
+#include <platform/context.h>
 #include <kernel/syscalls.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
@@ -35,6 +36,8 @@ void syscallHandle(void *ctx) {
 
 SyscallRequest *syscallEnqueue(SyscallRequest *request) {
     schedLock();
+
+    request->queued = true;
 
     if(!requests) {
         requests = request;
@@ -66,6 +69,7 @@ SyscallRequest *syscallDequeue() {
     SyscallRequest *request = requests;
     requests = requests->next;
     request->busy = true;
+    request->queued = false;
 
     schedRelease();
     return request;
@@ -80,6 +84,24 @@ int syscallProcess() {
     SyscallRequest *syscall = syscallDequeue();
     if(!syscall) return 0;
 
-    /* stub */
+    // essentially just dispatch the syscall and store the return value
+    // in the thread's context so it can get it back
+    if(syscall->function > MAX_SYSCALL || !syscallDispatchTable[syscall->function]) {
+        KWARN("undefined syscall request %d from tid %d, killing thread...\n", syscall->function, syscall->thread->tid);
+        schedLock();
+        terminateThread(syscall->thread, -1, false);
+        schedRelease();
+    } else {
+        syscallDispatchTable[syscall->function](syscall);
+        platformSetContextStatus(syscall->thread->context, syscall->ret);
+    }
+
+    if(syscall->thread->status == THREAD_BLOCKED) {
+        // this way we prevent accidentally running threads that exit()
+        syscall->thread->status = THREAD_QUEUED;
+        syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);
+    }
+
+    syscall->busy = false;
     return 1;
 }

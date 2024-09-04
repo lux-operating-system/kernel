@@ -8,32 +8,36 @@
 #include <platform/x86_64.h>
 #include <platform/exception.h>
 #include <platform/platform.h>
+#include <platform/lock.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/sched.h>
+
+static lock_t lock = LOCK_INITIAL;
 
 static const char *exceptions[] = {
-    "Divide error",             // 0x00
-    "Debug exception",          // 0x01
-    "Non-maskable interrupt",   // 0x02
-    "Breakpoint",               // 0x03
-    "Overflow",                 // 0x04
-    "Boundary range exceeded",  // 0x05
-    "Undefined opcode",         // 0x06
-    "Device not present",       // 0x07
-    "Double fault",             // 0x08
-    "Reserved exception",       // 0x09
-    "Invalid TSS",              // 0x0A
-    "Data segment exception",   // 0x0B
-    "Stack segment exception",  // 0x0C
-    "General protection fault", // 0x0D
-    "Page fault",               // 0x0E
-    "Reserved exception",       // 0x0F
-    "Math fault",               // 0x10
-    "Alignment exception",      // 0x11
-    "Machine check fail",       // 0x12
-    "Extended math fault",      // 0x13
-    "Virtualization fault",     // 0x14
-    "Control protection fault", // 0x15
+    "divide error",             // 0x00
+    "debug exception",          // 0x01
+    "don-maskable interrupt",   // 0x02
+    "breakpoint",               // 0x03
+    "overflow",                 // 0x04
+    "boundary range exceeded",  // 0x05
+    "undefined opcode",         // 0x06
+    "device not present",       // 0x07
+    "double fault",             // 0x08
+    "reserved exception",       // 0x09
+    "invalid TSS",              // 0x0A
+    "data segment exception",   // 0x0B
+    "stack segment exception",  // 0x0C
+    "general protection fault", // 0x0D
+    "page fault",               // 0x0E
+    "reserved exception",       // 0x0F
+    "math fault",               // 0x10
+    "alignment exception",      // 0x11
+    "machine check fail",       // 0x12
+    "extended math fault",      // 0x13
+    "virtualization fault",     // 0x14
+    "control protection fault", // 0x15
 };
 
 void installExceptions() {
@@ -81,22 +85,45 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     }
 
     // TODO: implement a separate kernel panic and userspace exception handling
+    acquireLockBlocking(&lock);
+    schedLock();
     pid_t pid = getPid();
-    if(pid) {
+    if(pid > 0) {
         pid_t tid = getTid();
-        KERROR("cpu %d (pid %d, tid %d): %d - %s with error code %d\n", platformWhichCPU(), pid, tid, number, exceptions[number], code);
-    } else {
-        KERROR("cpu %d: %d - %s with error code %d\n", platformWhichCPU(), number, exceptions[number], code);
+        if(number == 14) {
+            // for unresolved page faults, print out the faulting logical address
+            KWARN("cpu %d (tid %d): %s @ 0x%X, code %d address 0x%X\n", platformWhichCPU(), tid, exceptions[number], r->rip, code, readCR2());
+        } else {
+            // for everything but page faults
+            KWARN("cpu %d (tid %d): %s @ 0x%X, code %d\n", platformWhichCPU(), tid, exceptions[number], r->rip, code);
+        }
+
+        // and let the scheduler handle it
+        if(schedException(pid, tid)) {
+            // here the faulty thread was terminated
+            releaseLock(&lock);
+            schedRelease();
+            for(;;) schedule();
+        } else {
+            // handled and can continue
+            releaseLock(&lock);
+            schedRelease();
+            return;
+        }
     }
-    
-    KERROR(" rip: 0x%016X  cs:  0x%02X\n", r->rip, r->cs);
-    KERROR(" rax: 0x%016X  rbx: 0x%016X  rcx: 0x%016X\n", r->rax, r->rbx, r->rcx);
-    KERROR(" rdx: 0x%016X  rsi: 0x%016X  rdi: 0x%016X\n", r->rdx, r->rsi, r->rdi);
-    KERROR(" r8:  0x%016X  r9:  0x%016X  r10: 0x%016X\n", r->r8, r->r9, r->r10);
-    KERROR(" r11: 0x%016X  r12: 0x%016X  r13: 0x%016X\n", r->r11, r->r12, r->r13);
-    KERROR(" r14: 0x%016X  r15: 0x%016X\n", r->r14, r->r15);
-    KERROR(" rsp: 0x%016X  rbp: 0x%016X  ss: 0x%02X\n", r->rsp, r->rbp, r->ss);
-    KERROR(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
-    KERROR(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
+
+    KPANIC("kernel panic: cpu %d: %s, code %d\n", platformWhichCPU(), exceptions[number], code);
+    KPANIC(" rip: 0x%016X  cs:  0x%02X\n", r->rip, r->cs);
+    KPANIC(" rax: 0x%016X  rbx: 0x%016X  rcx: 0x%016X\n", r->rax, r->rbx, r->rcx);
+    KPANIC(" rdx: 0x%016X  rsi: 0x%016X  rdi: 0x%016X\n", r->rdx, r->rsi, r->rdi);
+    KPANIC(" r8:  0x%016X  r9:  0x%016X  r10: 0x%016X\n", r->r8, r->r9, r->r10);
+    KPANIC(" r11: 0x%016X  r12: 0x%016X  r13: 0x%016X\n", r->r11, r->r12, r->r13);
+    KPANIC(" r14: 0x%016X  r15: 0x%016X\n", r->r14, r->r15);
+    KPANIC(" rsp: 0x%016X  rbp: 0x%016X  ss: 0x%02X\n", r->rsp, r->rbp, r->ss);
+    KPANIC(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
+    KPANIC(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
+
+    schedRelease();
+    releaseLock(&lock);
     while(1);
 }
