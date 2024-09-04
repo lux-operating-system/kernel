@@ -1,0 +1,37 @@
+name: Check build (macOS)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install nasm curl make
+
+      - name: Fetch and install toolchain
+        run: |
+          curl https://jewelcodes.io/lux/toolchain-macos-arm64.tar.xz -o toolchain-macos-arm64.tar.xz
+          tar -xvJf toolchain-macos-arm64.tar.xz
+          mv toolchain $HOME/toolchain
+          echo "$HOME/toolchain/bin" >> $GITHUB_PATH
+
+      - name: Verify toolchain is executable
+        run: x86_64-lux-gcc -v
+
+      - name: Build kernel
+        run: make
+    
+      - name: Clean up artifacts
+        run: |
+          rm -rf toolchain-macos-arm64.tar.xz $HOME/toolchain
+          make clean
