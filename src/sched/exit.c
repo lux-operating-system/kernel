@@ -59,7 +59,7 @@ void terminateThread(Thread *t, int status, bool normal) {
     }
 
     if(!normal) {
-        KWARN("killed tid %d from pid %d abnormally\n", t->tid, t->pid);
+        KWARN("killed tid %d abnormally\n", t->tid);
     }
 }
 
