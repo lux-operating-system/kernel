@@ -269,7 +269,7 @@ pid_t getTid() {
     return platformGetTid();
 }
 
-/* schedTimer(): decrements and returns the time slice of the running thread
+/* schedTimer(): scheduler timer main function
  * params: none
  * returns: remaining time in milliseconds
  */
@@ -281,6 +281,7 @@ uint64_t schedTimer() {
 
     if(!acquireLock(lock)) return 1;
 
+    // decrement the time slice of the current thread
     uint64_t time;
     Thread *t = getThread(getTid());
     if(!t) {
@@ -289,6 +290,9 @@ uint64_t schedTimer() {
         if(t->time) t->time--;  // prevent underflows
         time = t->time;
     }
+
+    // and that of sleeping threads too
+    schedSleepTimer();
 
     releaseLock(lock);
     return time;
@@ -474,7 +478,7 @@ void schedAdjustTimeslice() {
 
     while(p) {
         while(t) {
-            if(t->status == THREAD_QUEUED) {
+            if(t->status == THREAD_QUEUED || t->status == THREAD_BLOCKED) {
                 t->time = schedTimeslice(t, t->priority);
             }
 

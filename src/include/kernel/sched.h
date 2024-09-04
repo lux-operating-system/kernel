@@ -23,6 +23,7 @@
 #define THREAD_RUNNING          1
 #define THREAD_BLOCKED          2       // waiting for I/O
 #define THREAD_ZOMBIE           3
+#define THREAD_SLEEP            4
 
 #define PRIORITY_HIGH           0
 #define PRIORITY_NORMAL         1
@@ -31,7 +32,7 @@
 typedef struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
-    uint64_t time;          //.timeslice
+    uint64_t time;          // timeslice OR sleep time if sleeping thread
 
     bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
 
@@ -90,6 +91,7 @@ pid_t getLumenPID();
 void setLumenPID(pid_t);
 int schedException(pid_t, pid_t);
 void terminateThread(Thread *, int, bool);
+void schedSleepTimer();
 
 // these functions are exposed as system calls, but some will need to take
 // the thread as an argument from the system call handler - the actual user
@@ -99,3 +101,4 @@ int yield(Thread *);
 pid_t fork(Thread *);
 void exit(Thread *, int);
 int execve(Thread *, const char *, const char **argv, const char **envp);
+unsigned long msleep(Thread *, unsigned long);
