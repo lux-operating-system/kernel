@@ -15,7 +15,8 @@ jobs:
 
       - name: Fetch and install toolchain
         run: |
-          tar -xvJf https://jewelcodes.io/lux/toolchain-linux-x86_64.tar.xz -o toolchain-linux-x86_64.tar.xz
+          curl https://jewelcodes.io/lux/toolchain-linux-x86_64.tar.xz -o toolchain-linux-x86_64.tar.xz
+          tar -xvJf toolchain-linux-x86_64.tar.xz
           mv toolchain $HOME/work/toolchain
           mv host $HOME/work/host
           echo "$HOME/work/toolchain/bin" >> $GITHUB_PATH
