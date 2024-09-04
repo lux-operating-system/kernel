@@ -22,8 +22,9 @@ jobs:
         run: |
           curl https://jewelcodes.io/lux/toolchain-macos-arm64.tar.xz -o toolchain-macos-arm64.tar.xz
           tar -xvJf toolchain-macos-arm64.tar.xz
-          mv toolchain $HOME/toolchain
-          echo "$HOME/toolchain/bin" >> $GITHUB_PATH
+          mv toolchain $HOME/work/toolchain
+          mv host $HOME/work/host
+          echo "$HOME/work/toolchain/bin" >> $GITHUB_PATH
 
       - name: Verify toolchain is executable
         run: x86_64-lux-gcc -v
@@ -33,5 +34,5 @@ jobs:
     
       - name: Clean up artifacts
         run: |
-          rm -rf toolchain-macos-arm64.tar.xz $HOME/toolchain
+          rm -rf toolchain-macos-arm64.tar.xz $HOME/work/toolchain $HOME/work/host
           make clean
