@@ -27,7 +27,7 @@ pid_t fork(Thread *t) {
         return -1;
     }
 
-    //KDEBUG("forking parent PID %d into child %d\n", t->pid, pid);
+    KDEBUG("forking parent PID %d into child %d\n", t->pid, pid);
 
     // we now have a blank slate process, so we need to create a thread in it
     // and deep clone the parent into the child
