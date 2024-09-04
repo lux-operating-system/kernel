@@ -27,14 +27,17 @@ unsigned long msleep(Thread *t, unsigned long msec) {
     t->time = msec;
 
     sleepingCount++;
-    sleepingThreads = realloc(sleepingThreads, sizeof(Thread *) * sleepingCount);
-    if(!sleepingThreads) {
+    Thread **list = realloc(sleepingThreads, sizeof(Thread *) * sleepingCount);
+    if(!list) {
         KERROR("failed to allocate memory to put thread %d to sleep\n", t->tid);
         t->status = THREAD_QUEUED;  // failed sleep (?)
+        t->time = schedTimeslice(t, t->priority);
+        sleepingCount--;
         schedRelease();
         return 0;
     }
 
+    sleepingThreads = list;
     sleepingThreads[sleepingCount-1] = t;
     schedRelease();
     return 0;
