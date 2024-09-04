@@ -42,7 +42,7 @@ SyscallRequest *syscallEnqueue(SyscallRequest *request) {
     if(!requests) {
         requests = request;
     } else {
-        SyscallRequest *q = request;
+        SyscallRequest *q = requests;
         while(q->next) {
             q = q->next;
         }
