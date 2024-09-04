@@ -19,6 +19,19 @@ void *memcpy(void *dst, const void *src, size_t n) {
     return dst;
 }
 
+void *memmove(void *dst, const void *src, size_t n) {
+    // force volatile here so it only uses byte-by-byte accesses
+    // this is necessary for overlapping memory areas
+    uint8_t volatile *dstc = (uint8_t volatile *)dst;
+    uint8_t volatile *srcc = (uint8_t volatile *)src;
+
+    for(size_t i = 0; i < n; i++) {
+        dstc[i] = srcc[i];
+    }
+
+    return dst;
+}
+
 size_t strlen(const char *s) {
     size_t i = 0;
     for(; *s; i++) {
