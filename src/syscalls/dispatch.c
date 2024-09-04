@@ -54,6 +54,10 @@ void syscallDispatchGetGID(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchMSleep(SyscallRequest *req) {
+    req->ret = msleep(req->thread, req->params[0]);
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     // group 1: scheduler functions
     syscallDispatchExit,        // 0 - exit()
@@ -66,4 +70,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchGetTID,      // 7 - gettid()
     syscallDispatchGetUID,      // 8 - getuid()
     syscallDispatchGetGID,      // 9 - getgid()
+    NULL,                       // 10 - setuid()
+    NULL,                       // 11 - setgid()
+    syscallDispatchMSleep,      // 12 - msleep()
 };
