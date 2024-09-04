@@ -96,6 +96,9 @@ void platformSwitchContext(Thread *t) {
     KernelCPUInfo *kinfo = getKernelCPUInfo();
     //KDEBUG("switching to thread %d on CPU %d\n", t->tid, getKernelCPUInfo()->cpuIndex);
 
+    ThreadContext *ctx = (ThreadContext *)t->context;
+    ctx->regs.rflags |= 0x202; // interrupts can never be switched off outside of the kernel
+
     kinfo->thread = t;
     kinfo->process = getProcess(t->pid);
     platformLoadContext(t->context);
