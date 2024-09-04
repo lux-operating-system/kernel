@@ -92,10 +92,10 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
         pid_t tid = getTid();
         if(number == 14) {
             // for unresolved page faults, print out the faulting logical address
-            KWARN("cpu %d (pid %d, tid %d): %s @ 0x%X, code %d address 0x%X\n", platformWhichCPU(), pid, tid, exceptions[number], r->rip, code, readCR2());
+            KWARN("cpu %d (tid %d): %s @ 0x%X, code %d address 0x%X\n", platformWhichCPU(), tid, exceptions[number], r->rip, code, readCR2());
         } else {
             // for everything but page faults
-            KWARN("cpu %d (pid %d, tid %d): %s @ 0x%X, code %d\n", platformWhichCPU(), pid, tid, exceptions[number], r->rip, code);
+            KWARN("cpu %d (tid %d): %s @ 0x%X, code %d\n", platformWhichCPU(), tid, exceptions[number], r->rip, code);
         }
 
         // and let the scheduler handle it
