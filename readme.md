@@ -13,7 +13,7 @@ In less than 2,500 lines <sup>[1]</sup> of code, lux implements **memory managem
 - [ ] **Interprocess communication:** lux will implement kernel-level support for local Unix sockets to facilitate communication with the servers.
 
 ### Software Architecture
-lux is a microkernel that provides minimal kernel-level functionality and will behave as a wrapper for a variety of servers running in user space, which will provide the expected OS functionality. This design will depend on a user space router ([lumen](https://github.com/lux-operating-system/lumen)) to forward or "route" messages between the kernel and the servers. These servers will then implement driver functionality, such as device drivers, file system drivers, networking stacks, and so on. lux, lumen, and the servers follow the client-server paradigm and will communicate via Unix sockets.
+lux is a microkernel that provides minimal kernel-level functionality and will behave as a wrapper for a variety of servers running in user space, which will provide the expected OS functionality. This design will depend on a user space router ([lux-operating-system/lumen](https://github.com/lux-operating-system/lumen)) to forward or "route" messages between the kernel and the servers. These servers will then implement driver functionality, such as device drivers, file system drivers, networking stacks, and so on. lux, lumen, and the servers follow the client-server paradigm and will communicate via Unix sockets.
 
 This diagram illustrates the architecture of the various components in an operating system built on lux and lumen. It is subject to change as more components are developed.
 
