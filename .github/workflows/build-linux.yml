@@ -15,8 +15,8 @@ jobs:
 
       - name: Fetch and install toolchain
         run: |
-          curl https://github.com/lux-operating-system/toolchain-x86_64/releases/download/github-runners/toolchain-linux-x86_64.tar.xz -o toolchain-linux-x86_64.tar.xz
-          tar -xvJf toolchain-linux-x86_64.tar.xz
+          curl https://github.com/lux-operating-system/toolchain-x86_64/releases/download/github-runners/toolchain-linux-x86_64.tar.gz -o toolchain-linux-x86_64.tar.gz
+          tar -xvzf toolchain-linux-x86_64.tar.gz
           mv toolchain $HOME/work/toolchain
           mv host $HOME/work/host
           echo "$HOME/work/toolchain/bin" >> $GITHUB_PATH
@@ -29,5 +29,5 @@ jobs:
     
       - name: Clean up artifacts
         run: |
-          rm -rf toolchain-linux-x86_64.tar.xz $HOME/work/toolchain $HOME/work/host
+          rm -rf toolchain-linux-x86_64.tar.gz $HOME/work/toolchain $HOME/work/host
           make clean
