@@ -82,7 +82,16 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     uint64_t highest;
     uint64_t entry = loadELF(ptr, &highest);
 
-    platformSetContext(process->threads[0], entry, highest, argv, envp);
+    if(platformSetContext(process->threads[0], entry, highest, argv, envp)) {
+        threadUseContext(getTid());
+        free(process->threads[0]->context);
+        free(process->threads[0]);
+        free(process->threads);
+        free(process);
+        setScheduling(true);
+        schedRelease();
+        return 0;
+    }
 
     KDEBUG("created new process with pid %d\n", pid);
 
