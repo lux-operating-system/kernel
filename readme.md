@@ -22,7 +22,7 @@ This diagram illustrates the architecture of the various components in an operat
 All of the described components, including the microkernel itself (with the exception of the scheduler), can be preempted and are fully multithreaded applications for a more responsive software foundation.
 
 ## Building
-Visit [lux-operating-system/lux](https://github.com/lux-operating-system/lux) for the full build instructions, starting from the toolchain and ending at a disk image that can be booted on a virtual machine or real hardware. If you don't want to manually build lux, [nightly builds](https://github.com/lux-operating-system/lux/actions) also generate a bootable disk image that can be used on a virtual machine.
+Visit [lux-operating-system/lux](https://github.com/lux-operating-system/lux) for the full build instructions, starting from the toolchain and ending at a disk image that can be booted on a virtual machine or real hardware. If you don't want to manually build lux, [nightly builds](https://github.com/lux-operating-system/lux/actions/workflows/nightly-mac.yml) also generate a bootable disk image that can be used on a virtual machine.
 
 ## License
 The lux microkernel is free and open source software released under the terms of the MIT License. Unix is a registered trademark of The Open Group.
