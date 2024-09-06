@@ -12,6 +12,9 @@
 #include <kernel/sched.h>
 #include <sys/types.h>
 
+/* system-wide limit */
+#define MAX_SOCKETS             (1 << 20)   // little over a million
+
 /* socket family/domain - only Unix sockets will be implemented in the kernel */
 #define AF_UNIX                 1
 #define AF_LOCAL                AF_UNIX
@@ -44,6 +47,8 @@ typedef struct {
     int inboundCount, outboundCount;
     void **inbound, **outbound;
 } SocketDescriptor;
+
+void socketInit();
 
 /* socket system calls */
 int socket(Thread *, int, int, int);

@@ -12,9 +12,31 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <kernel/logger.h>
 #include <kernel/socket.h>
 #include <kernel/io.h>
 #include <kernel/sched.h>
+
+/* array of system-wide open sockets */
+static SocketDescriptor *sockets;
+static int socketCount;
+
+/* socketInit(): initializes the socket subsystem
+ * params: none
+ * returns: nothing
+ */
+
+void socketInit() {
+    sockets = calloc(sizeof(SocketDescriptor *), MAX_SOCKETS);
+    if(!sockets) {
+        KERROR("failed to allocate memory for socket subsystem\n");
+        while(1);
+    }
+
+    socketCount = 0;
+
+    KDEBUG("max %d sockets, %d per process\n", MAX_SOCKETS, MAX_IO_DESCRIPTORS);
+}
 
 /* socket(): opens a communication socket
  * params: t - calling thread, NULL for kernel threads
