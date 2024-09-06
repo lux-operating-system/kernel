@@ -60,6 +60,7 @@ typedef struct Process {
     char *command;          // command line with arguments
 
     IODescriptor io[MAX_IO_DESCRIPTORS];
+    int iodCount;
 
     size_t threadCount;
     size_t childrenCount;

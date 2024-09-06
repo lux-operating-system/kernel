@@ -155,6 +155,14 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
     p->childrenCount = 0;
     p->children = NULL;
 
+    p->iodCount = 3;        // stdin, stdout, stderr
+    p->io[IO_STDIN].type = IO_STDIN;
+    p->io[IO_STDIN].valid = true;
+    p->io[IO_STDOUT].type = IO_STDOUT;
+    p->io[IO_STDOUT].valid = true;
+    p->io[IO_STDERR].type = IO_STDERR;
+    p->io[IO_STDERR].valid = true;
+
     p->threads = calloc(1, sizeof(Thread *));
     if(!p->threads) {
         KERROR("failed to allocate memory for kernel thread\n");
@@ -429,6 +437,14 @@ pid_t processCreate() {
     process->parent = getPid();
     process->user = 0;          // TODO
     process->group = 0;         // TODO
+
+    process->iodCount = 3;        // stdin, stdout, stderr
+    process->io[IO_STDIN].type = IO_STDIN;
+    process->io[IO_STDIN].valid = true;
+    process->io[IO_STDOUT].type = IO_STDOUT;
+    process->io[IO_STDOUT].valid = true;
+    process->io[IO_STDERR].type = IO_STDERR;
+    process->io[IO_STDERR].valid = true;
 
     // env and command line will be taken care of by fork() or exec()
 
