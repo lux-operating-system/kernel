@@ -25,6 +25,10 @@
 #define SOCK_DGRAM              2       // datagram-oriented
 #define SOCK_SEQPACKET          3       // connection-oriented
 
+/* additional socket flags */
+#define SOCK_NONBLOCK           0x100
+#define SOCK_CLOEXEC            0x200
+
 typedef uint16_t sa_family_t;
 typedef size_t socklen_t;
 

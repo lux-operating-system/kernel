@@ -24,11 +24,17 @@
 #define IO_FILE                 4
 #define IO_SOCKET               5
 
+/* I/O descriptor flags */
+#define O_NONBLOCK              0x0001
+#define O_NDELAY                O_NONBLOCK
+#define O_CLOEXEC               0x0002
+
 // TODO: decide whether to implement named pipes as files or an independent type
 
 typedef struct IODescriptor {
     bool valid;
     int type;
+    uint16_t flags;
     void *data;                 // file or socket-specific data
 } IODescriptor;
 
