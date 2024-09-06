@@ -39,8 +39,8 @@ struct sockaddr_un {
 
 /* socket-specific I/O descriptor (see io.h) */
 typedef struct {
-    struct sockaddr socket;
-    int backlog;
+    struct sockaddr address;
+    int type, protocol, backlog;
     int inboundCount, outboundCount;
     void **inbound, **outbound;
 } SocketDescriptor;
