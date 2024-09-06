@@ -55,6 +55,7 @@ typedef struct {
 } SocketDescriptor;
 
 void socketInit();
+SocketDescriptor *getLocalSocket(const struct sockaddr *, socklen_t);
 
 /* socket system calls */
 int socket(Thread *, int, int, int);

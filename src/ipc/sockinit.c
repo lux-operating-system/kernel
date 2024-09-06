@@ -41,6 +41,24 @@ void socketInit() {
     KDEBUG("max %d sockets, %d per process\n", MAX_SOCKETS, MAX_IO_DESCRIPTORS);
 }
 
+/* getLocalSocket(): finds a local socket by address
+ * params: addr - socket address
+ * params: len - length of socket address
+ * returns: pointer to socket descriptor, NULL on fail
+ */
+
+SocketDescriptor *getLocalSocket(const struct sockaddr *addr, socklen_t len) {
+    if(!socketCount) return NULL;
+    if(len > sizeof(struct sockaddr)) len = sizeof(struct sockaddr);
+    for(int i = 0; i < socketCount; i++) {
+        if((sockets[i]) && !memcmp(&sockets[i]->address, addr, len)) {
+            return sockets[i];
+        }
+    }
+
+    return NULL;
+}
+
 /* socket(): opens a communication socket
  * params: t - calling thread, NULL for kernel threads
  * params: domain - socket domain/family
