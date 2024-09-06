@@ -32,4 +32,5 @@ typedef struct IODescriptor {
     void *data;                 // file or socket-specific data
 } IODescriptor;
 
-int openIO(void *p, void **iod);
+int openIO(void *, void **);
+void closeIO(void *, void *);
