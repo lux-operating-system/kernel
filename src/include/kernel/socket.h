@@ -14,7 +14,7 @@
 #include <sys/types.h>
 
 /* system-wide limit */
-#define MAX_SOCKETS             (1 << 20)   // little over a million
+#define MAX_SOCKETS             (1 << 18)   // 262k
 
 /* socket family/domain - only Unix sockets will be implemented in the kernel */
 #define AF_UNIX                 1
