@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include <kernel/sched.h>
 #include <sys/types.h>
 
@@ -47,6 +48,7 @@ struct sockaddr_un {
 /* socket-specific I/O descriptor (see io.h) */
 typedef struct {
     struct sockaddr address;
+    bool listener;
     int type, protocol, backlog;
     int inboundCount, outboundCount;
     void **inbound, **outbound;
