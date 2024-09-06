@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel/sched.h>
+#include <sys/types.h>
 
 /* socket family/domain - only Unix sockets will be implemented in the kernel */
 #define AF_UNIX                 1
