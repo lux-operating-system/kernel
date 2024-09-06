@@ -91,6 +91,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
 
     // set up the socket family for now
     SocketDescriptor *sock = (SocketDescriptor *)iod->data;
+    sock->process = p;
     sock->address.sa_family = domain;
     sock->type = type & 0xFF;
     sock->protocol = protocol;

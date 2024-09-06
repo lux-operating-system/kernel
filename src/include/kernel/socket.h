@@ -46,12 +46,14 @@ struct sockaddr_un {
 };
 
 /* socket-specific I/O descriptor (see io.h) */
-typedef struct {
+typedef struct SocketDescriptor {
+    Process *process;
     struct sockaddr address;
     bool listener;
     int type, protocol, backlog;
     int inboundCount, outboundCount;
     void **inbound, **outbound;
+    struct SocketDescriptor *peer;
 } SocketDescriptor;
 
 void socketInit();
