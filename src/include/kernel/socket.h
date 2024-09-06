@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <kernel/sched.h>
 
 /* socket family/domain - only Unix sockets will be implemented in the kernel */
 #define AF_UNIX                 1
@@ -42,3 +43,12 @@ typedef struct {
     int inboundCount, outboundCount;
     void **inbound, **outbound;
 } SocketDescriptor;
+
+/* socket system calls */
+int socket(Thread *, int, int, int);
+int connect(Thread *, int, const struct sockaddr *, socklen_t);
+int bind(Thread *, int, const struct sockaddr *, socklen_t);
+int listen(Thread *, int, int);
+int accept(Thread *, int, struct sockaddr *, socklen_t *);
+ssize_t recv(Thread *, int, void *, size_t, int);
+ssize_t send(Thread *, int, const void *, size_t, int);
