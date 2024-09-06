@@ -20,8 +20,6 @@
 
 #define MAX_PID                 99999
 
-#define MAX_IO_DESCRIPTORS      1024    // max files/sockets open per process
-
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
 #define THREAD_BLOCKED          2       // waiting for I/O
@@ -59,7 +57,7 @@ typedef struct Process {
     char *env;              // environmental variables
     char *command;          // command line with arguments
 
-    IODescriptor io[MAX_IO_DESCRIPTORS];
+    struct IODescriptor io[MAX_IO_DESCRIPTORS];
     int iodCount;
 
     size_t threadCount;
