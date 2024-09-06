@@ -12,12 +12,15 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <kernel/syscalls.h>
+#include <kernel/io.h>
 
 // ideal number of context switches per second
 // still not sure of how to decide on this value so it'll probably change
 #define SCHED_SWITCH_RATE       200
 
 #define MAX_PID                 99999
+
+#define MAX_IO_DESCRIPTORS      1024    // max files/sockets open per process
 
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
@@ -55,6 +58,8 @@ typedef struct Process {
 
     char *env;              // environmental variables
     char *command;          // command line with arguments
+
+    IODescriptor io[MAX_IO_DESCRIPTORS];
 
     size_t threadCount;
     size_t childrenCount;
