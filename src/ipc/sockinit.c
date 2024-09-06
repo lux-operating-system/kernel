@@ -12,12 +12,14 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <platform/lock.h>
 #include <kernel/logger.h>
 #include <kernel/socket.h>
 #include <kernel/io.h>
 #include <kernel/sched.h>
 
 /* array of system-wide open sockets */
+static lock_t lock = LOCK_INITIAL;
 static SocketDescriptor *sockets;
 static int socketCount;
 
@@ -54,6 +56,8 @@ int socket(Thread *t, int domain, int type, int protocol) {
     if(!p) return -ESRCH;
     if(p->iodCount == MAX_IO_DESCRIPTORS) return -EMFILE;
 
+    acquireLockBlocking(&lock);
+
     IODescriptor *iod = NULL;       // open I/O descriptor
     int sd = openIO(p, (void **) &iod);
     if(sd < 0 || !iod) return sd;
@@ -61,6 +65,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
     iod->type = IO_SOCKET;
     iod->data = calloc(1, sizeof(SocketDescriptor));
     if(!iod->data) {
+        releaseLock(&lock);
         closeIO(p, iod);
     }
 
@@ -70,5 +75,9 @@ int socket(Thread *t, int domain, int type, int protocol) {
     sock->type = type;
     sock->protocol = protocol;
 
+    sockets[socketCount] = sock;
+    socketCount++;
+
+    releaseLock(&lock);
     return sd;
 }
