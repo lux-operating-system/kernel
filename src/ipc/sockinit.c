@@ -12,6 +12,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <platform/lock.h>
 #include <kernel/logger.h>
 #include <kernel/socket.h>
@@ -20,7 +21,7 @@
 
 /* array of system-wide open sockets */
 static lock_t lock = LOCK_INITIAL;
-static SocketDescriptor *sockets;
+static SocketDescriptor **sockets;
 static int socketCount;
 
 /* socketInit(): initializes the socket subsystem
@@ -80,4 +81,32 @@ int socket(Thread *t, int domain, int type, int protocol) {
 
     releaseLock(&lock);
     return sd;
+}
+
+/* bind(): assigns a local address to a socket
+ * params: t - calling thread, NULL for kernel threads
+ * params: sd - socket descriptor
+ * params: addr - socket address structure
+ * params: len - length of socket address struct
+ * returns: zero on success, negative error code on fail
+ */
+
+int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getPid());
+    if(!p) return -ESRCH;
+
+    // input verification
+    if(len > sizeof(struct sockaddr)) len = sizeof(struct sockaddr);
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
+    if(!p->io[sd].valid || p->io[sd].type != IO_SOCKET) return -ENOTSOCK;
+
+    SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
+    if(!sock) return -ENOTSOCK;
+    if(addr->sa_family != sock->address.sa_family) return -EAFNOSUPPORT;
+
+    // finally
+    memcpy(&sock->address, addr, len);
+    return 0;
 }
