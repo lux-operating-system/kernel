@@ -7,6 +7,8 @@
 
 /* Abstractions for file systems and sockets */
 
+#pragma once
+
 #include <stdint.h>
 #include <stdbool.h>
 
