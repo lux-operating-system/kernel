@@ -65,6 +65,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
 
     iod->type = IO_SOCKET;
     iod->data = calloc(1, sizeof(SocketDescriptor));
+    iod->flags = type & 0xFF00;
     if(!iod->data) {
         releaseLock(&lock);
         closeIO(p, iod);
@@ -73,7 +74,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
     // set up the socket family for now
     SocketDescriptor *sock = (SocketDescriptor *)iod->data;
     sock->address.sa_family = domain;
-    sock->type = type;
+    sock->type = type & 0xFF;
     sock->protocol = protocol;
 
     sockets[socketCount] = sock;
