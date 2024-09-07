@@ -46,7 +46,6 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     socketLock();
     peer->backlog[peer->backlogCount] = self;
     peer->backlogCount++;
-    self->peer = peer;
     socketRelease();
     return 0;
 }
@@ -139,6 +138,7 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
 
     // and assign the peer address
     self->peer = listener->backlog[0];  // TODO: is this always FIFO?
+    self->peer->peer = self;
     memmove(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
     listener->backlogCount--;
 
