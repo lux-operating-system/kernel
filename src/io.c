@@ -20,7 +20,7 @@
 
 int openIO(void *pv, void **iodv) {
     Process *p = (Process *)pv;
-    IODescriptor *iod = (IODescriptor *)iodv;
+    IODescriptor **iod = (IODescriptor **)iodv;
 
     if(p->iodCount >= MAX_IO_DESCRIPTORS) return -ESRCH;
 
@@ -35,6 +35,8 @@ int openIO(void *pv, void **iodv) {
     p->io[desc].data = NULL;
 
     p->iodCount++;
+
+    *iod = &p->io[desc];
     return desc;
 }
 
