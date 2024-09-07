@@ -134,11 +134,15 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     memcpy(&self->address, &listener->address, sizeof(struct sockaddr));
     self->type = listener->type;
     self->protocol = listener->protocol;
+    self->process = listener->process;
 
     // and assign the peer address
     self->peer = listener->backlog[0];  // TODO: is this always FIFO?
     memmove(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
+    listener->backlogCount--;
 
     socketRelease();
-    return connectedSocket;
+
+    if(!self->peer) return -ECONNABORTED;
+    else return connectedSocket;
 }
