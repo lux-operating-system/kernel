@@ -50,10 +50,11 @@ typedef struct SocketDescriptor {
     Process *process;
     struct sockaddr address;
     bool listener;
-    int type, protocol, backlog;
+    int type, protocol, backlogMax, backlogCount;
     int inboundCount, outboundCount;
     void **inbound, **outbound;
-    struct SocketDescriptor *peer;
+    struct SocketDescriptor **backlog;  // for incoming connections via connect()
+    struct SocketDescriptor *peer;      // for peer-to-peer connections
 } SocketDescriptor;
 
 void socketInit();
