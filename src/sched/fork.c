@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <platform/platform.h>
 #include <platform/context.h>
 #include <kernel/sched.h>
@@ -77,9 +78,15 @@ pid_t fork(Thread *t) {
         return -1;
     }
 
+    // clone I/O descriptors
+    Process *parent = getProcess(t->pid);
+    if(parent) {
+        memcpy(p->io, parent->io, sizeof(IODescriptor) * MAX_IO_DESCRIPTORS);
+        p->iodCount = parent->iodCount;
+    }
+
     // if we made this far then the creation was successful
     // list the child process as a child of the parent
-    Process *parent = getProcess(t->pid);
     if(parent) {
         parent->childrenCount++;
         parent->children = realloc(parent->children, parent->childrenCount);

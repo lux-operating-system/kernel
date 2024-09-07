@@ -155,6 +155,14 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
     p->childrenCount = 0;
     p->children = NULL;
 
+    p->iodCount = 3;        // stdin, stdout, stderr
+    p->io[IO_STDIN].type = IO_STDIN;
+    p->io[IO_STDIN].valid = true;
+    p->io[IO_STDOUT].type = IO_STDOUT;
+    p->io[IO_STDOUT].valid = true;
+    p->io[IO_STDERR].type = IO_STDERR;
+    p->io[IO_STDERR].valid = true;
+
     p->threads = calloc(1, sizeof(Thread *));
     if(!p->threads) {
         KERROR("failed to allocate memory for kernel thread\n");
@@ -430,6 +438,14 @@ pid_t processCreate() {
     process->user = 0;          // TODO
     process->group = 0;         // TODO
 
+    process->iodCount = 3;        // stdin, stdout, stderr
+    process->io[IO_STDIN].type = IO_STDIN;
+    process->io[IO_STDIN].valid = true;
+    process->io[IO_STDOUT].type = IO_STDOUT;
+    process->io[IO_STDOUT].valid = true;
+    process->io[IO_STDERR].type = IO_STDERR;
+    process->io[IO_STDERR].valid = true;
+
     // env and command line will be taken care of by fork() or exec()
 
     process->threadCount = 0;
@@ -457,15 +473,8 @@ int threadUseContext(pid_t tid) {
  */
 
 uint64_t schedTimeslice(Thread *t, int p) {
-    /* todo: actually interpret the priority value */
-    uint64_t schedTime = PLATFORM_TIMER_FREQUENCY / SCHED_SWITCH_RATE;
-
-    int cpus = platformCountCPU();
-    uint64_t time = schedTime / threads;
-    if(time < 6) time = 6;      // minimum threshold
-    time *= cpus;
-    if(time < 12) time = 12;
-
+    if(!p) p = PRIORITY_NORMAL;
+    uint64_t time = p * SCHED_TIME_SLICE;
     t->priority = p;
     return time;
 }
@@ -563,4 +572,43 @@ void setLumenPID(pid_t pid) {
 
 pid_t getLumenPID() {
     return lumen;
+}
+
+/* schedStatus(): dumps the queue of threads
+ */
+
+void schedStatus() {
+    Process *p = first;
+
+    while(p) {
+        if(p->threadCount && p->threads) {
+            Thread *t = p->threads[0];
+
+            while(t) {
+                switch(t->status) {
+                case THREAD_BLOCKED:
+                    KDEBUG("pid %d tid %d: blocked\n", t->pid, t->tid);
+                    break;
+                case THREAD_RUNNING:
+                    KDEBUG("pid %d tid %d: running (%d)\n", t->pid, t->tid, t->time);
+                    break;
+                case THREAD_QUEUED:
+                    KDEBUG("pid %d tid %d: queued (%d)\n", t->pid, t->tid, t->time);
+                    break;
+                case THREAD_SLEEP:
+                    KDEBUG("pid %d tid %d: sleeping (%d)\n", t->pid, t->tid, t->time);
+                    break;
+                case THREAD_ZOMBIE:
+                    KDEBUG("pid %d tid %d: zombie\n", t->pid, t->tid);
+                    break;
+                default:
+                    KDEBUG("pid %d tid %d: undefined status %d\n", t->pid, t->tid, t->status);
+                }
+
+                t = t->next;
+            }
+        }
+
+        p = p->next;
+    }
 }

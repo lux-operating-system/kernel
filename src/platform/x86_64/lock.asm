@@ -64,6 +64,6 @@ acquireLockBlocking:
 global releaseLock
 align 16
 releaseLock:
-    btr word[rdi], 0
+    lock btr word[rdi], 0
     xor rax, rax
     ret

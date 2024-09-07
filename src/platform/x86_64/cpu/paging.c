@@ -287,7 +287,7 @@ void *platformCloneUserSpace(uintptr_t parent) {
         uint64_t ptr = oldPML4[i] & ~(PAGE_SIZE-1);
         uint64_t flags = oldPML4[i] & (PAGE_SIZE-1);
         if(oldPML4[i]) {
-            newPML4[i] = clonePagingLayer(ptr, 1) | flags;
+            newPML4[i] = clonePagingLayer(ptr, 0) | flags;
         }
     }
 

@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <kernel/logger.h>
+#include <kernel/socket.h>
 #include <kernel/sched.h>
 #include <kernel/modules.h>
 #include <platform/platform.h>
@@ -50,15 +51,21 @@ void *kernelThread(void *args) {
     }
 
     setLumenPID(pid);
-    idleThread(args);
+    return idleThread(args);
 }
 
 // the true kernel entry point is called after platform-specific initialization
 // platform-specific code is in platform/[PLATFORM]/main.c
 
 int main(int argc, char **argv) {
+    /* the platform-specific main() function must initialize some basic form of
+     * output for debugging, physical and virtual memory, and multiprocessing; the
+     * boot process will continue here in a more platform-independent fashion */
+
+    socketInit();       // sockets
     schedInit();        // scheduler
 
+    // number of kernel threads = number of CPU cores
     kthreadCreate(&kernelThread, NULL);
 
     for(int i = 1; i < platformCountCPU(); i++) {
