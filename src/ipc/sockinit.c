@@ -104,7 +104,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
 
     if(!p) return -ESRCH;
     if(p->iodCount == MAX_IO_DESCRIPTORS) return -EMFILE;
-    if(socket >= MAX_SOCKETS) return -ENFILE;
+    if(socketCount >= MAX_SOCKETS) return -ENFILE;
 
     acquireLockBlocking(&lock);
 
