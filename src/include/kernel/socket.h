@@ -58,6 +58,8 @@ typedef struct SocketDescriptor {
 
 void socketInit();
 SocketDescriptor *getLocalSocket(const struct sockaddr *, socklen_t);
+void socketLock();
+void socketRelease();
 
 /* socket system calls */
 int socket(Thread *, int, int, int);

@@ -59,6 +59,24 @@ SocketDescriptor *getLocalSocket(const struct sockaddr *addr, socklen_t len) {
     return NULL;
 }
 
+/* socketLock(): acquires the socket descriptor spinlock
+ * params: none
+ * returns: nothing
+ */
+
+void socketLock() {
+    acquireLockBlocking(&lock);
+}
+
+/* socketRelease(): frees the socket descriptor spinlock
+ * params: none
+ * returns: nothing
+ */
+
+void socketRelease() {
+    releaseLock(&lock);
+}
+
 /* socket(): opens a communication socket
  * params: t - calling thread, NULL for kernel threads
  * params: domain - socket domain/family
