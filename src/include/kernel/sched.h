@@ -14,9 +14,8 @@
 #include <kernel/syscalls.h>
 #include <kernel/io.h>
 
-// ideal number of context switches per second
 // still not sure of how to decide on this value so it'll probably change
-#define SCHED_SWITCH_RATE       200
+#define SCHED_TIME_SLICE        1       // ms
 
 #define MAX_PID                 99999
 
@@ -26,9 +25,9 @@
 #define THREAD_ZOMBIE           3
 #define THREAD_SLEEP            4
 
-#define PRIORITY_HIGH           0
-#define PRIORITY_NORMAL         1
-#define PRIORITY_LOW            2
+#define PRIORITY_LOW            1
+#define PRIORITY_NORMAL         2
+#define PRIORITY_HIGH           3
 
 typedef struct Thread {
     int status, cpu, priority;

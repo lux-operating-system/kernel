@@ -473,15 +473,8 @@ int threadUseContext(pid_t tid) {
  */
 
 uint64_t schedTimeslice(Thread *t, int p) {
-    /* todo: actually interpret the priority value */
-    uint64_t schedTime = PLATFORM_TIMER_FREQUENCY / SCHED_SWITCH_RATE;
-
-    int cpus = platformCountCPU();
-    uint64_t time = schedTime / threads;
-    if(time < 6) time = 6;      // minimum threshold
-    time *= cpus;
-    if(time < 12) time = 12;
-
+    if(!p) p = PRIORITY_NORMAL;
+    uint64_t time = p * SCHED_TIME_SLICE;
     t->priority = p;
     return time;
 }
