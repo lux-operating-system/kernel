@@ -54,6 +54,7 @@ typedef struct SocketDescriptor {
     int type, protocol, backlogMax, backlogCount;
     int inboundCount, outboundCount;
     void **inbound, **outbound;
+    size_t *inboundLen, *outboundLen;
     struct SocketDescriptor **backlog;  // for incoming connections via connect()
     struct SocketDescriptor *peer;      // for peer-to-peer connections
 } SocketDescriptor;
