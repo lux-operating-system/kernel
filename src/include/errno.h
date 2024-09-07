@@ -61,7 +61,7 @@
 #define ENOPROTOOPT         50  // protocol not implemented
 #define ENOSPC              51  // ran out of storage
 #define ENOSYS              52  // function not supported
-#define ENOCONN             53  // socket not connected
+#define ENOTCONN            53  // socket not connected
 #define ENOTDIR             54  // not a directory nor symlink to directory
 #define ENOTEMPTY           55  // directory not empty
 #define ENOTRECOVERABLE     56  // unrecoverable error
