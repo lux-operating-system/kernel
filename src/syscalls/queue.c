@@ -92,8 +92,10 @@ int syscallProcess() {
         terminateThread(syscall->thread, -1, false);
         schedRelease();
     } else {
+        threadUseContext(syscall->thread->tid);
         syscallDispatchTable[syscall->function](syscall);
         platformSetContextStatus(syscall->thread->context, syscall->ret);
+        //threadUseContext(getTid());
     }
 
     if((syscall->thread->status == THREAD_BLOCKED) && syscall->unblock) {
