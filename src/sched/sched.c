@@ -580,3 +580,42 @@ void setLumenPID(pid_t pid) {
 pid_t getLumenPID() {
     return lumen;
 }
+
+/* schedStatus(): dumps the queue of threads
+ */
+
+void schedStatus() {
+    Process *p = first;
+
+    while(p) {
+        if(p->threadCount && p->threads) {
+            Thread *t = p->threads[0];
+
+            while(t) {
+                switch(t->status) {
+                case THREAD_BLOCKED:
+                    KDEBUG("pid %d tid %d: blocked\n", t->pid, t->tid);
+                    break;
+                case THREAD_RUNNING:
+                    KDEBUG("pid %d tid %d: running\n", t->pid, t->tid);
+                    break;
+                case THREAD_QUEUED:
+                    KDEBUG("pid %d tid %d: queued\n", t->pid, t->tid);
+                    break;
+                case THREAD_SLEEP:
+                    KDEBUG("pid %d tid %d: sleeping\n", t->pid, t->tid);
+                    break;
+                case THREAD_ZOMBIE:
+                    KDEBUG("pid %d tid %d: zombie\n", t->pid, t->tid);
+                    break;
+                default:
+                    KDEBUG("pid %d tid %d: undefined status %d\n", t->pid, t->tid, t->status);
+                }
+
+                t = t->next;
+            }
+        }
+
+        p = p->next;
+    }
+}
