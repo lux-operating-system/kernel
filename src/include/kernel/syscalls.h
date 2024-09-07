@@ -14,7 +14,7 @@
 #define MAX_SYSCALL                     12       // for now
 
 typedef struct SyscallRequest {
-    bool busy, queued;
+    bool busy, queued, unblock;
 
     uint64_t function;
     uint64_t params[4];

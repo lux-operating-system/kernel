@@ -96,7 +96,7 @@ int syscallProcess() {
         platformSetContextStatus(syscall->thread->context, syscall->ret);
     }
 
-    if(syscall->thread->status == THREAD_BLOCKED) {
+    if((syscall->thread->status == THREAD_BLOCKED) && syscall->unblock) {
         // this way we prevent accidentally running threads that exit()
         syscall->thread->status = THREAD_QUEUED;
         syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);

@@ -20,18 +20,22 @@ void syscallDispatchExit(SyscallRequest *req) {
 
 void syscallDispatchFork(SyscallRequest *req) {
     req->ret = fork(req->thread);
+    req->unblock = true;
 }
 
 void syscallDispatchYield(SyscallRequest *req) {
     req->ret = yield(req->thread);
+    req->unblock = true;
 }
 
 void syscallDispatchGetPID(SyscallRequest *req) {
     req->ret = req->thread->pid;
+    req->unblock = true;
 }
 
 void syscallDispatchGetTID(SyscallRequest *req) {
     req->ret = req->thread->tid;
+    req->unblock = true;
 }
 
 void syscallDispatchGetUID(SyscallRequest *req) {
@@ -42,6 +46,8 @@ void syscallDispatchGetUID(SyscallRequest *req) {
     } else {
         req->ret = p->user;
     }
+
+    req->unblock = true;
 }
 
 void syscallDispatchGetGID(SyscallRequest *req) {
@@ -52,6 +58,8 @@ void syscallDispatchGetGID(SyscallRequest *req) {
     } else {
         req->ret = p->group;
     }
+
+    req->unblock = true;
 }
 
 void syscallDispatchMSleep(SyscallRequest *req) {
@@ -59,7 +67,7 @@ void syscallDispatchMSleep(SyscallRequest *req) {
 }
 
 void (*syscallDispatchTable[])(SyscallRequest *) = {
-    // group 1: scheduler functions
+    /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
     syscallDispatchFork,        // 1 - fork()
     syscallDispatchYield,       // 2 - yield()
