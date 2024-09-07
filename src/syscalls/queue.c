@@ -102,8 +102,8 @@ int syscallProcess() {
         // this way we prevent accidentally running threads that exit()
         syscall->thread->status = THREAD_QUEUED;
         syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);
+        syscall->busy = false;
     }
 
-    syscall->busy = false;
     return 1;
 }

@@ -137,6 +137,7 @@ void syscallDispatchAccept(SyscallRequest *req) {
             req->unblock = false;
             req->busy = false;
             req->queued = true;
+            req->next = NULL;
             syscallEnqueue(req);
             return;
         }
