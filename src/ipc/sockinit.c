@@ -114,7 +114,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
 
     iod->type = IO_SOCKET;
     iod->data = calloc(1, sizeof(SocketDescriptor));
-    iod->flags = type & 0xFF00;
+    iod->flags = type >> 8;
     if(!iod->data) {
         releaseLock(&lock);
         closeIO(p, iod);
