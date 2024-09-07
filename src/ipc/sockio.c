@@ -130,6 +130,7 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
             self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(void *));
         }
 
+        socketRelease();
         return truelen;
     } else {
         /* TODO: handle other protocols in user space */
