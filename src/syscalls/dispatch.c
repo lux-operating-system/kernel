@@ -148,9 +148,8 @@ void syscallDispatchAccept(SyscallRequest *req) {
 }
 
 void syscallDispatchRecv(SyscallRequest *req) {
-    ssize_t status;
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        status = recv(req->thread, req->params[0], (void *)req->params[1], req->params[2], req->params[3]);
+        ssize_t status = recv(req->thread, req->params[0], (void *)req->params[1], req->params[2], req->params[3]);
 
         // block the thread if necessary
         if(status == -EWOULDBLOCK || status == -EAGAIN) {
@@ -173,9 +172,8 @@ void syscallDispatchRecv(SyscallRequest *req) {
 }
 
 void syscallDispatchSend(SyscallRequest *req) {
-    ssize_t status;
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        status = send(req->thread, req->params[0], (const void *)req->params[1], req->params[2], req->params[3]);
+        ssize_t status = send(req->thread, req->params[0], (const void *)req->params[1], req->params[2], req->params[3]);
 
         // block the thread if necessary
         if(status == -EWOULDBLOCK || status == -EAGAIN) {
