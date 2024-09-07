@@ -25,9 +25,9 @@
 #define THREAD_ZOMBIE           3
 #define THREAD_SLEEP            4
 
-#define PRIORITY_LOW            1
-#define PRIORITY_NORMAL         2
-#define PRIORITY_HIGH           3
+#define PRIORITY_NORMAL         1
+#define PRIORITY_HIGH           2
+#define PRIORITY_HIGHEST        3
 
 typedef struct Thread {
     int status, cpu, priority;
