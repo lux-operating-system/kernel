@@ -62,6 +62,7 @@ void socketInit();
 SocketDescriptor *getLocalSocket(const struct sockaddr *, socklen_t);
 void socketLock();
 void socketRelease();
+int socketRegister(SocketDescriptor *);
 
 /* socket system calls */
 int socket(Thread *, int, int, int);

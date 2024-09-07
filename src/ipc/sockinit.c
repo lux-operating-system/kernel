@@ -77,6 +77,18 @@ void socketRelease() {
     releaseLock(&lock);
 }
 
+/* socketRegister(): registers an open socket
+ * params: sock - socket descriptor structure
+ * returns: zero on success
+ */
+
+int socketRegister(SocketDescriptor *sock) {
+    if(socketCount >= MAX_SOCKETS) return -ENFILE;
+    sockets[socketCount] = sock;
+    socketCount++;
+    return 0;
+}
+
 /* socket(): opens a communication socket
  * params: t - calling thread, NULL for kernel threads
  * params: domain - socket domain/family
@@ -92,6 +104,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
 
     if(!p) return -ESRCH;
     if(p->iodCount == MAX_IO_DESCRIPTORS) return -EMFILE;
+    if(socket >= MAX_SOCKETS) return -ENFILE;
 
     acquireLockBlocking(&lock);
 
