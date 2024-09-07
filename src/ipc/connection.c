@@ -38,6 +38,7 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     SocketDescriptor *peer = getLocalSocket(addr, len);
 
     if(!peer) return -EADDRNOTAVAIL;
+    if(self->address.sa_family != peer->address.sa_family) return -EAFNOSUPPORT;
     if(!peer->listener || !peer->backlogMax || !peer->backlog) return -ECONNREFUSED;
     if(peer->backlogCount >= peer->backlogMax) return -ETIMEDOUT;
 
