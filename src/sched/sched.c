@@ -597,13 +597,13 @@ void schedStatus() {
                     KDEBUG("pid %d tid %d: blocked\n", t->pid, t->tid);
                     break;
                 case THREAD_RUNNING:
-                    KDEBUG("pid %d tid %d: running\n", t->pid, t->tid);
+                    KDEBUG("pid %d tid %d: running (%d)\n", t->pid, t->tid, t->time);
                     break;
                 case THREAD_QUEUED:
-                    KDEBUG("pid %d tid %d: queued\n", t->pid, t->tid);
+                    KDEBUG("pid %d tid %d: queued (%d)\n", t->pid, t->tid, t->time);
                     break;
                 case THREAD_SLEEP:
-                    KDEBUG("pid %d tid %d: sleeping\n", t->pid, t->tid);
+                    KDEBUG("pid %d tid %d: sleeping (%d)\n", t->pid, t->tid, t->time);
                     break;
                 case THREAD_ZOMBIE:
                     KDEBUG("pid %d tid %d: zombie\n", t->pid, t->tid);
