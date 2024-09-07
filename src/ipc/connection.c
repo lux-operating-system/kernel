@@ -46,6 +46,7 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     socketLock();
     peer->backlog[peer->backlogCount] = self;
     peer->backlogCount++;
+    self->peer = peer;
     socketRelease();
     return 0;
 }
