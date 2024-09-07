@@ -147,6 +147,56 @@ void syscallDispatchAccept(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchRecv(SyscallRequest *req) {
+    ssize_t status;
+    if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
+        status = recv(req->thread, req->params[0], (void *)req->params[1], req->params[2], req->params[3]);
+
+        // block the thread if necessary
+        if(status == -EWOULDBLOCK || status == -EAGAIN) {
+            // return without unblocking if necessary
+            Process *p = getProcess(req->thread->pid);
+            if(!(p->io[req->params[0]].flags & O_NONBLOCK)) {
+                // block by putting the syscall back in the queue
+                req->unblock = false;
+                req->busy = false;
+                req->queued = true;
+                req->next = NULL;
+                syscallEnqueue(req);
+                return;
+            }
+        }
+
+        req->ret = status;
+        req->unblock = true;
+    }
+}
+
+void syscallDispatchSend(SyscallRequest *req) {
+    ssize_t status;
+    if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
+        status = send(req->thread, req->params[0], (const void *)req->params[1], req->params[2], req->params[3]);
+
+        // block the thread if necessary
+        if(status == -EWOULDBLOCK || status == -EAGAIN) {
+            // return without unblocking if necessary
+            Process *p = getProcess(req->thread->pid);
+            if(!(p->io[req->params[0]].flags & O_NONBLOCK)) {
+                // block by putting the syscall back in the queue
+                req->unblock = false;
+                req->busy = false;
+                req->queued = true;
+                req->next = NULL;
+                syscallEnqueue(req);
+                return;
+            }
+        }
+
+        req->ret = status;
+        req->unblock = true;
+    }
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -189,6 +239,6 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchBind,        // 33 - bind()
     syscallDispatchListen,      // 34 - listen()
     syscallDispatchAccept,      // 35 - accept()
-    NULL,                       // 36 - recv()
-    NULL,                       // 37 - send()
+    syscallDispatchRecv,        // 36 - recv()
+    syscallDispatchSend,        // 37 - send()
 };
