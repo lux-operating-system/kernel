@@ -48,3 +48,37 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     socketRelease();
     return 0;
 }
+
+/* listen(): listens for incoming connections on a socket
+ * params: t - calling thread, NULL for kernel threads
+ * params: sd - socket descriptor
+ * params: backlog - maximum number of queued connections, zero for default
+ * returns: zero on success, negative error code on fail
+ */
+
+int listen(Thread *t, int sd, int backlog) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getPid());
+    if(!p) return -ESRCH;
+
+    if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
+        return -ENOTSOCK;
+    
+    socketLock();
+    SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
+    sock->backlogCount = 0;
+
+    if(backlog > 0) sock->backlogMax = backlog;
+    else sock->backlogMax = SOCKET_DEFAULT_BACKLOG;
+    
+    sock->backlog = calloc(backlog, sizeof(SocketDescriptor *));
+    if(!sock->backlog) {
+        socketRelease();
+        return -ENOBUFS;
+    }
+
+    sock->listener = true;
+    socketRelease();
+    return 0;
+}

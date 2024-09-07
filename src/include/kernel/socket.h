@@ -13,8 +13,9 @@
 #include <kernel/sched.h>
 #include <sys/types.h>
 
-/* system-wide limit */
+/* system-wide limits */
 #define MAX_SOCKETS             (1 << 18)   // 262k
+#define SOCKET_DEFAULT_BACKLOG  1024        // default socket backlog size
 
 /* socket family/domain - only Unix sockets will be implemented in the kernel */
 #define AF_UNIX                 1
