@@ -132,12 +132,18 @@ void syscallDispatchAccept(SyscallRequest *req) {
     if(status == -EWOULDBLOCK || status == -EAGAIN) {
         // return without unblocking if necessary
         Process *p = getProcess(req->thread->pid);
-        if(!(p->io[req->params[0]].flags & O_NONBLOCK))
+        if(!(p->io[req->params[0]].flags & O_NONBLOCK)) {
+            // block by putting the syscall back in the queue
             req->unblock = false;
-    } else {
-        req->ret = status;
-        req->unblock = true;
+            req->busy = false;
+            req->queued = true;
+            syscallEnqueue(req);
+            return;
+        }
     }
+
+    req->ret = status;
+    req->unblock = true;
 }
 
 void (*syscallDispatchTable[])(SyscallRequest *) = {
