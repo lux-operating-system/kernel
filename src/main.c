@@ -10,6 +10,7 @@
 #include <kernel/socket.h>
 #include <kernel/sched.h>
 #include <kernel/modules.h>
+#include <kernel/memory.h>
 #include <platform/platform.h>
 
 void *idleThread(void *args) {
@@ -51,6 +52,11 @@ void *kernelThread(void *args) {
     }
 
     setLumenPID(pid);
+
+    PhysicalMemoryStatus ps;
+    pmmStatus(&ps);
+    KDEBUG("early boot complete, memory usage: %d of %d MiB used\n", ps.usedPages>>8, ps.usablePages>>8);
+
     return idleThread(args);
 }
 
