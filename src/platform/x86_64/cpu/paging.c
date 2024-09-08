@@ -262,10 +262,10 @@ uint64_t clonePagingLayer(uint64_t ptr, int layer) {
                 newPhys = pmmAllocate();
                 if(!newPhys) return 0;
 
-                oldPhys = parent[i] & ~(PAGE_SIZE-1);
+                oldPhys = parent[i] & ~(PAGE_SIZE-1) & ~PT_PAGE_NXE;
                 memcpy((void *)vmmMMIO(newPhys, true), (const void *)vmmMMIO(oldPhys, true), PAGE_SIZE);
 
-                clone[i] = newPhys | (parent[i] & (PAGE_SIZE-1));   // copy the parent's permissions
+                clone[i] = newPhys | (parent[i] & ((PAGE_SIZE-1) | PT_PAGE_NXE));   // copy the parent's permissions
             } else {
                 // here we're working with either the PDP or PD that is also present
                 newPhys = pmmAllocate();
