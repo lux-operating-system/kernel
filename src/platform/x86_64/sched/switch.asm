@@ -45,9 +45,15 @@ platformLoadContext:
 
     fxrstor [rdi]
 
-    mov rax, [rdi+512]      ; paging
+    ; save performance by only invalidating TLB if the context actually changed
+    mov rax, cr3
+    cmp rax, [rdi+512]      ; pml4
+    jz .continue
+
+    mov rax, [rdi+512]
     mov cr3, rax
 
+.continue:
     mov rax, [rdi+672]      ; stack segment
     mov ds, rax
     mov es, rax
