@@ -34,15 +34,9 @@ int apicInit() {
         while(1);
     }
 
-    // check for PAE/NX
+    // check for syscall/sysret instructions
     memset(&regs, 0, sizeof(CPUIDRegisters));
     readCPUID(0x80000001, &regs);
-    if(!(regs.edx & (1 << 20))) {
-        KERROR("CPU doesn't support PAE/NX\n");
-        while(1);
-    }
-
-    // and syscall/sysret instructions
     if(!(regs.edx & (1 << 11))) {
         KERROR("CPU doesn't support fast syscall/sysret\n");
         while(1);

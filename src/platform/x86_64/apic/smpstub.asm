@@ -59,6 +59,14 @@ times 0x100 - ($-$$) nop
     mov fs, rax
     mov gs, rax
 
+    ; enable NX - this is necessary here because the pages mapping the stack
+    ; are marked as no-execute, so we cannot wait until the C code to do this
+    ; else we get unhandled page faults :)
+    mov ecx, 0xC0000080
+    rdmsr
+    or eax, 0x800
+    wrmsr
+
     mov rax, 0x1FF0         ; top of stack pointer
     mov rsp, [rax]
     mov rbp, rsp

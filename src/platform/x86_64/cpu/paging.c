@@ -20,9 +20,19 @@ static uint64_t *kernelPagingRoot;  // pml4 -- PHYSICAL ADDRESS
  */
 
 int platformPagingSetup() {
-    // identity map the lower memory
-    // this is already true but we need to replace the paging structs built
-    // by the boot loader
+    // check for PAE/NX
+    CPUIDRegisters regs;
+    memset(&regs, 0, sizeof(CPUIDRegisters));
+    readCPUID(0x80000001, &regs);
+    if(!(regs.edx & (1 << 20))) {
+        KERROR("CPU doesn't support PAE/NX\n");
+        while(1);
+    }
+
+    // enable no-execute pages
+    writeMSR(MSR_EFER, readMSR(MSR_EFER) | MSR_EFER_NX_ENABLE);
+
+    // map physical memory into the higher half
     uint64_t *pml4 = (uint64_t *)pmmAllocate();     // 512 GiB per entry
     uint64_t *pdp = (uint64_t *)pmmAllocate();      // 1 GiB per entry
 
@@ -58,7 +68,7 @@ int platformPagingSetup() {
     writeCR3((uint64_t)pml4);
 
     ttyRemapFramebuffer();
-    KDEBUG("kernel paging structures created, identity mapped %d GiB\n", KERNEL_BASE_MAPPED);
+    KDEBUG("kernel paging structures created, mapped %d GiB at 0x%X\n", KERNEL_BASE_MAPPED, KERNEL_MMIO_BASE);
     kernelPagingRoot = pml4;
     return 0;
 }
@@ -137,7 +147,7 @@ uintptr_t platformGetPage(int *flags, uintptr_t addr) {
     if(!(ptEntry & PT_PAGE_NXE)) *flags |= PLATFORM_PAGE_EXEC;
     if(ptEntry & PT_PAGE_NO_CACHE) *flags |= PLATFORM_PAGE_NO_CACHE;
     
-    return (ptEntry & ~(PAGE_SIZE-1)) | offset;
+    return (ptEntry & ~(PAGE_SIZE-1) & ~(PT_PAGE_NXE)) | offset;
 }
 
 /* platformMapPage(): maps a physical address to a logical address
@@ -205,7 +215,7 @@ uintptr_t platformMapPage(uintptr_t logical, uintptr_t physical, int flags) {
     if(flags & PLATFORM_PAGE_PRESENT) parsedFlags |= PT_PAGE_PRESENT;
     if(flags & PLATFORM_PAGE_WRITE) parsedFlags |= PT_PAGE_RW;
     if(flags & PLATFORM_PAGE_USER) parsedFlags |= PT_PAGE_USER;
-    if(!flags & PLATFORM_PAGE_EXEC) parsedFlags |= PT_PAGE_NXE;
+    if(!(flags & PLATFORM_PAGE_EXEC)) parsedFlags |= PT_PAGE_NXE;
     if(flags & PLATFORM_PAGE_NO_CACHE) parsedFlags |= PT_PAGE_NO_CACHE | PT_PAGE_WRITE_THROUGH;
 
     pt[ptIndex] = physical | parsedFlags;
