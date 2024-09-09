@@ -15,6 +15,7 @@
 #include <kernel/acpi.h>
 #include <kernel/modules.h>
 #include <kernel/logger.h>
+#include <kernel/version.h>
 #include <platform/platform.h>
 #include <platform/x86_64.h>
 #include <platform/exception.h>
@@ -29,16 +30,21 @@ int platformMain(KernelBootInfo *k) {
 
     // check if the kernel is booting is quiet mode
     size_t len = strlen(boot.arguments);
-
-    for(size_t i = 0; i < len-5; i++) {
-        if(!memcmp(boot.arguments+i, " quiet", 6)) {
-            loggerSetVerbose(false);
-            break;
+    if(len >= 9) {
+        for(size_t i = 0; i <= len-6; i++) {
+            if(!memcmp(boot.arguments+i, " quiet", 6)) {
+                loggerSetVerbose(false);
+                break;
+            }
         }
     }
 
     platformCPUSetup();
     ttyInit(&boot);
+
+    KDEBUG("%s\n", KERNEL_VERSION);
+    KDEBUG("booting with command-line options: %s\n", boot.arguments);
+
     installExceptions();
     pmmInit(&boot);
     vmmInit();
