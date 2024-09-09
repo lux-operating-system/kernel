@@ -61,6 +61,7 @@ void *kernelThread(void *args) {
     KDEBUG("early boot complete, memory usage: %d MiB / %d MiB\n", ps.usedPages>>8, ps.usablePages>>8);
 
     for(;;) {
+        serverIdle();
         if(!syscallProcess()) platformHalt();
     }
 }

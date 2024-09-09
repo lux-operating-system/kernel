@@ -31,7 +31,7 @@ void serverInit() {
     addr.sun_family = AF_UNIX;
     strcpy(addr.sun_path, SERVER_KERNEL_PATH);     // this is a special path and not a true file
 
-    kernelSocket = socket(NULL, AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0);
+    kernelSocket = socket(NULL, AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0);    // NEVER block the kernel
     if(kernelSocket < 0) {
         KERROR("failed to open kernel socket: error code %d\n", -1*kernelSocket);
         while(1) platformHalt();
@@ -60,4 +60,28 @@ void serverInit() {
     }
 
     KDEBUG("kernel is listening on socket %d: %s\n", kernelSocket, addr.sun_path);
+}
+
+/* serverIdle(): handles incoming kernel connections when idle
+ * params: none
+ * returns: nothing
+ */
+
+void serverIdle() {
+    // check for incoming connections
+    int sd = accept(NULL, kernelSocket, &connaddr[connectionCount], &connlen[connectionCount]);
+    if(sd > 0) {
+        KDEBUG("kernel accepted connection from %s\n", sd, connaddr[connectionCount].sa_data);
+        connections[connectionCount] = sd;
+        connectionCount++;
+    }
+
+    // check if any of the incoming connections sent anything
+    if(!connectionCount) return;
+    for(int i = 0; i < connectionCount; i++) {
+        sd = connections[i];
+        if(recv(NULL, sd, buffer, SERVER_MAX_SIZE, 0) > 0) {
+            // TODO: handle
+        }
+    }
 }
