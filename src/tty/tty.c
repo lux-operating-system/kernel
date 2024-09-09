@@ -69,9 +69,9 @@ void ttyInit(KernelBootInfo *boot) {
     }
 
     // show signs of life
-    KDEBUG("kernel tty initialized\n");
+    /*KDEBUG("kernel tty initialized\n");
     KDEBUG("screen resolution is %dx%dx%d bpp\n", ktty.w, ktty.h, ktty.bpp);
-    KDEBUG("terminal resolution is %dx%d\n", ktty.wc, ktty.hc);
+    KDEBUG("terminal resolution is %dx%d\n", ktty.wc, ktty.hc);*/
 }
 
 /* ttyRemapFramebuffer(): this is called after paging is initialized */
