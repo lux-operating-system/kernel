@@ -23,35 +23,7 @@ void *idleThread(void *args) {
 
 void *kernelThread(void *args) {
     // open the kernel socket for server communication
-    struct sockaddr_un addr;
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, SERVER_KERNEL_PATH);     // this is a special path and not a true file
-
-    int sd = socket(NULL, AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-    if(sd < 0) {
-        KERROR("failed to open kernel socket: error code %d\n", -1*sd);
-        while(1) platformHalt();
-    }
-
-    int status = bind(NULL, sd, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un));
-    if(status) {
-        KERROR("failed to bind kernel socket: error code %d\n", -1*status);
-        while(1) platformHalt();
-    }
-
-    status = listen(NULL, sd, 2048);
-    if(status) {
-        KERROR("failed to listen to kernel socket: error code %d\n", -1*status);
-        while(1) platformHalt();
-    }
-
-    KDEBUG("kernel is listening on socket %d: %s\n", sd, addr.sun_path);
-
-    void *buffer = malloc(SERVER_MAX_SIZE);
-    if(!buffer) {
-        KERROR("failed to allocate memory for server buffer\n");
-        while(1) platformHalt();
-    }
+    serverInit();
 
     KDEBUG("attempt to load lumen from ramdisk...\n");
 

@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#define SERVER_MAX_CONNECTIONS  512
 #define SERVER_MAX_SIZE         0x80000             // max msg size is 512 KiB
 #define SERVER_KERNEL_PATH      "lux:///kernel"     // not a real file, special path
 #define SERVER_LUMEN_PATH       "lux:///lumen"      // likewise not a real file
@@ -65,3 +66,6 @@ typedef struct {
     uint64_t buffer;        // pointer
     uint16_t w, h, pitch, bpp;
 } FramebufferResponse;
+
+void serverInit();
+void serverIdle();
