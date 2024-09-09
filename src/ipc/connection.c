@@ -73,7 +73,7 @@ int listen(Thread *t, int sd, int backlog) {
     if(backlog > 0) sock->backlogMax = backlog;
     else sock->backlogMax = SOCKET_DEFAULT_BACKLOG;
 
-    sock->backlog = calloc(backlog, sizeof(SocketDescriptor *));
+    sock->backlog = calloc(sock->backlogMax, sizeof(SocketDescriptor *));
     if(!sock->backlog) {
         socketRelease();
         return -ENOBUFS;
