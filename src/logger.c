@@ -5,14 +5,23 @@
  * Core Microkernel
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <kernel/logger.h>
 #include <platform/lock.h>
 #include <platform/platform.h>
 
 static lock_t lock = LOCK_INITIAL;
+static bool verbose = true;
+
+void loggerSetVerbose(bool v) {
+    verbose = v;
+}
 
 int kprintf(int level, const char *src, const char *f, ...) {
+    if(!verbose && (level != KPRINTF_LEVEL_ERROR || level != KPRINTF_LEVEL_PANIC))
+        return 0;
+
     acquireLockBlocking(&lock);
 
     int len = printf("\e[37m%08d ", platformUptime());
