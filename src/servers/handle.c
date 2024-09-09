@@ -69,9 +69,10 @@ void serverInit() {
 
 void serverIdle() {
     // check for incoming connections
+    connlen[connectionCount] = sizeof(struct sockaddr);
     int sd = accept(NULL, kernelSocket, &connaddr[connectionCount], &connlen[connectionCount]);
     if(sd > 0) {
-        KDEBUG("kernel accepted connection from %s\n", sd, connaddr[connectionCount].sa_data);
+        KDEBUG("kernel accepted connection from %s\n", connaddr[connectionCount].sa_data);
         connections[connectionCount] = sd;
         connectionCount++;
     }
