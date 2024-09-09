@@ -142,6 +142,12 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     memmove(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
     listener->backlogCount--;
 
+    // save the peer address if requested
+    if(addr && len) {
+        if(*len > sizeof(struct sockaddr)) *len = sizeof(struct sockaddr);
+        memcpy(addr, &self->peer->address, *len);
+    }
+
     socketRelease();
 
     if(!self->peer) return -ECONNABORTED;
