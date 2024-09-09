@@ -149,6 +149,8 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
     ctx->regs.rsp = stack;
 
     t->highest = stack + PAGE_SIZE;     // requisite to sbrk() someday
+
+    t->pages = (t->highest - USER_BASE_ADDRESS + PAGE_SIZE - 1) / PAGE_SIZE;
     return 0;
 }
 

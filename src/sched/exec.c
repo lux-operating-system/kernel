@@ -93,6 +93,8 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
         return 0;
     }
 
+    process->pages = process->threads[0]->pages;
+
     KDEBUG("created new process with pid %d\n", pid);
 
     processes++;

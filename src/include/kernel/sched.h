@@ -39,6 +39,8 @@ typedef struct Thread {
     SyscallRequest syscall; // for when the thread is blocked
     int exitStatus;         // for zombie threads
 
+    int pages;              // memory pages used
+
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
 
@@ -58,6 +60,8 @@ typedef struct Process {
 
     struct IODescriptor io[MAX_IO_DESCRIPTORS];
     int iodCount;
+
+    int pages;              // memory pages used
 
     size_t threadCount;
     size_t childrenCount;
