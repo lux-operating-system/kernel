@@ -19,7 +19,7 @@ void loggerSetVerbose(bool v) {
 }
 
 int kprintf(int level, const char *src, const char *f, ...) {
-    if(!verbose && (level != KPRINTF_LEVEL_ERROR || level != KPRINTF_LEVEL_PANIC))
+    if(!verbose && (level != KPRINTF_LEVEL_ERROR) && (level != KPRINTF_LEVEL_PANIC))
         return 0;
 
     acquireLockBlocking(&lock);
