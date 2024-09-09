@@ -24,9 +24,9 @@ void *sbrk(Thread *t, intptr_t delta) {
     intptr_t newbrk = t->highest + delta;
 
     ssize_t diff = newbrk - brk;
+    if(diff < 0) diff *= -1;
 
-    ssize_t pages = (diff + PAGE_SIZE - 1) / PAGE_SIZE;
-    if(pages < 0) pages *= -1;
+    size_t pages = (diff + PAGE_SIZE - 1) / PAGE_SIZE;
 
     if(!delta) return (void *)brk;
 
