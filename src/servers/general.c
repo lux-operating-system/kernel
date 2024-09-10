@@ -47,6 +47,13 @@ void handleGeneralRequest(int sd, const MessageHeader *req, void *res) {
         KWARN("unhandled general request 0x%02X, dropping\n", req->command);
 }
 
+/* serverLog(): prints to the kernel log */
+
+void serverLog(Thread *t, int sd, const MessageHeader *req, void *res) {
+    LogCommand *request = (LogCommand *) req;
+    ksprint(request->server, request->message);
+}
+
 /* getFramebuffer(): provides frame buffer access to the requesting thread */
 
 void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
@@ -93,11 +100,12 @@ void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
 /* dispatch table, much like syscalls */
 
 static void (*generalRequests[])(Thread *, int, const MessageHeader *req, void *res) = {
-    NULL,               // 0 - sysinfo
-    NULL,               // 1 - rand
-    NULL,               // 2 - request I/O access
-    NULL,               // 3 - get process I/O privileges
-    NULL,               // 4 - get list of processes/threads
-    NULL,               // 5 - get status of process/thread
-    getFramebuffer,     // 6 - request framebuffer access
+    serverLog,          // 0 - log
+    NULL,               // 1 - sysinfo
+    NULL,               // 2 - rand
+    NULL,               // 3 - request I/O access
+    NULL,               // 4 - get process I/O privileges
+    NULL,               // 5 - get list of processes/threads
+    NULL,               // 6 - get status of process/thread
+    getFramebuffer,     // 7 - request framebuffer access
 };
