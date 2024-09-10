@@ -51,7 +51,8 @@ int kprintf(int level, const char *src, const char *f, ...) {
 }
 
 int ksprint(int level, const char *name, const char *msg) {
-    if(!verbose) return 0;
+    if(!verbose && (level != KPRINTF_LEVEL_ERROR) && (level != KPRINTF_LEVEL_PANIC))
+        return 0;
 
     acquireLockBlocking(&lock);
     int len = printf("\e[37m%08d ", platformUptime());
