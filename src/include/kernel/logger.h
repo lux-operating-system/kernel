@@ -23,3 +23,4 @@
 
 void loggerSetVerbose(bool);
 int kprintf(int, const char *, const char *, ...);
+int ksprint(const char *, const char *);

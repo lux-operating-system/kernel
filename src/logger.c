@@ -49,3 +49,13 @@ int kprintf(int level, const char *src, const char *f, ...) {
     releaseLock(&lock);
     return len;
 }
+
+int ksprint(const char *name, const char *msg) {
+    if(!verbose) return 0;
+
+    acquireLockBlocking(&lock);
+    int len = printf("\e[37m%08d ", platformUptime());
+    len += printf("\e[36mMODULE %s: \e[37m%s", name, msg);
+    releaseLock(&lock);
+    return len;
+}
