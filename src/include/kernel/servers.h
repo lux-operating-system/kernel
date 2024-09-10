@@ -10,6 +10,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <kernel/sched.h>
 
 #define SERVER_MAX_CONNECTIONS  512
 #define SERVER_MAX_SIZE         0x80000             // max msg size is 512 KiB
@@ -42,6 +43,7 @@ typedef struct {
     uint8_t reserved[3];    // for alignment
     uint64_t latency;       // in ms, for responses
     uint64_t status;        // return value for responses
+    pid_t requester;
 } MessageHeader;
 
 typedef struct {
@@ -62,6 +64,7 @@ typedef struct {
 
 /* framebuffer access command */
 typedef struct {
+    MessageHeader header;
     uint64_t buffer;        // pointer
     uint16_t w, h, pitch, bpp;
 } FramebufferResponse;
