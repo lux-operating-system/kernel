@@ -55,6 +55,7 @@ typedef struct {
 /* log command */
 typedef struct {
     MessageHeader header;
+    int level;
     char server[512];       // null terminated
     char message[];         // variable length, null terminated
 } LogCommand;

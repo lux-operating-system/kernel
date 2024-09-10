@@ -51,7 +51,7 @@ void handleGeneralRequest(int sd, const MessageHeader *req, void *res) {
 
 void serverLog(Thread *t, int sd, const MessageHeader *req, void *res) {
     LogCommand *request = (LogCommand *) req;
-    ksprint(request->server, request->message);
+    ksprint(request->level, request->server, request->message);
 }
 
 /* getFramebuffer(): provides frame buffer access to the requesting thread */
