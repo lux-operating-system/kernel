@@ -25,11 +25,15 @@
 #define COMMAND_PROCESS_STATUS  0x0005  // get status of process/thread
 #define COMMAND_FRAMEBUFFER     0x0006  // request frame buffer access
 
+#define MAX_GENERAL_COMMAND     0x0006
+
 /* these commands are requested by the kernel for lumen to fulfill syscall requests */
 #define COMMAND_STAT            0x8000
 #define COMMAND_FLUSH           0x8001
 #define COMMAND_MOUNT           0x8002
 #define COMMAND_UMOUNT          0x8003
+
+#define MAX_SYSCALL_COMMAND     0x0003
 
 typedef struct {
     uint16_t command;
@@ -38,21 +42,16 @@ typedef struct {
     uint8_t reserved[3];    // for alignment
     uint64_t latency;       // in ms, for responses
     uint64_t status;        // return value for responses
-} CommandHeader;
+} MessageHeader;
 
 typedef struct {
-    CommandHeader header;
-    uint8_t data[];
-} ServerCommand;
-
-typedef struct {
-    CommandHeader header;
+    MessageHeader header;
     uint64_t id;            // syscall request ID
-    uint8_t data[];         // variable-length command-specific data
-} SyscallCommand;
+} SyscallHeader;
 
 /* sysinfo command */
 typedef struct {
+    MessageHeader header;
     char kernel[64];        // version string
     uint64_t uptime;
     int maxPid, maxSockets, maxFiles;
@@ -69,3 +68,5 @@ typedef struct {
 
 void serverInit();
 void serverIdle();
+void handleGeneralRequest(int, const MessageHeader *, void *);
+void handleSyscallResponse(int, const MessageHeader *);

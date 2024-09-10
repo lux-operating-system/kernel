@@ -18,7 +18,7 @@ static int kernelSocket = 0, lumenSocket = 0;
 static int *connections;           // connected socket descriptors
 static struct sockaddr *connaddr;  // connected socket addresses
 static socklen_t *connlen;         // length of connected socket addresses
-static void *buffer;
+static void *in, *out;
 static int connectionCount = 0;
 
 /* serverInit(): initializes the server subsystem
@@ -52,9 +52,10 @@ void serverInit() {
     connections = calloc(SERVER_MAX_CONNECTIONS, sizeof(int));
     connaddr = calloc(SERVER_MAX_CONNECTIONS, sizeof(struct sockaddr));
     connlen = calloc(SERVER_MAX_CONNECTIONS, sizeof(socklen_t));
-    buffer = malloc(SERVER_MAX_SIZE);
+    in = malloc(SERVER_MAX_SIZE);
+    out = malloc(SERVER_MAX_SIZE);
 
-    if(!connections || !connaddr || !connlen || !buffer) {
+    if(!connections || !connaddr || !connlen || !in || !out) {
         KERROR("failed to allocate memory for incoming connections\n");
         while(1) platformHalt();
     }
@@ -79,10 +80,16 @@ void serverIdle() {
 
     // check if any of the incoming connections sent anything
     if(!connectionCount) return;
+
+    MessageHeader *h = (MessageHeader *) in;
     for(int i = 0; i < connectionCount; i++) {
         sd = connections[i];
-        if(recv(NULL, sd, buffer, SERVER_MAX_SIZE, 0) > 0) {
-            // TODO: handle
+        while(recv(NULL, sd, in, SERVER_MAX_SIZE, 0) > 0) {
+            if(h->command < MAX_GENERAL_COMMAND) handleGeneralRequest(sd, in, out);
+            else {
+                // TODO
+                KWARN("unimplemented message command 0x%02X, dropping...\n", h->command);
+            }
         }
     }
 }
