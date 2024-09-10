@@ -214,6 +214,7 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     // to free up memory used by the original program
     free(oldctx);
 
+    t->status = THREAD_QUEUED;
     schedAdjustTimeslice();
     setScheduling(true);
     schedRelease();
