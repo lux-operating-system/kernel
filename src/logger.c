@@ -24,19 +24,21 @@ int kprintf(int level, const char *src, const char *f, ...) {
 
     acquireLockBlocking(&lock);
 
-    int len = printf("\e[37m%08d ", platformUptime());
+    // [minutes.timer ticks]
+    int len = printf("\e[37m[%3d.%08d] ", platformUptime()/PLATFORM_TIMER_FREQUENCY/60, platformUptime());
+    len += printf("\e[96mkernel ");
 
     switch(level) {
     case KPRINTF_LEVEL_DEBUG:
-        len += printf("\e[32m");
+        len += printf("\e[92m");
         break;
     case KPRINTF_LEVEL_WARNING:
-        len += printf("\e[33m");
+        len += printf("\e[93m");
         break;
     case KPRINTF_LEVEL_ERROR:
     case KPRINTF_LEVEL_PANIC:
     default:
-        len += printf("\e[31m");
+        len += printf("\e[91m");
     }
 
     len += printf("%s: \e[37m", src);
@@ -55,20 +57,20 @@ int ksprint(int level, const char *name, const char *msg) {
         return 0;
 
     acquireLockBlocking(&lock);
-    int len = printf("\e[37m%08d ", platformUptime());
-    len += printf("\e[36mserver ");
+    int len = printf("\e[37m[%3d.%08d] ", platformUptime()/PLATFORM_TIMER_FREQUENCY/60, platformUptime());
+    len += printf("\e[95mserver ");
     
     switch(level) {
     case KPRINTF_LEVEL_DEBUG:
-        len += printf("\e[32m");
+        len += printf("\e[92m");
         break;
     case KPRINTF_LEVEL_WARNING:
-        len += printf("\e[33m");
+        len += printf("\e[93m");
         break;
     case KPRINTF_LEVEL_ERROR:
     case KPRINTF_LEVEL_PANIC:
     default:
-        len += printf("\e[31m");
+        len += printf("\e[91m");
     }
     
     len += printf("%s: \e[37m%s", name, msg);
