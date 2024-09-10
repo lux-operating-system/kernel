@@ -85,7 +85,7 @@ void serverIdle() {
     for(int i = 0; i < connectionCount; i++) {
         sd = connections[i];
         while(recv(NULL, sd, in, SERVER_MAX_SIZE, 0) > 0) {
-            if(h->command < MAX_GENERAL_COMMAND) handleGeneralRequest(sd, in, out);
+            if(h->command <= MAX_GENERAL_COMMAND) handleGeneralRequest(sd, in, out);
             else {
                 // TODO
                 KWARN("unimplemented message command 0x%02X, dropping...\n", h->command);
