@@ -13,6 +13,7 @@
 #include <kernel/socket.h>
 #include <kernel/syscalls.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -200,6 +201,13 @@ void syscallDispatchSend(SyscallRequest *req) {
     }
 }
 
+/* Group 4: Memory Management */
+
+void syscallDispatchSBrk(SyscallRequest *req) {
+    req->ret = (uint64_t) sbrk(req->thread, (intptr_t) req->params[0]);
+    req->unblock = true;
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -244,4 +252,12 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchAccept,      // 35 - accept()
     syscallDispatchRecv,        // 36 - recv()
     syscallDispatchSend,        // 37 - send()
+    NULL,                       // 38 - kill()
+
+    /* group 4: memory management */
+    syscallDispatchSBrk,        // 39 - sbrk()
+    NULL,                       // 40 - mmap()
+    NULL,                       // 41 - munmap()
+    NULL,                       // 42 - mlock()
+    NULL,                       // 43 - munlock()
 };
