@@ -108,5 +108,6 @@ void schedSleepTimer();
 int yield(Thread *);
 pid_t fork(Thread *);
 void exit(Thread *, int);
-int execve(Thread *, const char *, const char **argv, const char **envp);
+int execve(Thread *, const char *, const char **, const char **);
+int execrdv(Thread *, const char *, const char **);
 unsigned long msleep(Thread *, unsigned long);
