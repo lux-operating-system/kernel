@@ -12,6 +12,9 @@
 #include <kernel/sched.h>
 #include <kernel/logger.h>
 #include <kernel/elf.h>
+#include <kernel/modules.h>
+
+int execmve(Thread *, void *, const char **, const char **);
 
 /* execveMemory(): executes a program from memory
  * params: ptr - pointer to the program in memory
@@ -107,7 +110,7 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     return pid;
 }
 
-/* execve(): executes a program from a file
+/* execve(): replaces the current program, executes a program from a file
  * params: t - parent thread structure
  * params: name - file name of the program
  * params: argv - arguments to be passed to the program
@@ -117,4 +120,102 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
 
 int execve(Thread *t, const char *name, const char **argv, const char **envp) {
     return 0;    /* todo */
+}
+
+/* execrdv(): replaces the current program, executes a program from the ramdisk
+ * this is only used before file system drivers are loaded
+ * params: t - parent thread structure
+ * params: name - file name of the program
+ * params: argv - arguments to be passed to the program
+ * returns: should not return on success
+ */
+
+int execrdv(Thread *t, const char *name, const char **argv) {
+    schedLock();
+    setScheduling(false);
+
+    // load from ramdisk
+    int64_t size = ramdiskFileSize(name);
+    if(size <= sizeof(ELFFileHeader)) {
+        setScheduling(true);
+        schedRelease();
+        return -1;
+    }
+
+    void *image = malloc(size);
+    if(!image) {
+        setScheduling(true);
+        schedRelease();
+        return -1;
+    }
+
+    if(ramdiskRead(image, name, size) != size) {
+        setScheduling(true);
+        schedRelease();
+        return -1;
+    }
+
+    return execmve(t, image, argv, NULL);
+}
+
+/* execmve(): helper function that replaces the current running program from memory
+ * params: t - parent thread structure
+ * params: image - image of the program in memory
+ * params: argv - arguments to be passed to the program
+ * params: envp - environmental variables
+ * returns: should not return on success
+ */
+
+int execmve(Thread *t, void *image, const char **argv, const char **envp) {
+    // create the new context before deleting the current one
+    // this guarantees we can return on failure
+    void *newctx = calloc(1, PLATFORM_CONTEXT_SIZE);
+    if(!newctx) {
+        free(image);
+        setScheduling(true);
+        schedRelease();
+        return -1;
+    }
+
+    if(!platformCreateContext(newctx, PLATFORM_CONTEXT_USER, 0, 0)) {
+        free(newctx);
+        free(image);
+        setScheduling(true);
+        schedRelease();
+        return -1;
+    }
+
+    void *oldctx = t->context;
+    t->context = newctx;
+
+    threadUseContext(t->tid);   // switch to our new context
+
+    // parse the binary
+    uint64_t highest;
+    uint64_t entry = loadELF(image, &highest);
+    free(image);
+    if(!entry || !highest) {
+        t->context = oldctx;
+        free(newctx);
+        setScheduling(true);
+        schedRelease();
+        return -1;
+    }
+
+    if(platformSetContext(t, entry, highest, argv, envp)) {
+        t->context = oldctx;
+        free(newctx);
+        setScheduling(true);
+        schedRelease();
+        return -1;
+    }
+
+    // TODO: here we've successfully loaded the new program, but we also need
+    // to free up memory used by the original program
+    free(oldctx);
+
+    schedAdjustTimeslice();
+    setScheduling(true);
+    schedRelease();
+    return 0; // return to syscall dispatcher; the thread will not see this return
 }
