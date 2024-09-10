@@ -236,3 +236,12 @@ void ttyPuts(const char *s) {
         s++;
     }
 }
+
+/* getTtyStatus(): returns the status of the framebuffer and emulated terminal
+ * params: b - buffer to store the status
+ * returns: nothing
+ */
+
+void getTtyStatus(KTTY *b) {
+    memcpy(b, &ktty, sizeof(KTTY));
+}
