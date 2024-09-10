@@ -50,12 +50,27 @@ int kprintf(int level, const char *src, const char *f, ...) {
     return len;
 }
 
-int ksprint(const char *name, const char *msg) {
+int ksprint(int level, const char *name, const char *msg) {
     if(!verbose) return 0;
 
     acquireLockBlocking(&lock);
     int len = printf("\e[37m%08d ", platformUptime());
-    len += printf("\e[36mMODULE %s: \e[37m%s", name, msg);
+    len += printf("\e[36mserver ");
+    
+    switch(level) {
+    case KPRINTF_LEVEL_DEBUG:
+        len += printf("\e[32m");
+        break;
+    case KPRINTF_LEVEL_WARNING:
+        len += printf("\e[33m");
+        break;
+    case KPRINTF_LEVEL_ERROR:
+    case KPRINTF_LEVEL_PANIC:
+    default:
+        len += printf("\e[31m");
+    }
+    
+    len += printf("%s: \e[37m%s", name, msg);
     releaseLock(&lock);
     return len;
 }
