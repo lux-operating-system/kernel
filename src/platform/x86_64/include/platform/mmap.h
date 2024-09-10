@@ -19,4 +19,5 @@
 #define KERNEL_HEAP_LIMIT       (uintptr_t)0xFFFF8FFFFFFFFFFF
 #define KERNEL_MMIO_LIMIT       ((uint64_t)KERNEL_BASE_MAPPED << 30)
 #define USER_BASE_ADDRESS       0x400000                        // 4 MB, user programs will be loaded here
+#define USER_MMIO_BASE          (uintptr_t)0x0000700000000000   // for mmap() and similar syscalls
 #define USER_LIMIT_ADDRESS      (KERNEL_BASE_ADDRESS-1)         // maximum limit for the lower half
