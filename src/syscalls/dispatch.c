@@ -108,7 +108,12 @@ void syscallDispatchMount(SyscallRequest *req) {
         req->requestID = id;
         req->external = true;
 
-        mount(req->thread, id, (const char *)req->params[0], (const char *)req->params[1], (const char *)req->params[2], req->params[3]);
+        int status = mount(req->thread, id, (const char *)req->params[0], (const char *)req->params[1], (const char *)req->params[2], req->params[3]);
+        if(status) {
+            req->external = false;
+            req->ret = status;      // error code
+            req->unblock = true;
+        }
     }
 }
 
