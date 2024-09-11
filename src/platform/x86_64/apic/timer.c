@@ -80,6 +80,14 @@ int apicTimerInit() {
 
     KDEBUG("local APIC frequency is %d MHz\n", apicFrequency / 1000 / 1000);
 
+    // ensure the hardware can go at least twice as fast as the software
+    if(apicFrequency < (PLATFORM_TIMER_FREQUENCY*2)) {
+        KERROR("local APIC frequency is not high enough to use as main timing source\n");
+        for(;;) platformHalt();
+    }
+
+    KDEBUG("setting up system timer at %d kHz\n", PLATFORM_TIMER_FREQUENCY / 1000);
+
     // set up the local APIC timer in periodic mode and allocate interrupt 0xFE for it
     lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_PERIODIC | LAPIC_LVT_MASK | LAPIC_TIMER_IRQ);
     lapicWrite(LAPIC_TIMER_DIVIDE, LAPIC_TIMER_DIVIDER_1);
