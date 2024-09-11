@@ -72,10 +72,6 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
             }
 
             int flags = VMM_USER | VMM_WRITE;
-            if(prhdr->flags & ELF_SEGMENT_FLAGS_WRITE) {
-                flags |= VMM_WRITE;
-            }
-
             if(prhdr->flags & ELF_SEGMENT_FLAGS_EXEC) {
                 flags |= VMM_EXEC;
             }
@@ -85,7 +81,18 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
                 return 0;
             }
 
+            if(vp != (prhdr->virtualAddress & ~(PAGE_SIZE-1))) {
+                vmmFree(vp, pages);
+            }
+
             memcpy((void *)prhdr->virtualAddress, (const void *)(binary + prhdr->fileOffset), prhdr->fileSize);
+
+            // adjust the perms by removing the write perms if necessary
+            if(!(prhdr->flags & ELF_SEGMENT_FLAGS_WRITE)) {
+                flags &= ~VMM_WRITE;
+            }
+
+            vmmSetFlags(prhdr->virtualAddress, pages, flags);
         } else {
             /* unimplemented header type */
             KERROR("unimplemented ELF header type %d\n", prhdr->segmentType);
