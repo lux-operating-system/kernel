@@ -15,7 +15,9 @@
 
 typedef struct SyscallRequest {
     bool busy, queued, unblock;
+    bool external;          // set for syscalls that are handled in user space
 
+    uint64_t requestID;     // unique random ID for user space syscalls
     uint64_t function;
     uint64_t params[4];
     uint64_t ret;           // return value from the kernel to the program
