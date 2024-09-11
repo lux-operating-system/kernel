@@ -212,3 +212,25 @@ uintptr_t vmmMMIO(uintptr_t phys, bool cache) {
         return 0;
     }
 }
+
+/* vmmSetFlags(): sets the flags for a series of pages
+ * params: base - base address
+ * params: count - number of pages
+ * params: flags - page attributes to set
+ * returns: base address
+ */
+
+uintptr_t vmmSetFlags(uintptr_t base, size_t count, int flags) {
+    uintptr_t phys;
+    int parsedFlags = PLATFORM_PAGE_PRESENT;
+    if(flags & VMM_EXEC) parsedFlags |= PLATFORM_PAGE_EXEC;
+    if(flags & VMM_USER) parsedFlags |= PLATFORM_PAGE_USER;
+    if(flags & VMM_WRITE) parsedFlags |= PLATFORM_PAGE_WRITE;
+
+    for(size_t i = 0; i < count; i++) {
+        if(vmmPageStatus(base + (i*PAGE_SIZE), &phys) & PLATFORM_PAGE_PRESENT)
+            platformMapPage(base + (i*PAGE_SIZE), phys, parsedFlags);
+    }
+
+    return base;
+}

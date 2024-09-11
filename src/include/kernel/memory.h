@@ -66,4 +66,6 @@ int vmmFree(uintptr_t, size_t);
 int vmmPageFault(uintptr_t, int);       // the platform-specific page fault handler must call this
 uintptr_t vmmMMIO(uintptr_t, bool);
 int vmmPageStatus(uintptr_t, uintptr_t *);
+uintptr_t vmmSetFlags(uintptr_t, size_t, int);
+
 void *sbrk(Thread *, intptr_t);
