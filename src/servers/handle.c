@@ -8,6 +8,7 @@
 /* Kernel-Server Communication */
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <platform/platform.h>
 #include <kernel/logger.h>
@@ -20,6 +21,8 @@ static struct sockaddr *connaddr;  // connected socket addresses
 static socklen_t *connlen;         // length of connected socket addresses
 static void *in, *out;
 static int connectionCount = 0;
+static bool lumenConnected = false;
+static struct sockaddr_un lumenAddr;
 
 /* serverInit(): initializes the server subsystem
  * params: none
@@ -61,6 +64,18 @@ void serverInit() {
     }
 
     KDEBUG("kernel is listening on socket %d: %s\n", kernelSocket, addr.sun_path);
+
+    // set up lumen's socket
+    lumenSocket = socket(NULL, AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0);
+    if(lumenSocket < 0) {
+        KERROR("failed to open socket for lumen: error code %d\n", -1*lumenSocket);
+        for(;;) platformHalt();
+    }
+
+    // don't do anything else for now, we will try to connect to lumen later
+    // after lumen itself is running
+    lumenAddr.sun_family = AF_UNIX;
+    strcpy(lumenAddr.sun_path, SERVER_LUMEN_PATH);
 }
 
 /* serverIdle(): handles incoming kernel connections when idle
@@ -76,6 +91,14 @@ void serverIdle() {
         //KDEBUG("kernel accepted connection from %s\n", connaddr[connectionCount].sa_data);
         connections[connectionCount] = sd;
         connectionCount++;
+        if(connectionCount && !lumenConnected) {
+            // connect to lumen
+            int status = connect(NULL, lumenSocket, (const struct sockaddr *) &lumenAddr, sizeof(struct sockaddr_un));
+            if(!status) {
+                lumenConnected = true;
+                KDEBUG("connected to lumen at socket %d\n", lumenSocket);
+            }
+        }
     }
 
     // check if any of the incoming connections sent anything
