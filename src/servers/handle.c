@@ -15,7 +15,7 @@
 #include <kernel/socket.h>
 #include <kernel/servers.h>
 
-static int kernelSocket = 0, lumenSocket = 0;
+int kernelSocket = 0, lumenSocket = 0;
 static int *connections;           // connected socket descriptors
 static struct sockaddr *connaddr;  // connected socket addresses
 static socklen_t *connlen;         // length of connected socket addresses
