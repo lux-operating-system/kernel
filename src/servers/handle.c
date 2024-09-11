@@ -93,11 +93,9 @@ void serverIdle() {
         connectionCount++;
         if(connectionCount && !lumenConnected) {
             // connect to lumen
-            int status = connect(NULL, lumenSocket, (const struct sockaddr *) &lumenAddr, sizeof(struct sockaddr_un));
-            if(!status) {
-                lumenConnected = true;
-                KDEBUG("connected to lumen at socket %d\n", lumenSocket);
-            }
+            KDEBUG("connected to lumen at socket %d\n", sd);
+            lumenConnected = true;
+            lumenSocket = sd;
         }
     }
 
