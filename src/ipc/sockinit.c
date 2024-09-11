@@ -51,7 +51,9 @@ SocketDescriptor *getLocalSocket(const struct sockaddr *addr, socklen_t len) {
     if(!socketCount) return NULL;
     if(len > sizeof(struct sockaddr)) len = sizeof(struct sockaddr);
     for(int i = 0; i < socketCount; i++) {
-        if((sockets[i]) && !memcmp(&sockets[i]->address, addr, len)) {
+        if((sockets[i]) && (sockets[i]->address.sa_family == AF_UNIX ||
+        sockets[i]->address.sa_family == AF_LOCAL) &&
+        !strcmp((char *)&sockets[i]->address.sa_data, addr->sa_data)) {
             return sockets[i];
         }
     }
