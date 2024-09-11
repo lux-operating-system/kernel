@@ -14,7 +14,7 @@
  * platform-specific code, abstracting the difference between different platforms;
  * the goal is to keep the core kernel portable across CPU architectures */
 
-#define PLATFORM_TIMER_FREQUENCY            10000       // Hz, this is for the scheduler
+#define PLATFORM_TIMER_FREQUENCY            1000        // Hz, this is for the scheduler
 
 #define PLATFORM_PAGE_PRESENT               0x0001      // present in main memory
 #define PLATFORM_PAGE_SWAP                  0x0002      // present in storage device
