@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <kernel/sched.h>
+#include <kernel/file.h>
 
 #define SERVER_MAX_CONNECTIONS  512
 #define SERVER_MAX_SIZE         0x80000             // max msg size is 512 KiB
@@ -77,6 +78,15 @@ typedef struct {
     uint64_t buffer;        // pointer
     uint16_t w, h, pitch, bpp;
 } FramebufferResponse;
+
+/* mount command */
+typedef struct {
+    SyscallHeader header;
+    char source[MAX_FILE_PATH];
+    char target[MAX_FILE_PATH];
+    char type[32];
+    int flags;
+} MountCommand;
 
 void serverInit();
 void serverIdle();

@@ -17,7 +17,7 @@
 #include <kernel/io.h>
 #include <kernel/sched.h>
 
-int mount(Thread *t, const char *src, const char *tgt, const char *type, int flags) {
+int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
     /* stub */
     return -1;
 }

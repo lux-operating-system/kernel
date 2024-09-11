@@ -25,3 +25,6 @@ typedef struct {
     size_t position;
     struct stat info;
 } FileDescriptor;
+
+/* file system syscalls */
+int mount(Thread *, uint64_t, const char *, const char *, const char *, int);

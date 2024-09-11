@@ -9,11 +9,13 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <platform/mmap.h>
+#include <platform/platform.h>
 #include <kernel/sched.h>
 #include <kernel/socket.h>
 #include <kernel/syscalls.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/file.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -96,7 +98,19 @@ void syscallDispatchMSleep(SyscallRequest *req) {
     req->ret = msleep(req->thread, req->params[0]);
 }
 
-/* TODO: Group 2: File System */
+/* Group 2: File System */
+
+void syscallDispatchMount(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[2], 32)) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+        req->external = true;
+
+        mount(req->thread, id, (const char *)req->params[0], (const char *)req->params[1], (const char *)req->params[2], req->params[3]);
+    }
+}
 
 /* Group 3: Interprocess Communication */
 
@@ -240,7 +254,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 25 - rmdir()
     NULL,                       // 26 - utime()
     NULL,                       // 27 - chroot()
-    NULL,                       // 28 - mount()
+    syscallDispatchMount,       // 28 - mount()
     NULL,                       // 29 - umount()
     NULL,                       // 30 - fnctl()
 
