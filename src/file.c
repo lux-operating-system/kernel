@@ -30,5 +30,6 @@ int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *
     strcpy(command->source, src);
     strcpy(command->target, tgt);
     strcpy(command->type, type);
-    
+
+    requestServer(t, command);
 }
