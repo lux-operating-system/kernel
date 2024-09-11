@@ -16,8 +16,19 @@
 #include <kernel/file.h>
 #include <kernel/io.h>
 #include <kernel/sched.h>
+#include <kernel/servers.h>
 
 int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
-    /* stub */
-    return -1;
+    // send a request to lumen
+    MountCommand *command = calloc(1, sizeof(MountCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_MOUNT;
+    command->header.header.length = sizeof(MountCommand);
+    command->header.id = id;
+    command->flags = flags;
+    strcpy(command->source, src);
+    strcpy(command->target, tgt);
+    strcpy(command->type, type);
+    
 }
