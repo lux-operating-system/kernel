@@ -130,6 +130,8 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
         if(!self->inboundCount) {
             free(self->inbound);
             free(self->inboundLen);
+            self->inbound = NULL;
+            self->inboundLen = NULL;
         } else {
             memmove(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
             memmove(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));

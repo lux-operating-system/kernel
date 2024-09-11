@@ -28,8 +28,6 @@ pid_t fork(Thread *t) {
         return -1;
     }
 
-    KDEBUG("forking parent PID %d into child %d\n", t->pid, pid);
-
     // we now have a blank slate process, so we need to create a thread in it
     // and deep clone the parent into the child
     Process *p = getProcess(pid);
@@ -58,6 +56,13 @@ pid_t fork(Thread *t) {
     p->threads[0]->pid = pid;
     p->threads[0]->tid = pid;
     p->threads[0]->context = calloc(1, PLATFORM_CONTEXT_SIZE);
+    p->threads[0]->highest = t->highest;
+    p->threads[0]->pages = t->pages;
+
+    // NOTE: fork() only clones one thread, which is why we're not cloning the
+    // entire process memory, but just the calling thread
+    p->pages = t->pages;
+
     if(!p->threads[0]->context) {
         free(p->threads[0]);
         free(p->threads);

@@ -73,7 +73,7 @@ int listen(Thread *t, int sd, int backlog) {
     if(backlog > 0) sock->backlogMax = backlog;
     else sock->backlogMax = SOCKET_DEFAULT_BACKLOG;
 
-    sock->backlog = calloc(backlog, sizeof(SocketDescriptor *));
+    sock->backlog = calloc(sock->backlogMax, sizeof(SocketDescriptor *));
     if(!sock->backlog) {
         socketRelease();
         return -ENOBUFS;
@@ -141,6 +141,12 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     self->peer->peer = self;
     memmove(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
     listener->backlogCount--;
+
+    // save the peer address if requested
+    if(addr && len) {
+        if(*len > sizeof(struct sockaddr)) *len = sizeof(struct sockaddr);
+        memcpy(addr, &self->peer->address, *len);
+    }
 
     socketRelease();
 

@@ -1,7 +1,7 @@
 PLATFORM=x86_64
 PLATFORMDEF=PLATFORM_X86_64
 ASFLAGS=-f elf64 -i./src/platform/$(PLATFORM)
-CCFLAGS=-c -D$(PLATFORMDEF) -I./src/include -I./src/platform/$(PLATFORM)/include -mno-sse -ffreestanding -O3 -mcmodel=large
+CCFLAGS=-c -D$(PLATFORMDEF) -I./src/include -I./src/platform/$(PLATFORM)/include -mno-sse -ffreestanding -O3 -mcmodel=large -mno-red-zone
 LDFLAGS=-T./src/platform/$(PLATFORM)/lux-$(PLATFORM).ld -nostdlib
 AS=nasm
 CC=x86_64-lux-gcc

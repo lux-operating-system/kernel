@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #define KPRINTF_LEVEL_DEBUG     0
 #define KPRINTF_LEVEL_WARNING   1
@@ -20,5 +21,6 @@
 #define KERROR(...)             kprintf(KPRINTF_LEVEL_ERROR, __FILE__+4, __VA_ARGS__)
 #define KPANIC(...)             kprintf(KPRINTF_LEVEL_PANIC, __FILE__+4, __VA_ARGS__)
 
+void loggerSetVerbose(bool);
 int kprintf(int, const char *, const char *, ...);
-int vkprintf(int, const char *, const char *, va_list);
+int ksprint(int, const char *, const char *);

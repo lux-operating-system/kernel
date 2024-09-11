@@ -5,22 +5,26 @@
  * Core Microkernel
  */
 
+#include <string.h>
 #include <stdlib.h>
 #include <kernel/logger.h>
 #include <kernel/socket.h>
 #include <kernel/sched.h>
 #include <kernel/modules.h>
+#include <kernel/memory.h>
+#include <kernel/servers.h>
 #include <platform/platform.h>
 
 void *idleThread(void *args) {
     for(;;) {
-        if(!syscallProcess()) {
-            platformHalt();     // only halt the cpu if there's nothing to do
-        }
+        if(!syscallProcess()) platformHalt();
     }
 }
 
 void *kernelThread(void *args) {
+    // open the kernel socket for server communication
+    serverInit();
+
     KDEBUG("attempt to load lumen from ramdisk...\n");
 
     // spawn the router in user space
@@ -51,7 +55,15 @@ void *kernelThread(void *args) {
     }
 
     setLumenPID(pid);
-    return idleThread(args);
+
+    PhysicalMemoryStatus ps;
+    pmmStatus(&ps);
+    KDEBUG("early boot complete, memory usage: %d MiB / %d MiB\n", ps.usedPages>>8, ps.usablePages>>8);
+
+    for(;;) {
+        serverIdle();
+        if(!syscallProcess()) platformHalt();
+    }
 }
 
 // the true kernel entry point is called after platform-specific initialization
@@ -68,14 +80,11 @@ int main(int argc, char **argv) {
     // number of kernel threads = number of CPU cores
     kthreadCreate(&kernelThread, NULL);
 
-    for(int i = 1; i < platformCountCPU(); i++) {
+    for(int i = 1; i < platformCountCPU(); i++)
         kthreadCreate(&idleThread, NULL);
-    }
 
     // now enable the scheduler
     setScheduling(true);
 
-    while(1) {
-        platformHalt();
-    }
+    while(1) platformHalt();
 }

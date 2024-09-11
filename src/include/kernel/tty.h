@@ -31,3 +31,4 @@ void ttyInit(KernelBootInfo *);
 void ttyPutc(char);
 void ttyPuts(const char *);
 void ttyRemapFramebuffer();
+void getTtyStatus(KTTY *);

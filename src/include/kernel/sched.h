@@ -39,6 +39,8 @@ typedef struct Thread {
     SyscallRequest syscall; // for when the thread is blocked
     int exitStatus;         // for zombie threads
 
+    int pages;              // memory pages used
+
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
 
@@ -58,6 +60,8 @@ typedef struct Process {
 
     struct IODescriptor io[MAX_IO_DESCRIPTORS];
     int iodCount;
+
+    int pages;              // memory pages used
 
     size_t threadCount;
     size_t childrenCount;
@@ -104,5 +108,6 @@ void schedSleepTimer();
 int yield(Thread *);
 pid_t fork(Thread *);
 void exit(Thread *, int);
-int execve(Thread *, const char *, const char **argv, const char **envp);
+int execve(Thread *, const char *, const char **, const char **);
+int execrdv(Thread *, const char *, const char **);
 unsigned long msleep(Thread *, unsigned long);

@@ -57,7 +57,6 @@ int pmmMark(uintptr_t phys, bool use) {
  */
 
 int pmmMarkContiguous(uintptr_t phys, size_t count, bool use) {
-    KDEBUG("marking contigiuous at 0x%X\n", phys);
     int status = 0;
     for(size_t i = 0; i < count; i++) {
         status |= pmmMark(phys, use);

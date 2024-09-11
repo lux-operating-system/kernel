@@ -13,6 +13,7 @@
 #include <kernel/socket.h>
 #include <kernel/syscalls.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -49,6 +50,11 @@ void syscallDispatchFork(SyscallRequest *req) {
 
 void syscallDispatchYield(SyscallRequest *req) {
     req->ret = yield(req->thread);
+    req->unblock = true;
+}
+
+void syscallDispatchExecrdv(SyscallRequest *req) {
+    req->ret = execrdv(req->thread, (const char *) req->params[0], (const char **) req->params[1]);
     req->unblock = true;
 }
 
@@ -195,6 +201,13 @@ void syscallDispatchSend(SyscallRequest *req) {
     }
 }
 
+/* Group 4: Memory Management */
+
+void syscallDispatchSBrk(SyscallRequest *req) {
+    req->ret = (uint64_t) sbrk(req->thread, (intptr_t) req->params[0]);
+    req->unblock = true;
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -202,7 +215,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchYield,       // 2 - yield()
     NULL,                       // 3 - waitpid()
     NULL,                       // 4 - execve()
-    NULL,                       // 5 - execrdv()
+    syscallDispatchExecrdv,     // 5 - execrdv()
     syscallDispatchGetPID,      // 6 - getpid()
     syscallDispatchGetTID,      // 7 - gettid()
     syscallDispatchGetUID,      // 8 - getuid()
@@ -239,4 +252,12 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchAccept,      // 35 - accept()
     syscallDispatchRecv,        // 36 - recv()
     syscallDispatchSend,        // 37 - send()
+    NULL,                       // 38 - kill()
+
+    /* group 4: memory management */
+    syscallDispatchSBrk,        // 39 - sbrk()
+    NULL,                       // 40 - mmap()
+    NULL,                       // 41 - munmap()
+    NULL,                       // 42 - mlock()
+    NULL,                       // 43 - munlock()
 };
