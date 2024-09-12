@@ -97,6 +97,8 @@ int threadUseContext(pid_t);
 pid_t execveMemory(const void *, const char **argv, const char **envp);
 pid_t getLumenPID();
 void setLumenPID(pid_t);
+void setKernelPID(pid_t);
+pid_t getKernelPID();
 int schedException(pid_t, pid_t);
 void terminateThread(Thread *, int, bool);
 void schedSleepTimer();

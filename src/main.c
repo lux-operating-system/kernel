@@ -22,6 +22,8 @@ void *idleThread(void *args) {
 }
 
 void *kernelThread(void *args) {
+    setKernelPID(getPid());
+
     // open the kernel socket for server communication
     serverInit();
 
