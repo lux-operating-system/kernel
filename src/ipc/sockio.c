@@ -33,14 +33,17 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
+    
+    socketLock();
 
     SocketDescriptor *self = (SocketDescriptor*) p->io[sd].data;
     SocketDescriptor *peer = self->peer;
-    if(!peer) return -EDESTADDRREQ;     // not in connection mode
+    if(!peer) {
+        socketRelease();
+        return -EDESTADDRREQ;     // not in connection mode
+    }
 
     sa_family_t family = self->address.sa_family;
-
-    socketLock();
 
     if(family == AF_UNIX || family == AF_LOCAL) {
         // simply append to the peer's inbound list
@@ -101,14 +104,19 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
 
+    socketLock();
+
     SocketDescriptor *self = (SocketDescriptor*) p->io[sd].data;
-    if(!self->peer) return -EDESTADDRREQ;   // not in connection mode
+    if(!self->peer) {
+        socketRelease();
+        return -EDESTADDRREQ;   // not in connection mode
+    }
 
     sa_family_t family = self->address.sa_family;
-    if(!self->inboundCount || !self->inbound || !self->inboundLen)
+    if(!self->inboundCount || !self->inbound || !self->inboundLen) {
+        socketRelease();
         return -EWOULDBLOCK;    // no messages available
-
-    socketLock();
+    }
 
     if(family == AF_UNIX || family == AF_LOCAL) {
         // copy from the inbound list
