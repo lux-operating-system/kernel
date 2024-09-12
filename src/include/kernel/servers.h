@@ -36,7 +36,7 @@
 #define COMMAND_MOUNT           0x8002
 #define COMMAND_UMOUNT          0x8003
 
-#define MAX_SYSCALL_COMMAND     0x0003
+#define MAX_SYSCALL_COMMAND     0x8003
 
 typedef struct {
     uint16_t command;
@@ -91,5 +91,5 @@ typedef struct {
 void serverInit();
 void serverIdle();
 void handleGeneralRequest(int, const MessageHeader *, void *);
-void handleSyscallResponse(int, const MessageHeader *);
+void handleSyscallResponse(const SyscallHeader *);
 int requestServer(Thread *, void *);

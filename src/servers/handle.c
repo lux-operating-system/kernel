@@ -107,6 +107,7 @@ void serverIdle() {
         sd = connections[i];
         while(recv(NULL, sd, in, SERVER_MAX_SIZE, 0) > 0) {
             if(h->command <= MAX_GENERAL_COMMAND) handleGeneralRequest(sd, in, out);
+            else if(h->command >= 0x8000 && h->command <= MAX_SYSCALL_COMMAND) handleSyscallResponse((SyscallHeader *)h);
             else {
                 // TODO
                 KWARN("unimplemented message command 0x%02X, dropping...\n", h->command);
