@@ -9,6 +9,7 @@
 
 #include <kernel/servers.h>
 #include <kernel/sched.h>
+#include <kernel/syscalls.h>
 #include <kernel/logger.h>
 
 void handleSyscallResponse(const SyscallHeader *hdr) {
