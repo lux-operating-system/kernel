@@ -14,6 +14,7 @@ section .text
 global timerHandlerStub
 align 16
 timerHandlerStub:
+    cli
     pushaq
 
     cld
