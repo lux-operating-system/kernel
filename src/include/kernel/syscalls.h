@@ -29,6 +29,7 @@ typedef struct SyscallRequest {
 void syscallHandle();
 SyscallRequest *syscallEnqueue(SyscallRequest *);
 SyscallRequest *syscallDequeue();
+SyscallRequest *getSyscall(pid_t);
 int syscallProcess();
 
 /* dispatch table */

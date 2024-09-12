@@ -107,3 +107,15 @@ int syscallProcess() {
 
     return 1;
 }
+
+/* getSyscall(): returns the syscall request structure of a thread
+ * params: tid - thread ID
+ * returns: pointer to syscall structure, NULL on fail
+ */
+
+SyscallRequest *getSyscall(pid_t tid) {
+    Thread *t = getThread(tid);
+    if(!t) return NULL;
+
+    return &t->syscall;
+}
