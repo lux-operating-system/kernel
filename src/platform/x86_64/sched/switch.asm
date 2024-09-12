@@ -47,11 +47,11 @@ platformLoadContext:
 
     ; save performance by only invalidating TLB if the context actually changed
     mov rax, cr3
-    cmp rax, [rdi+512]      ; pml4
+    mov rbx, [rdi+512]      ; pml4
+    cmp rax, rbx
     jz .continue
 
-    mov rax, [rdi+512]
-    mov cr3, rax
+    mov cr3, rbx
 
 .continue:
     mov rax, [rdi+672]      ; stack segment
