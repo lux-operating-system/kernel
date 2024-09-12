@@ -106,13 +106,16 @@ void syscallDispatchMount(SyscallRequest *req) {
     syscallVerifyPointer(req, req->params[2], 32)) {
         uint64_t id = platformRand();
         req->requestID = id;
-        req->external = true;
 
         int status = mount(req->thread, id, (const char *)req->params[0], (const char *)req->params[1], (const char *)req->params[2], req->params[3]);
         if(status) {
             req->external = false;
             req->ret = status;      // error code
             req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
         }
     }
 }
