@@ -102,7 +102,7 @@ int socketRegister(SocketDescriptor *sock) {
 int socket(Thread *t, int domain, int type, int protocol) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
 
     if(!p) return -ESRCH;
     if(p->iodCount == MAX_IO_DESCRIPTORS) return -EMFILE;
@@ -147,7 +147,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
 int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     // input verification

@@ -28,7 +28,7 @@
 ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
@@ -95,7 +95,7 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))

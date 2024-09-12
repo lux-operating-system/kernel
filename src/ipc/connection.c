@@ -28,7 +28,7 @@
 int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
@@ -60,7 +60,7 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 int listen(Thread *t, int sd, int backlog) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
@@ -97,7 +97,7 @@ int listen(Thread *t, int sd, int backlog) {
 int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
