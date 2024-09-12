@@ -97,7 +97,7 @@ void smpCPUInfoSetup() {
     writeMSR(MSR_STAR, syscallSegments);            // kernel/user segments
     writeMSR(MSR_LSTAR, (uint64_t)syscallEntry);    // 64-bit entry point
     writeMSR(MSR_CSTAR, 0);                         // non-existent 32-bit entry point
-    writeMSR(MSR_SFMASK, ~0x202);
+    writeMSR(MSR_SFMASK, ~0x002);
 
     writeMSR(MSR_EFER, readMSR(MSR_EFER) | MSR_EFER_SYSCALL);
 
