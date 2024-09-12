@@ -92,4 +92,4 @@ void serverInit();
 void serverIdle();
 void handleGeneralRequest(int, const MessageHeader *, void *);
 void handleSyscallResponse(int, const MessageHeader *);
-void requestServer(Thread *, void *);
+int requestServer(Thread *, void *);
