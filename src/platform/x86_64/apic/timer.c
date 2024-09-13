@@ -108,7 +108,6 @@ uint64_t apicTimerFrequency() {
  * this is called PLATFORM_TIMER_FREQUENCY times per second */
 
 void timerIRQ(void *stack) {
-    disableIRQs();
     platformAcknowledgeIRQ(NULL);
 
     KernelCPUInfo *info = getKernelCPUInfo();
