@@ -87,11 +87,11 @@ void serverIdle() {
     // check for incoming connections
     connlen[connectionCount] = sizeof(struct sockaddr);
     int sd = accept(NULL, kernelSocket, &connaddr[connectionCount], &connlen[connectionCount]);
-    if(sd > 0) {
+    if(sd > 0 && sd < MAX_IO_DESCRIPTORS) {
         //KDEBUG("kernel accepted connection from %s\n", connaddr[connectionCount].sa_data);
         connections[connectionCount] = sd;
         connectionCount++;
-        if(connectionCount && !lumenConnected) {
+        if(!lumenConnected) {
             // connect to lumen
             KDEBUG("connected to lumen at socket %d\n", sd);
             lumenConnected = true;
@@ -105,13 +105,16 @@ void serverIdle() {
     MessageHeader *h = (MessageHeader *) in;
     for(int i = 0; i < connectionCount; i++) {
         sd = connections[i];
-        while(recv(NULL, sd, in, SERVER_MAX_SIZE, 0) > 0) {
+        ssize_t s = recv(NULL, sd, in, SERVER_MAX_SIZE, 0);
+        while(s > 0 && s < SERVER_MAX_SIZE) {
             if(h->command <= MAX_GENERAL_COMMAND) handleGeneralRequest(sd, in, out);
             else if(h->command >= 0x8000 && h->command <= MAX_SYSCALL_COMMAND) handleSyscallResponse((SyscallHeader *)h);
             else {
                 // TODO
                 KWARN("unimplemented message command 0x%02X, dropping...\n", h->command);
             }
+
+            s = recv(NULL, sd, in, SERVER_MAX_SIZE, 0);
         }
     }
 }
