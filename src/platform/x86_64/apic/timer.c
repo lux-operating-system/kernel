@@ -108,8 +108,6 @@ uint64_t apicTimerFrequency() {
  * this is called PLATFORM_TIMER_FREQUENCY times per second */
 
 void timerIRQ(void *stack) {
-    platformAcknowledgeIRQ(NULL);
-
     KernelCPUInfo *info = getKernelCPUInfo();
     info->uptime++;
 
@@ -119,7 +117,11 @@ void timerIRQ(void *stack) {
             platformSaveContext(info->thread->context, stack);
         }
 
+        platformAcknowledgeIRQ(NULL);
+
         // now switch the context
         schedule();
+    } else {
+        platformAcknowledgeIRQ(NULL);
     }
 }
