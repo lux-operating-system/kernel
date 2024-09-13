@@ -33,7 +33,7 @@ apEntry:
 
     ; configure the CPU for long mode - this is the same sequence we followed
     ; in the boot loader
-    mov eax, 0x620          ; enable SSE, PAE, and global pages
+    mov eax, 0x620          ; enable SSE and PAE
     mov cr4, eax
 
     mov ecx, 0xC0000080
@@ -43,7 +43,7 @@ apEntry:
 
     mov eax, cr0
     and eax, 0x9FFFFFFF     ; enable global caching
-    or eax, 0x80010001      ; enable paging, write-protection, and protected mode
+    or eax, 0x80000001      ; enable paging and protected mode
     mov cr0, eax
 
     jmp 0x08:0x1100

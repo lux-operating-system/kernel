@@ -147,6 +147,11 @@ int apMain() {
 
     // reset paging
     writeCR3((uint64_t)platformGetPagingRoot());
+
+    writeCR0(readCR0() & ~CR0_CACHE_DISABLE);
+    writeCR0(readCR0() & ~CR0_NOT_WRITE_THROUGH);
+    writeCR0(readCR0() & ~CR0_WRITE_PROTECT);
+
     smpCPUInfoSetup();
 
     // set up the local APIC
