@@ -87,6 +87,8 @@ void serverInit() {
 
 void serverIdle() {
     // check for incoming connections
+    setLocalSched(false);
+
     connlen[connectionCount] = sizeof(struct sockaddr);
     int sd = accept(NULL, kernelSocket, &connaddr[connectionCount], &connlen[connectionCount]);
     if(sd > 0 && sd < MAX_IO_DESCRIPTORS) {
@@ -102,7 +104,10 @@ void serverIdle() {
     }
 
     // check if any of the incoming connections sent anything
-    if(!connectionCount) return;
+    if(!connectionCount) {
+        setLocalSched(true);
+        return;
+    }
 
     MessageHeader *h = (MessageHeader *) in;
     for(int i = 0; i < connectionCount; i++) {
@@ -119,4 +124,6 @@ void serverIdle() {
             s = recv(NULL, sd, in, SERVER_MAX_SIZE, 0);
         }
     }
+
+    setLocalSched(true);
 }
