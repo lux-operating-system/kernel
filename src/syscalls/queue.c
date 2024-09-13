@@ -100,9 +100,11 @@ int syscallProcess() {
 
     if((syscall->thread->status == THREAD_BLOCKED) && syscall->unblock) {
         // this way we prevent accidentally running threads that exit()
+        schedLock();
         syscall->thread->status = THREAD_QUEUED;
         syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);
         syscall->busy = false;
+        schedRelease();
     }
 
     return 1;
