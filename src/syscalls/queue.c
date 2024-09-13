@@ -84,6 +84,8 @@ int syscallProcess() {
     SyscallRequest *syscall = syscallDequeue();
     if(!syscall) return 0;
 
+    setLocalSched(false);
+
     // essentially just dispatch the syscall and store the return value
     // in the thread's context so it can get it back
     if(syscall->function > MAX_SYSCALL || !syscallDispatchTable[syscall->function]) {
@@ -100,13 +102,12 @@ int syscallProcess() {
 
     if((syscall->thread->status == THREAD_BLOCKED) && syscall->unblock) {
         // this way we prevent accidentally running threads that exit()
-        schedLock();
         syscall->thread->status = THREAD_QUEUED;
         syscall->thread->time = schedTimeslice(syscall->thread, syscall->thread->priority);
         syscall->busy = false;
-        schedRelease();
     }
 
+    setLocalSched(true);
     return 1;
 }
 
