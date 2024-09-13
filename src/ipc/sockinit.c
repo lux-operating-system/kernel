@@ -20,7 +20,7 @@
 #include <kernel/sched.h>
 
 /* array of system-wide open sockets */
-static lock_t lock = LOCK_INITIAL;
+static lock_t *lock;
 static SocketDescriptor **sockets;
 static int socketCount;
 
@@ -31,12 +31,14 @@ static int socketCount;
 
 void socketInit() {
     sockets = calloc(sizeof(SocketDescriptor *), MAX_SOCKETS);
-    if(!sockets) {
+    lock = mallocUC(sizeof(lock_t));
+    if(!sockets || !lock) {
         KERROR("failed to allocate memory for socket subsystem\n");
         while(1);
     }
 
     socketCount = 0;
+    *lock = LOCK_INITIAL;
 
     KDEBUG("max %d sockets, %d per process\n", MAX_SOCKETS, MAX_IO_DESCRIPTORS);
 }
@@ -67,7 +69,7 @@ SocketDescriptor *getLocalSocket(const struct sockaddr *addr, socklen_t len) {
  */
 
 void socketLock() {
-    acquireLockBlocking(&lock);
+    acquireLockBlocking(lock);
 }
 
 /* socketRelease(): frees the socket descriptor spinlock
@@ -76,7 +78,7 @@ void socketLock() {
  */
 
 void socketRelease() {
-    releaseLock(&lock);
+    releaseLock(lock);
 }
 
 /* socketRegister(): registers an open socket
@@ -108,7 +110,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
     if(p->iodCount == MAX_IO_DESCRIPTORS) return -EMFILE;
     if(socketCount >= MAX_SOCKETS) return -ENFILE;
 
-    acquireLockBlocking(&lock);
+    acquireLockBlocking(lock);
 
     IODescriptor *iod = NULL;       // open I/O descriptor
     int sd = openIO(p, (void **) &iod);
@@ -118,7 +120,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
     iod->data = calloc(1, sizeof(SocketDescriptor));
     iod->flags = type >> 8;
     if(!iod->data) {
-        releaseLock(&lock);
+        releaseLock(lock);
         closeIO(p, iod);
     }
 
@@ -132,7 +134,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
     sockets[socketCount] = sock;
     socketCount++;
 
-    releaseLock(&lock);
+    releaseLock(lock);
     return sd;
 }
 
@@ -155,7 +157,7 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[sd].valid || p->io[sd].type != IO_SOCKET) return -ENOTSOCK;
 
-    acquireLockBlocking(&lock);
+    acquireLockBlocking(lock);
 
     SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
     if(!sock) return -ENOTSOCK;
@@ -163,6 +165,6 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 
     // finally
     memcpy(&sock->address, addr, len);
-    releaseLock(&lock);
+    releaseLock(lock);
     return 0;
 }
