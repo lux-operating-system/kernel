@@ -155,11 +155,14 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[sd].valid || p->io[sd].type != IO_SOCKET) return -ENOTSOCK;
 
+    acquireLockBlocking(&lock);
+
     SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
     if(!sock) return -ENOTSOCK;
     if(addr->sa_family != sock->address.sa_family) return -EAFNOSUPPORT;
 
     // finally
     memcpy(&sock->address, addr, len);
+    releaseLock(&lock);
     return 0;
 }

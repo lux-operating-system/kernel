@@ -34,16 +34,32 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
 
+    socketLock();
+
     SocketDescriptor *self = (SocketDescriptor *) p->io[sd].data;
     SocketDescriptor *peer = getLocalSocket(addr, len);
 
-    if(!peer) return -EADDRNOTAVAIL;
-    if(self->address.sa_family != peer->address.sa_family) return -EAFNOSUPPORT;
-    if(!peer->listener || !peer->backlogMax || !peer->backlog) return -ECONNREFUSED;
-    if(peer->backlogCount >= peer->backlogMax) return -ETIMEDOUT;
+    if(!peer) {
+        socketRelease();
+        return -EADDRNOTAVAIL;
+    }
+
+    if(self->address.sa_family != peer->address.sa_family) {
+        socketRelease();
+        return -EAFNOSUPPORT;
+    }
+
+    if(!peer->listener || !peer->backlogMax || !peer->backlog) {
+        socketRelease();
+        return -ECONNREFUSED;
+    }
+
+    if(peer->backlogCount >= peer->backlogMax) {
+        socketRelease();
+        return -ETIMEDOUT;
+    }
 
     // at this point we're sure it's safe to create a connection
-    socketLock();
     peer->backlog[peer->backlogCount] = self;
     peer->backlogCount++;
     socketRelease();
@@ -102,15 +118,19 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
-    
-    SocketDescriptor *listener = (SocketDescriptor *)p->io[sd].data;
-    if(!listener->listener || !listener->backlog || !listener->backlogMax)
-        return -EINVAL;         // socket is not listening
-
-    if(!listener->backlogCount)
-        return -EWOULDBLOCK;    // socket has no incoming queue
 
     socketLock();
+    
+    SocketDescriptor *listener = (SocketDescriptor *)p->io[sd].data;
+    if(!listener->listener || !listener->backlog || !listener->backlogMax) {
+        socketRelease();
+        return -EINVAL;         // socket is not listening
+    }
+
+    if(!listener->backlogCount) {
+        socketRelease();
+        return -EWOULDBLOCK;    // socket has no incoming queue
+    }
 
     // create a new connected socket
     IODescriptor *iod = NULL;
