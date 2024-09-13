@@ -68,8 +68,8 @@ int platformCPUSetup() {
     idtr.limit = (sizeof(IDTEntry) * 256) - 1;
     loadIDT(&idtr);
 
-    writeCR0(readCR0() & ~CR0_CACHE_DISABLE);
     writeCR0(readCR0() & ~CR0_NOT_WRITE_THROUGH);
+    writeCR0(readCR0() & ~CR0_CACHE_DISABLE);
     writeCR0(readCR0() & ~CR0_WRITE_PROTECT);
 
     enableIRQs();
