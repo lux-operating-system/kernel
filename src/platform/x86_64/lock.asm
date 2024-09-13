@@ -49,6 +49,7 @@ acquireLockBlocking:
     mov rax, 1
     ret
 
+align 16
 .wait:
     pause
     bt word [rdi], 0
@@ -60,6 +61,6 @@ acquireLockBlocking:
 global releaseLock
 align 16
 releaseLock:
-    lock btr word[rdi], 0
+    mov word[rdi], 0
     xor rax, rax
     ret
