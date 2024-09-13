@@ -90,9 +90,11 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     pid_t pid = getPid();
     if(pid > 0) {
         pid_t tid = getTid();
+        Thread *t = getThread(getTid());
         if(number == 14) {
             // for unresolved page faults, print out the faulting logical address
             KWARN("cpu %d (tid %d): %s @ 0x%X:0x%X, code %d address 0x%X\n", platformWhichCPU(), tid, exceptions[number], r->cs, r->rip, code, readCR2());
+            if(t) KWARN("program break was at 0x%X\n", t->highest);
         } else {
             // for everything but page faults
             KWARN("cpu %d (tid %d): %s @ 0x%X:0x%X, code %d\n", platformWhichCPU(), tid, exceptions[number], r->cs, r->rip, code);
