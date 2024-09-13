@@ -18,7 +18,7 @@ static lock_t lock = LOCK_INITIAL;
 static const char *exceptions[] = {
     "divide error",             // 0x00
     "debug exception",          // 0x01
-    "don-maskable interrupt",   // 0x02
+    "non-maskable interrupt",   // 0x02
     "breakpoint",               // 0x03
     "overflow",                 // 0x04
     "boundary range exceeded",  // 0x05
