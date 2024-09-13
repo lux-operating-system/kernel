@@ -93,6 +93,7 @@ void schedStatus();
 pid_t kthreadCreate(void *(*)(void *), void *);
 pid_t processCreate();
 int threadUseContext(pid_t);
+void setLocalSched(bool);
 
 pid_t execveMemory(const void *, const char **argv, const char **envp);
 pid_t getLumenPID();

@@ -215,3 +215,13 @@ void platformSetContextStatus(void *ctx, uint64_t value) {
     ThreadContext *context = (ThreadContext *)ctx;
     context->regs.rax = value;
 }
+
+/* setLocalSched(): enables or disables scheduling on one CPU
+ * params: sched - true/false
+ * returns: nothing
+ */
+
+void setLocalSched(bool sched) {
+    if(sched) enableIRQs();
+    else disableIRQs();
+}
