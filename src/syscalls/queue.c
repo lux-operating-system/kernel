@@ -38,6 +38,8 @@ SyscallRequest *syscallEnqueue(SyscallRequest *request) {
     schedLock();
 
     request->queued = true;
+    request->unblock = false;
+    request->busy = false;
 
     if(!requests) {
         requests = request;
