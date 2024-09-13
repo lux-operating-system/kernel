@@ -28,9 +28,6 @@ lockStatus:
 global acquireLock
 align 16
 acquireLock:
-    bt word[rdi], 0
-    jc .fail
-
     lock bts word[rdi], 0
     jc .fail
 
@@ -46,9 +43,6 @@ acquireLock:
 global acquireLockBlocking
 align 16
 acquireLockBlocking:
-    bt word[rdi], 0
-    jc .wait
-
     lock bts word[rdi], 0
     jc .wait
 
@@ -57,6 +51,8 @@ acquireLockBlocking:
 
 .wait:
     pause
+    bt word [rdi], 0
+    jc .wait
     jmp acquireLockBlocking
 
 ; int releaseLock(lock_t *lock)
