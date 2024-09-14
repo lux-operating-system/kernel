@@ -23,7 +23,7 @@ align 16
 platformSaveContext:
     cli         ; SENSITIVE AREA
 
-    fxsave [rdi]
+    fxsave64 [rdi]
 
     mov rax, cr3
     mov [rdi+512], rax
@@ -43,7 +43,7 @@ align 16
 platformLoadContext:
     cli         ;; SENSITIVE!!! this code can NOT be interrupted
 
-    fxrstor [rdi]
+    fxrstor64 [rdi]
 
     ; save performance by only invalidating TLB if the context actually changed
     mov rax, cr3
