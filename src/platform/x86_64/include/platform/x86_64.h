@@ -111,6 +111,7 @@ void installInterrupt(uint64_t, uint16_t, int, int, int);
 #define PT_PAGE_NO_CACHE        0x0010
 #define PT_PAGE_SIZE_EXTENSION  0x0080
 #define PT_PAGE_NXE             ((uint64_t)0x8000000000000000)   // SET to disable execution privilege
+#define PT_PAGE_LOW_FLAGS       (PT_PAGE_PRESENT | PT_PAGE_RW | PT_PAGE_USER | PT_PAGE_NO_CACHE)
 
 // page fault status code
 #define PF_PRESENT              0x01
