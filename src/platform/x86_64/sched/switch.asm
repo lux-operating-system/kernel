@@ -25,8 +25,8 @@ platformSaveContext:
 
     fxsave64 [rdi]
 
-    mov rax, cr3
-    mov [rdi+512], rax
+    ;mov rax, cr3
+    ;mov [rdi+512], rax
 
     add rdi, 520
     mov rcx, 160/8
