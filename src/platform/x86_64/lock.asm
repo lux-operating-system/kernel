@@ -14,12 +14,8 @@ global lockStatus
 align 16
 lockStatus:
     xor rax, rax
-    mov al, byte[rdi]
-    and al, al
-    jz .done
-    mov al, 1
-
-.done:
+    mov eax, [rdi]
+    and eax, 1
     ret
 
 ; int acquireLock(lock_t *lock)
@@ -28,7 +24,7 @@ lockStatus:
 global acquireLock
 align 16
 acquireLock:
-    lock bts word[rdi], 0
+    lock bts dword [rdi], 0
     jc .fail
 
     mov rax, 1
@@ -43,7 +39,7 @@ acquireLock:
 global acquireLockBlocking
 align 16
 acquireLockBlocking:
-    lock bts word[rdi], 0
+    lock bts dword[rdi], 0
     jc .wait
 
     mov rax, 1
@@ -52,8 +48,8 @@ acquireLockBlocking:
 align 16
 .wait:
     pause
-    bt word [rdi], 0
-    jc .wait
+    test dword[rdi], 1
+    jnz .wait
     jmp acquireLockBlocking
 
 ; int releaseLock(lock_t *lock)
@@ -61,6 +57,6 @@ align 16
 global releaseLock
 align 16
 releaseLock:
-    mov word[rdi], 0
     xor rax, rax
+    mov [rdi], eax
     ret
