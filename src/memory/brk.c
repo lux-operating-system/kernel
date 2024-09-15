@@ -7,6 +7,7 @@
 
 /* Program Break Memory Manager */
 
+#include <string.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <platform/platform.h>
@@ -45,9 +46,11 @@ void *sbrk(Thread *t, intptr_t delta) {
             return (void *)-1;
         }
 
+        memset((void *)ptr, 0, pages*PAGE_SIZE);
+
         t->pages += pages;
         p->pages += pages;
-        t->highest += pages * PAGE_SIZE;
+        t->highest += (pages * PAGE_SIZE);
     } else {
         // thread is trying to free memory
         // this is slightly tricky because we cant assume the caller page-aligned everything
@@ -60,7 +63,7 @@ void *sbrk(Thread *t, intptr_t delta) {
         vmmFree(ptr, pages);
         t->pages -= pages;
         p->pages -= pages;
-        t->highest -= pages * PAGE_SIZE;
+        t->highest -= (pages * PAGE_SIZE);
     }
 
     return (void *) brk;
