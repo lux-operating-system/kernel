@@ -26,6 +26,7 @@ align 16
     cld
     call exception
     popaq
+    add rsp, 8              ; pop fake error code
     iretq
 %endmacro
 
