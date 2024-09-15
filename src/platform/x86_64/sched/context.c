@@ -138,6 +138,9 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
     while(base % PAGE_SIZE) {
         base++;
     }
+
+    base += PAGE_SIZE;      // guard page
+
     size_t pages = (PLATFORM_THREAD_STACK+PAGE_SIZE-1)/PAGE_SIZE;
     pages++;
 
