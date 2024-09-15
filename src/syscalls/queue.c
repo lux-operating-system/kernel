@@ -83,6 +83,7 @@ SyscallRequest *syscallDequeue() {
  */
 
 int syscallProcess() {
+    if(!requests) return 0;
     SyscallRequest *syscall = syscallDequeue();
     if(!syscall) return 0;
 
