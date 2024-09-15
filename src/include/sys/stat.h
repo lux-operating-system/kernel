@@ -22,3 +22,5 @@ struct stat {
     blksize_t st_blksize;
     blkcnt_t st_blocks;
 };
+
+int stat(Thread *, uint64_t, const char *, struct stat *);

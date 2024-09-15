@@ -16,6 +16,8 @@
 #include <kernel/logger.h>
 #include <kernel/memory.h>
 #include <kernel/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -99,6 +101,24 @@ void syscallDispatchMSleep(SyscallRequest *req) {
 }
 
 /* Group 2: File System */
+
+void syscallDispatchStat(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) && syscallVerifyPointer(req, req->params[1], sizeof(struct stat))) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+
+        int status = stat(req->thread, id, (const char *)req->params[0], (struct stat *)req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;      // error code
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
 
 void syscallDispatchMount(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
@@ -251,7 +271,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 14 - close()
     NULL,                       // 15 - read()
     NULL,                       // 16 - write()
-    NULL,                       // 17 - stat()
+    syscallDispatchStat,        // 17 - stat()
     NULL,                       // 18 - lseek()
     NULL,                       // 19 - chown()
     NULL,                       // 20 - chmod()
