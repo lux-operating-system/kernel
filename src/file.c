@@ -17,6 +17,8 @@
 #include <kernel/io.h>
 #include <kernel/sched.h>
 #include <kernel/servers.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
     // send a request to lumen
@@ -31,5 +33,21 @@ int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *
     strcpy(command->target, tgt);
     strcpy(command->type, type);
 
-    return requestServer(t, command);
+    int status = requestServer(t, command);
+    free(command);
+    return status;
+}
+
+int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
+    StatCommand *command = calloc(1, sizeof(StatCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_STAT;
+    command->header.header.length = sizeof(StatCommand);
+    command->header.id = id;
+    strcpy(command->path, path);
+
+    int status = requestServer(t, command);
+    free(command);
+    return status;
 }
