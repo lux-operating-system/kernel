@@ -53,18 +53,19 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
             return -ENOBUFS;
         }
 
+        peer->inbound = newlist;
+
         size_t *newlen = realloc(peer->inboundLen, (peer->inboundCount+1) * sizeof(size_t));
 
         if(!newlen) {
-            free(newlist);
             socketRelease();
             return -ENOBUFS;
         }
 
+        peer->inboundLen = newlen;
+
         void *message = malloc(len);
         if(!message) {
-            free(newlist);
-            free(newlen);
             socketRelease();
             return -ENOBUFS;
         }
@@ -74,8 +75,6 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
         newlist[peer->inboundCount] = message;
         newlen[peer->inboundCount] = len;
         peer->inboundCount++;
-        peer->inbound = newlist;
-        peer->inboundLen = newlen;
 
         socketRelease();
         return len;

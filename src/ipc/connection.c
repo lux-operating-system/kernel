@@ -168,8 +168,11 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
         memcpy(addr, &self->peer->address, *len);
     }
 
-    socketRelease();
-
-    if(!self->peer) return -ECONNABORTED;
-    else return connectedSocket;
+    if(!self->peer) {
+        socketRelease();
+        return -ECONNABORTED;
+    } else {
+        socketRelease();
+        return connectedSocket;
+    }
 }
