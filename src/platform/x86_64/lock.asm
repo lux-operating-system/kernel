@@ -24,6 +24,9 @@ lockStatus:
 global acquireLock
 align 16
 acquireLock:
+    test dword [rdi], 1
+    jnz .fail
+
     lock bts dword [rdi], 0
     jc .fail
 
@@ -39,7 +42,10 @@ acquireLock:
 global acquireLockBlocking
 align 16
 acquireLockBlocking:
-    lock bts dword[rdi], 0
+    test dword [rdi], 1
+    jnz .wait
+
+    lock bts dword [rdi], 0
     jc .wait
 
     mov rax, 1
@@ -48,7 +54,7 @@ acquireLockBlocking:
 align 16
 .wait:
     pause
-    test dword[rdi], 1
+    test dword [rdi], 1
     jnz .wait
     jmp acquireLockBlocking
 
