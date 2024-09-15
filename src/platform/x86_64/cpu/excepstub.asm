@@ -24,7 +24,11 @@ align 16
     xor rsi, rsi            ; fake code
     mov rdx, rsp            ; registers we just pushed
     cld
+    sub rsp, 256            ; red zone
+    mov rbp, rsp
     call exception
+    add rbp, 256
+    mov rsp, rbp
     popaq
     add rsp, 8              ; pop fake error code
     iretq
@@ -41,7 +45,11 @@ align 16
     mov rsi, [rsp+120]      ; error code
     mov rdx, rsp            ; registers we just pushed
     cld
+    sub rsp, 256            ; red zone
+    mov rbp, rsp
     call exception
+    add rbp, 256
+    mov rsp, rbp
     popaq
     add rsp, 8              ; "pop" error code
     iretq

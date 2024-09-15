@@ -24,9 +24,6 @@ syscallEntry:
     ; switch to kernel stack
     mov r9, rsp                 ; r9 = user stack
 
-    mov r10, KERNEL_DATA_SEGMENT
-    mov ss, r10
-
     rdgsbase r10                ; a register we're allowed to trash
     and r10, r10
     jnz .stack
@@ -54,6 +51,8 @@ syscallEntry:
 
     extern syscallHandle
     mov rdi, rsp                    ; pass the context we just created
+    sub rsp, 256                    ; red zone
+    mov rbp, rsp
     call syscallHandle
 
     ; this should never return as it will force a context switch
