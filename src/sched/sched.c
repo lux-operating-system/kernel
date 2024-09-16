@@ -258,6 +258,8 @@ Thread *getThread(pid_t tid) {
 
         p = p->next;
     } while(p);
+
+    return NULL;
 }
 
 /* getPid(): returns the current running process
