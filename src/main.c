@@ -22,6 +22,7 @@ void *idleThread(void *args) {
 }
 
 void *kernelThread(void *args) {
+    setLocalSched(false);
     setKernelPID(getPid());
 
     // open the kernel socket for server communication
@@ -61,6 +62,8 @@ void *kernelThread(void *args) {
     PhysicalMemoryStatus ps;
     pmmStatus(&ps);
     KDEBUG("early boot complete, memory usage: %d MiB / %d MiB\n", ps.usedPages>>8, ps.usablePages>>8);
+
+    setLocalSched(true);
 
     for(;;) {
         serverIdle();
