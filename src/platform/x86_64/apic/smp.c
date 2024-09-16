@@ -233,11 +233,11 @@ int smpBoot() {
         platformMapPage(i * PAGE_SIZE, i * PAGE_SIZE, PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_EXEC | PLATFORM_PAGE_WRITE);
     }
 
-    apEntryVars[AP_ENTRY_GDTR] = (uint32_t)lowGDTR - KERNEL_BASE_ADDRESS;
-    apEntryVars[AP_ENTRY_IDTR] = (uint32_t)lowIDTR - KERNEL_BASE_ADDRESS;
+    apEntryVars[AP_ENTRY_GDTR] = (uintptr_t)lowGDTR - KERNEL_BASE_ADDRESS;
+    apEntryVars[AP_ENTRY_IDTR] = (uintptr_t)lowIDTR - KERNEL_BASE_ADDRESS;
     apEntryVars[AP_ENTRY_CR3] = tempCR3;
-    apEntryVars[AP_ENTRY_NEXT_LOW] = (uint32_t)&apMain;
-    apEntryVars[AP_ENTRY_NEXT_HIGH] = (uint32_t)((uintptr_t)&apMain >> 32);
+    apEntryVars[AP_ENTRY_NEXT_LOW] = (uintptr_t)&apMain;
+    apEntryVars[AP_ENTRY_NEXT_HIGH] = ((uintptr_t)&apMain >> 32);
 
     PlatformCPU *cpu;
     uint32_t volatile *complete = (uint32_t volatile *)&apBooted;
