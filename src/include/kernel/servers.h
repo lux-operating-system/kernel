@@ -92,6 +92,7 @@ typedef struct {
 /* stat() */
 typedef struct {
     SyscallHeader header;
+    char source[MAX_FILE_PATH];
     char path[MAX_FILE_PATH];
     struct stat buffer;
 } StatCommand;
