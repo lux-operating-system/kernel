@@ -157,9 +157,7 @@ void pmmInit(KernelBootInfo *boot) {
         }
     }
 
-    // now reserve all the kernel's memory including ramdisks, modules
-    // this is reserving until the end of the pmm bitmap
-    uintptr_t pmmBitmapEnd = (uintptr_t)pmmBitmap + pmmBitmapSize + PAGE_SIZE - 1;
+    // now reserve all the kernel's memory including ramdisks, modules, etc
     size_t kernelPages = (boot->lowestFreeMemory + pmmBitmapSize + PAGE_SIZE - 1) / PAGE_SIZE;
 
     pmmMarkContiguous(0, kernelPages, true);
