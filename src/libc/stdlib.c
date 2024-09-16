@@ -78,8 +78,7 @@ long atol(const char *s) {
     }
 
     if(!len) return 0;
-
-    char buffer[20];
+    if(len == 1) return (long) s[0] - '0';
 
     long multiplier = 1;
     for(int i = 1; i < len; i++) {
