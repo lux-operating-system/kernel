@@ -7,6 +7,7 @@
 
 /* Kernel-Server Communication */
 
+#include <string.h>
 #include <kernel/servers.h>
 #include <kernel/sched.h>
 #include <kernel/syscalls.h>
@@ -34,5 +35,17 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     req->unblock = true;
     req->thread->time = schedTimeslice(req->thread, req->thread->priority);
     req->thread->status = THREAD_QUEUED;
+
+    // some syscalls will require writing to the thread's memory
+    switch(hdr->header.command) {
+    case COMMAND_STAT:
+        if(hdr->header.status) break;
+
+        StatCommand *statcmd = (StatCommand *) hdr;
+        threadUseContext(req->thread->tid);
+        memcpy((void *)req->params[1], &statcmd->buffer, sizeof(struct stat));
+        break;
+    }
+
     schedRelease();
 }
