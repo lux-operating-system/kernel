@@ -201,7 +201,7 @@ void ttyPutc(char c) {
     uint32_t *fb = (uint32_t *)((uintptr_t)ktty.fb + (y * ktty.pitch) + (x * ktty.bytesPerPixel));
 
     // and font data
-    uint8_t *fontPtr = &font[(c - FONT_MIN_GLYPH)*FONT_HEIGHT];
+    const uint8_t *fontPtr = &font[(c - FONT_MIN_GLYPH)*FONT_HEIGHT];
 
     for(int i = 0; i < FONT_HEIGHT; i++) {
         uint8_t b = fontPtr[i];
