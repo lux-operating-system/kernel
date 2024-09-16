@@ -14,7 +14,7 @@ OBJA:=$(SRCA:.asm=.o)
 all: lux
 
 %.o: %.asm
-	@echo "\x1B[0;1;32m as  \x1B[0m $<"
+	@echo "\x1B[0;1;36m as  \x1B[0m $<"
 	@$(AS) $(ASFLAGS) -o $@ $<
 
 %.o: %.c
@@ -22,7 +22,7 @@ all: lux
 	@$(CC) $(CCFLAGS) -o $@ $<
 
 lux: $(OBJA) $(OBJC) 
-	@echo "\x1B[0;1;34m ld  \x1B[0m lux"
+	@echo "\x1B[0;1;93m ld  \x1B[0m lux"
 	@$(LD) $(LDFLAGS) $(OBJA) $(OBJC) -o lux
 
 clean:
