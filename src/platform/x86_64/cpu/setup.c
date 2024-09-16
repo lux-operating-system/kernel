@@ -73,4 +73,5 @@ int platformCPUSetup() {
     writeCR0(readCR0() & ~CR0_WRITE_PROTECT);
 
     enableIRQs();
+    return 0;
 }
