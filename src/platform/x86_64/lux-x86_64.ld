@@ -5,22 +5,22 @@ SECTIONS
 {
     . = 0xFFFF800000200000;
 
-    .text BLOCK(16) : ALIGN(16)
+    .text BLOCK(4096) : ALIGN(4096)
     {
         *(.text)
     }
 
-    .rodata BLOCK(16) : ALIGN(16)
+    .rodata BLOCK(4096) : ALIGN(4096)
     {
         *(.rodata)
     }
 
-    .data BLOCK(16) : ALIGN(16)
+    .data BLOCK(4096) : ALIGN(4096)
     {
         *(.data)
     }
 
-    .bss BLOCK(16) : ALIGN(16)
+    .bss BLOCK(4096) : ALIGN(4096)
     {
         *(.bss)
     }
