@@ -167,7 +167,7 @@ void syscallDispatchListen(SyscallRequest *req) {
 }
 
 void syscallDispatchAccept(SyscallRequest *req) {
-    int status;
+    int status = -EWOULDBLOCK;
     if(!req->params[1]) {
         status = accept(req->thread, req->params[0], NULL, NULL);
     } else {
