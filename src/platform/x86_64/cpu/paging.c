@@ -265,7 +265,7 @@ uint64_t clonePagingLayer(uint64_t ptr, int layer) {
                 oldPhys = parent[i] & ~(PAGE_SIZE-1) & ~PT_PAGE_NXE;
                 memcpy((void *)vmmMMIO(newPhys, true), (const void *)vmmMMIO(oldPhys, true), PAGE_SIZE);
 
-                clone[i] = newPhys | (parent[i] & ((PAGE_SIZE-1) | PT_PAGE_NXE));   // copy the parent's permissions
+                clone[i] = newPhys | (parent[i] & ((uint64_t)PT_PAGE_LOW_FLAGS | PT_PAGE_NXE));   // copy the parent's permissions
             } else {
                 // here we're working with either the PDP or PD that is also present
                 newPhys = pmmAllocate();
@@ -273,7 +273,7 @@ uint64_t clonePagingLayer(uint64_t ptr, int layer) {
 
                 oldPhys = parent[i] & ~(PAGE_SIZE-1);
                 clone[i] = clonePagingLayer(oldPhys, layer+1);
-                clone[i] |= parent[i] & (PAGE_SIZE-1);  // copy permissions again
+                clone[i] |= parent[i] & PT_PAGE_LOW_FLAGS;  // copy permissions again
             }
         }
     }
@@ -295,7 +295,7 @@ void *platformCloneUserSpace(uintptr_t parent) {
 
     for(int i = 0; i < 256; i++) {
         uint64_t ptr = oldPML4[i] & ~(PAGE_SIZE-1);
-        uint64_t flags = oldPML4[i] & (PAGE_SIZE-1);
+        uint64_t flags = oldPML4[i] & PT_PAGE_LOW_FLAGS;
         if(oldPML4[i]) {
             newPML4[i] = clonePagingLayer(ptr, 0) | flags;
         }

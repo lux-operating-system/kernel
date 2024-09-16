@@ -14,12 +14,18 @@ section .text
 global timerHandlerStub
 align 16
 timerHandlerStub:
+    cli
     pushaq
 
     cld
     extern timerIRQ     ; apic.c
     mov rdi, rsp        ; pointer to the regs we just pushed
+    sub rsp, 256        ; red zone
+    mov rbp, rsp
     call timerIRQ       ; IRQ is acknowledged in here
+
+    add rbp, 256
+    mov rsp, rbp
 
     popaq
     iretq

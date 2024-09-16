@@ -9,6 +9,7 @@
 #include <kernel/logger.h>
 #include <kernel/elf.h>
 #include <kernel/memory.h>
+#include <kernel/sched.h>
 #include <platform/mmap.h>
 
 /*
@@ -49,14 +50,16 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
     }
 
     // load the segments
+    setLocalSched(false);
     ELFProgramHeader *prhdr = (ELFProgramHeader *)(ptr + header->headerTable);
     for(int i = 0; i < header->headerEntryCount; i++) {
         if(prhdr->segmentType == ELF_SEGMENT_TYPE_NULL) {
-            /* ignore null entries and do nothing*/
+            /* ignore null entries and do nothing */
         } else if(prhdr->segmentType == ELF_SEGMENT_TYPE_LOAD) {
             // verify the segments are within the user space region of memory
             if((prhdr->virtualAddress < USER_BASE_ADDRESS) ||
             ((prhdr->virtualAddress+prhdr->memorySize) > USER_LIMIT_ADDRESS)) {
+                setLocalSched(true);
                 return 0;
             }
 
@@ -67,7 +70,7 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
 
             // allocate memory with permissions that match the program section
             size_t pages = (prhdr->memorySize + PAGE_SIZE - 1) / PAGE_SIZE;
-            if(prhdr->virtualAddress & (PAGE_SIZE-1)) {
+            if(prhdr->virtualAddress % PAGE_SIZE) {
                 pages++;
             }
 
@@ -78,6 +81,7 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
 
             uintptr_t vp = vmmAllocate(prhdr->virtualAddress, USER_LIMIT_ADDRESS, pages, flags);
             if(!vp) {
+                setLocalSched(true);
                 return 0;
             }
 
@@ -85,7 +89,8 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
                 vmmFree(vp, pages);
             }
 
-            memcpy((void *)prhdr->virtualAddress, (const void *)(binary + prhdr->fileOffset), prhdr->fileSize);
+            memset((void *)prhdr->virtualAddress, 0, prhdr->memorySize);
+            memcpy((void *)prhdr->virtualAddress, (const void *)((uintptr_t)binary + prhdr->fileOffset), prhdr->fileSize);
 
             // adjust the perms by removing the write perms if necessary
             if(!(prhdr->flags & ELF_SEGMENT_FLAGS_WRITE)) {
@@ -96,6 +101,7 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
         } else {
             /* unimplemented header type */
             KERROR("unimplemented ELF header type %d\n", prhdr->segmentType);
+            setLocalSched(true);
             return 0;
         }
 
@@ -103,5 +109,6 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
     }
 
     *highest = addr;
+    setLocalSched(true);
     return header->entryPoint;
 }

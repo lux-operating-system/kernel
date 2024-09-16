@@ -21,6 +21,7 @@ static uint8_t *pidBitmap;
 static Process *first;       // first process in the linked list
 static Process *last;
 static pid_t lumen;          // we'll need this to adopt orphaned processes
+static pid_t kernel;
 
 /* schedInit(): initializes the scheduler */
 
@@ -572,6 +573,24 @@ void setLumenPID(pid_t pid) {
 
 pid_t getLumenPID() {
     return lumen;
+}
+
+/* setKernelPID(): saves the main kernel thread's PID
+ * params: pid - process ID
+ * returns: nothing
+ */
+
+void setKernelPID(pid_t pid) {
+    kernel = pid;
+}
+
+/* getKernelPID(): returns the kernel's PID
+ * params: none
+ * returns: process ID
+ */
+
+pid_t getKernelPID() {
+    return kernel;
 }
 
 /* schedStatus(): dumps the queue of threads

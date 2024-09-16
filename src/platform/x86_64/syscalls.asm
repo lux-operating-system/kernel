@@ -10,6 +10,7 @@ section .text
 
 USER_CODE_SEGMENT           equ 0x23    ; gdt.h, these are hard-coded for a reason
 USER_DATA_SEGMENT           equ 0x1B
+KERNEL_DATA_SEGMENT         equ 0x10
 
 ; entry point into the kernel by the SYSCALL instruction
 ; this saves many CPU cycles compared to implementing syscalls via interrupts
@@ -22,6 +23,7 @@ syscallEntry:
     
     ; switch to kernel stack
     mov r9, rsp                 ; r9 = user stack
+
     rdgsbase r10                ; a register we're allowed to trash
     and r10, r10
     jnz .stack
@@ -49,7 +51,8 @@ syscallEntry:
 
     extern syscallHandle
     mov rdi, rsp                    ; pass the context we just created
-    cld
+    sub rsp, 256                    ; red zone
+    mov rbp, rsp
     call syscallHandle
 
     ; this should never return as it will force a context switch

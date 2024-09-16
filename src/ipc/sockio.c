@@ -28,19 +28,22 @@
 ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
+    
+    socketLock();
 
     SocketDescriptor *self = (SocketDescriptor*) p->io[sd].data;
     SocketDescriptor *peer = self->peer;
-    if(!peer) return -EDESTADDRREQ;     // not in connection mode
+    if(!peer) {
+        socketRelease();
+        return -EDESTADDRREQ;     // not in connection mode
+    }
 
     sa_family_t family = self->address.sa_family;
-
-    socketLock();
 
     if(family == AF_UNIX || family == AF_LOCAL) {
         // simply append to the peer's inbound list
@@ -50,18 +53,19 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
             return -ENOBUFS;
         }
 
+        peer->inbound = newlist;
+
         size_t *newlen = realloc(peer->inboundLen, (peer->inboundCount+1) * sizeof(size_t));
 
         if(!newlen) {
-            free(newlist);
             socketRelease();
             return -ENOBUFS;
         }
 
+        peer->inboundLen = newlen;
+
         void *message = malloc(len);
         if(!message) {
-            free(newlist);
-            free(newlen);
             socketRelease();
             return -ENOBUFS;
         }
@@ -71,8 +75,6 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
         newlist[peer->inboundCount] = message;
         newlen[peer->inboundCount] = len;
         peer->inboundCount++;
-        peer->inbound = newlist;
-        peer->inboundLen = newlen;
 
         socketRelease();
         return len;
@@ -95,20 +97,25 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
     Process *p;
     if(t) p = getProcess(t->pid);
-    else p = getProcess(getPid());
+    else p = getProcess(getKernelPID());
     if(!p) return -ESRCH;
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
 
+    socketLock();
+
     SocketDescriptor *self = (SocketDescriptor*) p->io[sd].data;
-    if(!self->peer) return -EDESTADDRREQ;   // not in connection mode
+    if(!self->peer) {
+        socketRelease();
+        return -EDESTADDRREQ;   // not in connection mode
+    }
 
     sa_family_t family = self->address.sa_family;
-    if(!self->inboundCount || !self->inbound || !self->inboundLen)
+    if(!self->inboundCount || !self->inbound || !self->inboundLen) {
+        socketRelease();
         return -EWOULDBLOCK;    // no messages available
-
-    socketLock();
+    }
 
     if(family == AF_UNIX || family == AF_LOCAL) {
         // copy from the inbound list
@@ -136,7 +143,7 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
             memmove(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
             memmove(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
             self->inbound = realloc(self->inbound, self->inboundCount * sizeof(void *));
-            self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(void *));
+            self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(size_t));
         }
 
         socketRelease();

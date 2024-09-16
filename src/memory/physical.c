@@ -174,7 +174,7 @@ void pmmInit(KernelBootInfo *boot) {
     KDEBUG("bitmap size = %d pages (%d KiB)\n", (pmmBitmapSize+PAGE_SIZE-1)/PAGE_SIZE, pmmBitmapSize/1024);
     KDEBUG("total usable memory = %d pages (%d MiB)\n", status.usablePages, (status.usablePages * PAGE_SIZE) / 0x100000);
     KDEBUG("kernel-reserved memory = %d pages (%d MiB)\n", status.usedPages, (status.usedPages * PAGE_SIZE) / 0x100000);
-    KDEBUG("hardware-reserved memory = %d pages (%d MiB)\n", status.reservedPages, (status.reservedPages * PAGE_SIZE) / 0x100000);
+    KDEBUG("hardware-reserved memory = %d pages (%d KiB)\n", status.reservedPages, (status.reservedPages * PAGE_SIZE) / 1024);
 }
 
 /* pmmStatus(): returns the physical memory manager's status

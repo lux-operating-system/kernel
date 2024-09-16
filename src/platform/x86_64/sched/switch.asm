@@ -23,10 +23,10 @@ align 16
 platformSaveContext:
     cli         ; SENSITIVE AREA
 
-    fxsave [rdi]
+    fxsave64 [rdi]
 
-    mov rax, cr3
-    mov [rdi+512], rax
+    ;mov rax, cr3
+    ;mov [rdi+512], rax
 
     add rdi, 520
     mov rcx, 160/8
@@ -43,15 +43,15 @@ align 16
 platformLoadContext:
     cli         ;; SENSITIVE!!! this code can NOT be interrupted
 
-    fxrstor [rdi]
+    fxrstor64 [rdi]
 
     ; save performance by only invalidating TLB if the context actually changed
     mov rax, cr3
-    cmp rax, [rdi+512]      ; pml4
+    mov rbx, [rdi+512]      ; pml4
+    cmp rax, rbx
     jz .continue
 
-    mov rax, [rdi+512]
-    mov cr3, rax
+    mov cr3, rbx
 
 .continue:
     mov rax, [rdi+672]      ; stack segment

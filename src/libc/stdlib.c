@@ -11,6 +11,9 @@
 #include <string.h>
 #include <kernel/memory.h>
 #include <platform/platform.h>
+#include <platform/lock.h>
+
+static lock_t lock = LOCK_INITIAL;
 
 struct mallocHeader {
     uint64_t byteSize;
@@ -96,15 +99,26 @@ void *malloc(size_t size) {
     if(!size) return NULL;
     size_t pageSize = (size + sizeof(struct mallocHeader) + PAGE_SIZE - 1) / PAGE_SIZE;
 
+    acquireLockBlocking(&lock);
+
     // allocate memory with kernel permissions, write permissions, and no execute
     // there's probably never a scenario where it's a good idea to execute code
     // in a block of memory allocated by malloc() or its derivatives
     uintptr_t ptr = vmmAllocate(KERNEL_HEAP_BASE, KERNEL_HEAP_LIMIT, pageSize, VMM_WRITE);
-    if(!ptr) return NULL;
+    if(!ptr) {
+        releaseLock(&lock);
+        return NULL;
+    }
 
     struct mallocHeader *header = (struct mallocHeader *)ptr;
     header->byteSize = size;
     header->pageSize = pageSize;
+
+    // allocate a guard page as well
+    uintptr_t guard = ptr + (pageSize*PAGE_SIZE);
+    platformMapPage(guard, 0, 0);
+
+    releaseLock(&lock);
 
     return (void *)((uintptr_t)ptr + sizeof(struct mallocHeader));
 }

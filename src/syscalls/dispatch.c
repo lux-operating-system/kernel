@@ -9,11 +9,15 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <platform/mmap.h>
+#include <platform/platform.h>
 #include <kernel/sched.h>
 #include <kernel/socket.h>
 #include <kernel/syscalls.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -96,7 +100,45 @@ void syscallDispatchMSleep(SyscallRequest *req) {
     req->ret = msleep(req->thread, req->params[0]);
 }
 
-/* TODO: Group 2: File System */
+/* Group 2: File System */
+
+void syscallDispatchStat(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) && syscallVerifyPointer(req, req->params[1], sizeof(struct stat))) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+
+        int status = stat(req->thread, id, (const char *)req->params[0], (struct stat *)req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;      // error code
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchMount(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[2], 32)) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+
+        int status = mount(req->thread, id, (const char *)req->params[0], (const char *)req->params[1], (const char *)req->params[2], req->params[3]);
+        if(status) {
+            req->external = false;
+            req->ret = status;      // error code
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
 
 /* Group 3: Interprocess Communication */
 
@@ -229,7 +271,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 14 - close()
     NULL,                       // 15 - read()
     NULL,                       // 16 - write()
-    NULL,                       // 17 - stat()
+    syscallDispatchStat,        // 17 - stat()
     NULL,                       // 18 - lseek()
     NULL,                       // 19 - chown()
     NULL,                       // 20 - chmod()
@@ -240,7 +282,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 25 - rmdir()
     NULL,                       // 26 - utime()
     NULL,                       // 27 - chroot()
-    NULL,                       // 28 - mount()
+    syscallDispatchMount,       // 28 - mount()
     NULL,                       // 29 - umount()
     NULL,                       // 30 - fnctl()
 

@@ -138,6 +138,9 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
     while(base % PAGE_SIZE) {
         base++;
     }
+
+    base += PAGE_SIZE;      // guard page
+
     size_t pages = (PLATFORM_THREAD_STACK+PAGE_SIZE-1)/PAGE_SIZE;
     pages++;
 
@@ -214,4 +217,14 @@ void platformSetContextStatus(void *ctx, uint64_t value) {
     // so return values will simply be passed in the RAX register
     ThreadContext *context = (ThreadContext *)ctx;
     context->regs.rax = value;
+}
+
+/* setLocalSched(): enables or disables scheduling on one CPU
+ * params: sched - true/false
+ * returns: nothing
+ */
+
+void setLocalSched(bool sched) {
+    if(sched) enableIRQs();
+    else disableIRQs();
 }

@@ -93,10 +93,13 @@ void schedStatus();
 pid_t kthreadCreate(void *(*)(void *), void *);
 pid_t processCreate();
 int threadUseContext(pid_t);
+void setLocalSched(bool);
 
 pid_t execveMemory(const void *, const char **argv, const char **envp);
 pid_t getLumenPID();
 void setLumenPID(pid_t);
+void setKernelPID(pid_t);
+pid_t getKernelPID();
 int schedException(pid_t, pid_t);
 void terminateThread(Thread *, int, bool);
 void schedSleepTimer();

@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 #include <kernel/sched.h>
+#include <kernel/file.h>
+#include <sys/stat.h>
 
 #define SERVER_MAX_CONNECTIONS  512
 #define SERVER_MAX_SIZE         0x80000             // max msg size is 512 KiB
@@ -35,7 +37,7 @@
 #define COMMAND_MOUNT           0x8002
 #define COMMAND_UMOUNT          0x8003
 
-#define MAX_SYSCALL_COMMAND     0x0003
+#define MAX_SYSCALL_COMMAND     0x8003
 
 typedef struct {
     uint16_t command;
@@ -78,7 +80,25 @@ typedef struct {
     uint16_t w, h, pitch, bpp;
 } FramebufferResponse;
 
+/* mount command */
+typedef struct {
+    SyscallHeader header;
+    char source[MAX_FILE_PATH];
+    char target[MAX_FILE_PATH];
+    char type[32];
+    int flags;
+} MountCommand;
+
+/* stat() */
+typedef struct {
+    SyscallHeader header;
+    char source[MAX_FILE_PATH];
+    char path[MAX_FILE_PATH];
+    struct stat buffer;
+} StatCommand;
+
 void serverInit();
 void serverIdle();
 void handleGeneralRequest(int, const MessageHeader *, void *);
-void handleSyscallResponse(int, const MessageHeader *);
+void handleSyscallResponse(const SyscallHeader *);
+int requestServer(Thread *, void *);

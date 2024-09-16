@@ -38,6 +38,8 @@ SyscallRequest *syscallEnqueue(SyscallRequest *request) {
     schedLock();
 
     request->queued = true;
+    request->unblock = false;
+    request->busy = false;
 
     if(!requests) {
         requests = request;
@@ -81,8 +83,11 @@ SyscallRequest *syscallDequeue() {
  */
 
 int syscallProcess() {
+    if(!requests) return 0;
     SyscallRequest *syscall = syscallDequeue();
     if(!syscall) return 0;
+
+    setLocalSched(false);
 
     // essentially just dispatch the syscall and store the return value
     // in the thread's context so it can get it back
@@ -105,5 +110,18 @@ int syscallProcess() {
         syscall->busy = false;
     }
 
+    setLocalSched(true);
     return 1;
+}
+
+/* getSyscall(): returns the syscall request structure of a thread
+ * params: tid - thread ID
+ * returns: pointer to syscall structure, NULL on fail
+ */
+
+SyscallRequest *getSyscall(pid_t tid) {
+    Thread *t = getThread(tid);
+    if(!t) return NULL;
+
+    return &t->syscall;
 }
