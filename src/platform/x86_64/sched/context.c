@@ -54,8 +54,6 @@ pid_t platformGetTid() {
 void *platformCreateContext(void *ptr, int level, uintptr_t entry, uintptr_t arg) {
     memset(ptr, 0, PLATFORM_CONTEXT_SIZE);
 
-    int flags;  // unused
-
     ThreadContext *context = (ThreadContext *)ptr;
     context->regs.rip = entry;
     context->regs.rdi = arg;
