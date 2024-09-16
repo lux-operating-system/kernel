@@ -96,6 +96,8 @@ int apicTimerInit() {
     // unmask the IRQ and enable the timer
     lapicWrite(LAPIC_LVT_TIMER, lapicRead(LAPIC_LVT_TIMER) & ~LAPIC_LVT_MASK);
     lapicWrite(LAPIC_TIMER_INITIAL, apicFrequency / PLATFORM_TIMER_FREQUENCY);
+
+    return 0;
 }
 
 /* apicTimerFrequency(): returns the local APIC's frequency */
