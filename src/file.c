@@ -91,7 +91,7 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     command->position = fd->position;
     command->flags = iod->flags;
     strcpy(command->device, fd->device);
-    strcpy(command->path, fd->path);
+    strcpy(command->path, fd->abspath);
     memcpy(command->data, buffer, count);
 
     int status = requestServer(t, command);
