@@ -83,3 +83,26 @@ ssize_t read(Thread *t, uint64_t id, int fd, void *buffer, size_t count) {
     else if(p->io[fd].type == IO_FILE) return readFile(t, id, &p->io[fd], buffer, count);
     else return -EBADF;
 }
+
+/* write(): writes to an I/O descriptor and relays the call to a file or socket
+ * params: t - calling thread, NULL for kernel threads
+ * params: id - syscall ID
+ * params: fd - file or socket descriptor
+ * params: buffer - buffer to write from
+ * params: count - number of bytes to write
+ * returns: number of bytes actually written, negative error code on fail
+ */
+
+ssize_t write(Thread *t, uint64_t id, int fd, const void *buffer, size_t count) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getKernelPID());
+    if(!p) return -ESRCH;
+
+    if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;
+
+    // relay the call to the appropriate file or socket handler
+    if(p->io[fd].type == IO_SOCKET) return send(t, fd, buffer, count, 0);
+    else if(p->io[fd].type == IO_FILE) return writeFile(t, id, &p->io[fd], buffer, count);
+    else return -EBADF;
+}
