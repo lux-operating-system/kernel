@@ -51,3 +51,24 @@ int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
     free(command);
     return status;
 }
+
+int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
+    OpenCommand *command = calloc(1, sizeof(OpenCommand));
+    if(!command) return -ENOMEM;
+
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    command->header.header.command = COMMAND_OPEN;
+    command->header.header.length = sizeof(OpenCommand);
+    command->header.id = id;
+    command->flags = flags;
+    command->mode = mode;
+    command->uid = p->user;
+    command->gid = p->group;
+    strcpy(command->path, path);
+
+    int status = requestServer(t, command);
+    free(command);
+    return status;
+}
