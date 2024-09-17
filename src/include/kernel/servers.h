@@ -120,7 +120,8 @@ typedef struct {
     int flags;
     uid_t uid;
     gid_t gid;
-    size_t position, length;
+    off_t position;
+    size_t length;
     uint8_t data[];
 } RWCommand;
 
