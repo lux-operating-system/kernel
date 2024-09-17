@@ -104,6 +104,7 @@ typedef struct {
 typedef struct {
     SyscallHeader header;
     char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
     int flags;
     mode_t mode;
     uid_t uid;
@@ -114,6 +115,7 @@ typedef struct {
 typedef struct {
     SyscallHeader header;
     char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
     int flags;
     mode_t mode;
     uid_t uid;
