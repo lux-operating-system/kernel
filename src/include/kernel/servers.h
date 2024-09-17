@@ -118,10 +118,9 @@ typedef struct {
     char path[MAX_FILE_PATH];
     char device[MAX_FILE_PATH];
     int flags;
-    mode_t mode;
     uid_t uid;
     gid_t gid;
-    size_t position;
+    size_t position, length;
     uint8_t data[];
 } RWCommand;
 
