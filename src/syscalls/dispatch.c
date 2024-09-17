@@ -119,6 +119,36 @@ void syscallDispatchOpen(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchRead(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+
+        ssize_t status = read(req->thread, id, req->params[0], (void *) req->params[1], req->params[2]);
+        if(status == -EWOULDBLOCK || status == -EAGAIN) {
+            // return without unblocking if necessary for sockets
+            Process *p = getProcess(req->thread->pid);
+            if(!(p->io[req->params[0]].flags & O_NONBLOCK)) {
+                // block by putting the syscall back in the queue
+                req->unblock = false;
+                req->busy = false;
+                req->queued = true;
+                req->next = NULL;
+                syscallEnqueue(req);
+                return;
+            }
+        } else if(status) {
+            req->external = false;
+            req->ret = status;      // status or error code
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchStat(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) && syscallVerifyPointer(req, req->params[1], sizeof(struct stat))) {
         uint64_t id = platformRand();
@@ -286,7 +316,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 2: file system manipulation */
     syscallDispatchOpen,        // 13 - open()
     NULL,                       // 14 - close()
-    NULL,                       // 15 - read()
+    syscallDispatchRead,        // 15 - read()
     NULL,                       // 16 - write()
     syscallDispatchStat,        // 17 - stat()
     NULL,                       // 18 - lseek()
