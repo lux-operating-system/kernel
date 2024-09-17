@@ -21,9 +21,10 @@
 /* file-specific I/O descriptor (see io.h) */
 typedef struct {
     Process *process;
-    char path[MAX_FILE_PATH];
-    size_t position;
-    struct stat info;
+    char abspath[MAX_FILE_PATH];    // absolute path
+    char device[MAX_FILE_PATH];     // device
+    char path[MAX_FILE_PATH];       // path relative to device mountpount
+    off_t position;
 } FileDescriptor;
 
 /* file system syscalls */
