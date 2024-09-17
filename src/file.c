@@ -56,7 +56,7 @@ int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
     if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;  // ensure valid file descriptor
-    if(p->io[fd].type != IO_FIL) return -EBADF;
+    if(p->io[fd].type != IO_FILE) return -EBADF;
 
     FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
     return stat(t, id, file->abspath, buffer);
