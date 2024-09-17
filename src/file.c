@@ -90,6 +90,7 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     command->gid = p->group;
     command->position = fd->position;
     command->flags = iod->flags;
+    command->length = count;
     strcpy(command->device, fd->device);
     strcpy(command->path, fd->abspath);
 
