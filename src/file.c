@@ -98,3 +98,30 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     free(command);
     return status;
 }
+
+ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer, size_t count) {
+    RWCommand *command = calloc(1, sizeof(RWCommand) + count);
+    if(!command) return -ENOMEM;
+
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    FileDescriptor *fd = (FileDescriptor *) iod->data;
+    if(!fd) return -EBADF;
+
+    command->header.header.command = COMMAND_WRITE;
+    command->header.header.length = sizeof(RWCommand) + count;
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+    command->position = fd->position;
+    command->flags = iod->flags;
+    command->length = count;
+    strcpy(command->device, fd->device);
+    strcpy(command->path, fd->abspath);
+    memcpy(command->data, buffer, count);
+
+    int status = requestServer(t, command);
+    free(command);
+    return status;
+}
