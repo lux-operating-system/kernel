@@ -74,7 +74,7 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
 }
 
 ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t count) {
-    RWCommand *command = calloc(1, sizeof(RWCommand) + count);
+    RWCommand *command = calloc(1, sizeof(RWCommand));
     if(!command) return -ENOMEM;
 
     Process *p = getProcess(t->pid);
@@ -84,7 +84,7 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     if(!fd) return -EBADF;
 
     command->header.header.command = COMMAND_READ;
-    command->header.header.length = sizeof(RWCommand) + count;
+    command->header.header.length = sizeof(RWCommand);
     command->header.id = id;
     command->uid = p->user;
     command->gid = p->group;
@@ -92,7 +92,6 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     command->flags = iod->flags;
     strcpy(command->device, fd->device);
     strcpy(command->path, fd->abspath);
-    memcpy(command->data, buffer, count);
 
     int status = requestServer(t, command);
     free(command);
