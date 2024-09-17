@@ -78,6 +78,13 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         // and return the file descriptor to the thread
         req->ret = fd;
         break;
+
+    case COMMAND_READ:
+        if((ssize_t)hdr->header.status <= 0) break;
+        RWCommand *readcmd = (RWCommand *) hdr;
+        threadUseContext(req->thread->tid);
+        memcpy((void *)req->params[1], readcmd->data, hdr->header.status);
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
