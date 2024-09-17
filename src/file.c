@@ -66,7 +66,7 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
     command->mode = mode;
     command->uid = p->user;
     command->gid = p->group;
-    strcpy(command->path, path);
+    strcpy(command->abspath, path);
 
     int status = requestServer(t, command);
     free(command);
