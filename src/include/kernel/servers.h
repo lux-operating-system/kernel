@@ -103,8 +103,9 @@ typedef struct {
 /* open() */
 typedef struct {
     SyscallHeader header;
-    char path[MAX_FILE_PATH];
-    char device[MAX_FILE_PATH];
+    char abspath[MAX_FILE_PATH];    // absolute path
+    char path[MAX_FILE_PATH];       // resolved path relative to dev mountpoint
+    char device[MAX_FILE_PATH];     // device
     int flags;
     mode_t mode;
     uid_t uid;
@@ -127,5 +128,5 @@ typedef struct {
 void serverInit();
 void serverIdle();
 void handleGeneralRequest(int, const MessageHeader *, void *);
-void handleSyscallResponse(const SyscallHeader *);
+void handleSyscallResponse(SyscallHeader *);
 int requestServer(Thread *, void *);
