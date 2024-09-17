@@ -52,6 +52,16 @@ int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
     return status;
 }
 
+int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;  // ensure valid file descriptor
+    if(p->io[fd].type != IO_FIL) return -EBADF;
+
+    FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
+    return stat(t, id, file->abspath, buffer);
+}
+
 int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
     OpenCommand *command = calloc(1, sizeof(OpenCommand));
     if(!command) return -ENOMEM;
