@@ -39,3 +39,16 @@ int ioapicConut() {
     return count;
 }
 
+/* ioapicInit(): initializes I/O APICs
+ * params: none
+ * returns: number of I/O APICs initialized
+ */
+
+int ioapicInit() {
+    if(!count) {
+        KERROR("no I/O APIC is present\n");
+        for(;;);
+    }
+
+    
+}

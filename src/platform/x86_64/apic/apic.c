@@ -131,6 +131,7 @@ int apicInit() {
     smpCPUInfoSetup();      // info structure for the boot CPU
     apicTimerInit();        // local APIC timer
     smpBoot();              // start up other non-boot CPUs
+    ioapicInit();           // I/O APICs
 
     return 0;
 }
