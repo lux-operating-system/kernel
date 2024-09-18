@@ -119,6 +119,11 @@ void syscallDispatchOpen(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchClose(SyscallRequest *req) {
+    req->ret = close(req->thread, req->params[0]);
+    req->unblock = true;
+}
+
 void syscallDispatchRead(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
         uint64_t id = platformRand();
@@ -345,7 +350,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
 
     /* group 2: file system manipulation */
     syscallDispatchOpen,        // 13 - open()
-    NULL,                       // 14 - close()
+    syscallDispatchClose,       // 14 - close()
     syscallDispatchRead,        // 15 - read()
     syscallDispatchWrite,       // 16 - write()
     syscallDispatchStat,        // 17 - stat()
