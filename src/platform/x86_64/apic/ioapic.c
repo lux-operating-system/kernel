@@ -114,5 +114,18 @@ int ioapicInit() {
         for(;;);
     }
 
+    for(int i = 0; i < count; i++) {
+        IOAPIC *ioapic = ioapicFindIndex(i);
+        if(!ioapic) {
+            KERROR("I/O APIC index %d is not present, memory corruption?\n");
+            for(;;);
+        }
 
+        // read the version and max IRQ
+        uint32_t val = ioapicRead(ioapic, IOAPIC_VER);
+        ioapic->version = val & 0xFF;
+        ioapic->count = ((val >> 16) & 0xFF) + 1;
+
+        KDEBUG("I/O APIC version 0x%02X @ 0x%X routing IRQs %d-%d\n", ioapic->version, ioapic->mmio, ioapic->gsi, ioapic->gsi+ioapic->count-1);
+    }
 }
