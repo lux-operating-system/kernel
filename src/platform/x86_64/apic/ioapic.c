@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <platform/apic.h>
 #include <kernel/logger.h>
+#include <kernel/memory.h>
 
 static IOAPIC *ioapics = NULL;
 static int count = 0;
@@ -71,6 +72,35 @@ IOAPIC *ioapicFindIRQ(int irq) {
     }
 
     return NULL;
+}
+
+/* ioapicWrite(): writes to an I/O APIC register
+ * params: ioapic - the I/O APIC device to write to
+ * params: index - register index
+ * params: value - value to write
+ * returns: nothing
+ */
+
+void ioapicWrite(IOAPIC *ioapic, uint32_t index, uint32_t value) {
+    uint32_t volatile *selector = (uint32_t volatile *)((uintptr_t)vmmMMIO(ioapic->mmio + IOAPIC_REGSEL, true));
+    uint32_t volatile *window = (uint32_t volatile *)((uintptr_t)vmmMMIO(ioapic->mmio + IOAPIC_IOWIN, true));
+
+    *selector = index;
+    *window = value;
+}
+
+/* ioapicRead(): reads from an I/O APIC register
+ * params: ioapic - the I/O APIC device to read from
+ * params: index - register index
+ * returns: value from register
+ */
+
+uint32_t ioapicRead(IOAPIC *ioapic, uint32_t index) {
+    uint32_t volatile *selector = (uint32_t volatile *)((uintptr_t)vmmMMIO(ioapic->mmio + IOAPIC_REGSEL, true));
+    uint32_t volatile *window = (uint32_t volatile *)((uintptr_t)vmmMMIO(ioapic->mmio + IOAPIC_IOWIN, true));
+
+    *selector = index;
+    return *window;
 }
 
 /* ioapicInit(): initializes I/O APICs
