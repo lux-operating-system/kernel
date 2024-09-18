@@ -33,6 +33,7 @@ typedef struct {
     // currently running process and thread
     Process *process;
     Thread *thread;
+    TSS *tss;
 
     int cpuIndex;
 } KernelCPUInfo;

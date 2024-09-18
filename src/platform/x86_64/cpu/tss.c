@@ -65,4 +65,5 @@ void tssSetup() {
     // store the stack pointer in the per-CPU info structure as well
     KernelCPUInfo *info = getKernelCPUInfo();
     info->kernelStack = (void *)tss->rsp0;
+    info->tss = tss;
 }
