@@ -29,7 +29,7 @@ typedef struct {
 
 /* file system syscalls */
 int open(Thread *, uint64_t, const char *, int, mode_t);
-int close(Thread *, uint64_t, int);
+int close(Thread *, int);
 ssize_t read(Thread *, uint64_t, int, void *, size_t);
 ssize_t write(Thread *, uint64_t, int, const void *, size_t);
 int mount(Thread *, uint64_t, const char *, const char *, const char *, int);
