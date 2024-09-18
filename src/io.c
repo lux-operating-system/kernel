@@ -14,6 +14,7 @@
 #include <kernel/io.h>
 #include <kernel/socket.h>
 #include <kernel/file.h>
+#include <kernel/logger.h>
 
 /* openIO(): opens an I/O descriptor in a process
  * params: p - process to open descriptor in
@@ -144,5 +145,14 @@ int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
     if(!p) return -ESRCH;
     if(p->user) return -EPERM;  // only root is allowed to access I/O ports
 
-    return platformIoperm(t, from, count, enable);
+    schedLock();
+
+    int status = platformIoperm(t, from, count, enable);
+    if(!status)
+        KDEBUG("thread %d was %s access to I/O ports 0x%04X-0x%04X\n", t->tid, enable ? "granted" : "revoked", from, from+count-1);
+    else
+        KWARN("thread %d was denied access to I/O ports 0x%04X-0x%04X\n", t->tid, from, from+count-1);
+
+    schedRelease();
+    return status;
 }
