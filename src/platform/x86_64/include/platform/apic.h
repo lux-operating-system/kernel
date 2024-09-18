@@ -187,3 +187,7 @@ void timerHandlerStub();
 int ioapicRegister(IOAPIC *);
 int ioapicCount();
 int ioapicInit();
+IOAPIC *ioapicFindIndex(int);
+IOAPIC *ioapicFindIRQ(int);
+void ioapicWrite(IOAPIC *, uint32_t, uint32_t);
+uint32_t ioapicRead(IOAPIC *, uint32_t);
