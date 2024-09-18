@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/sched.h>
+#include <platform/tss.h>
 
 // every platform must define some kind of structure that allows it to identify
 // different CPUs in a multiprocessing system
