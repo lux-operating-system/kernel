@@ -170,7 +170,7 @@ typedef struct {
     uint64_t mmioBase;
 } __attribute__((packed)) ACPIMADTLocalAPICOverride;
 
-typedef struct {
+typedef struct IOAPIC {
     uint8_t version, apicID;
     uintptr_t mmio;
     uint8_t gsi, count;
@@ -183,3 +183,6 @@ uint32_t lapicRead(uint32_t);
 int apicTimerInit();
 uint64_t apicTimerFrequency();
 void timerHandlerStub();
+
+int registerIOAPIC(IOAPIC *);
+int countIOAPIC();
