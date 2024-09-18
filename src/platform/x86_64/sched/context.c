@@ -62,6 +62,8 @@ void *platformCreateContext(void *ptr, int level, uintptr_t entry, uintptr_t arg
     //if(!context->cr3) return NULL;
     void *stack;
 
+    memset(context->ioports, 0xFF, 8192);   // disable I/O port access by default
+
     if(level == PLATFORM_CONTEXT_KERNEL) {
         context->regs.cs = GDT_KERNEL_CODE << 3;
         context->regs.ss = GDT_KERNEL_DATA << 3;

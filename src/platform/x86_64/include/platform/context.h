@@ -42,7 +42,9 @@ typedef struct {
     // threads under the same process will share the same address space
     uint64_t cr3;
 
-    ThreadGPR regs;
+    ThreadGPR regs;         // register state
+
+    uint8_t ioports[8192];  // I/O port privileges
 } __attribute__((packed)) ThreadContext;
 
 void *platformCreateContext(void *, int, uintptr_t, uintptr_t);
