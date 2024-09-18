@@ -103,6 +103,25 @@ uint32_t ioapicRead(IOAPIC *ioapic, uint32_t index) {
     return *window;
 }
 
+/* ioapicMask(): configures the mask of an IRQ
+ * params: irq - IRQ to configure
+ * params: mask - 0 to unmask, 1 to mask
+ * returns: zero on success
+ */
+
+int ioapicMask(int irq, int mask) {
+    IOAPIC *ioapic = ioapicFindIRQ(irq);
+    if(!ioapic) return -1;
+
+    uint32_t index = IOAPIC_REDIRECTION + (irq * 2);
+    if(mask)
+        ioapicWrite(ioapic, index, ioapicRead(ioapic, index) | IOAPIC_RED_MASK);
+    else
+        ioapicWrite(ioapic, index, ioapicRead(ioapic, index) & ~IOAPIC_RED_MASK);
+
+    return 0;
+}
+
 /* ioapicInit(): initializes I/O APICs
  * params: none
  * returns: number of I/O APICs initialized
@@ -126,6 +145,12 @@ int ioapicInit() {
         ioapic->version = val & 0xFF;
         ioapic->count = ((val >> 16) & 0xFF) + 1;
 
+        // and mask all IRQs
+        for(int j = ioapic->gsi; j < (ioapic->gsi + ioapic->count); j++)
+            ioapicMask(j, 1);
+
         KDEBUG("I/O APIC version 0x%02X @ 0x%X routing IRQs %d-%d\n", ioapic->version, ioapic->mmio, ioapic->gsi, ioapic->gsi+ioapic->count-1);
     }
+
+    return count;
 }
