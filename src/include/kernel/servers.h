@@ -65,6 +65,12 @@ typedef struct {
     char message[];         // variable length, null terminated
 } LogCommand;
 
+/* rand command */
+typedef struct {
+    MessageHeader header;
+    uint64_t number;        // random number
+} RandCommand;
+
 /* sysinfo command */
 typedef struct {
     MessageHeader header;

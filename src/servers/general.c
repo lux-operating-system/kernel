@@ -54,6 +54,17 @@ void serverLog(Thread *t, int sd, const MessageHeader *req, void *res) {
     ksprint(request->level, request->server, request->message);
 }
 
+/* serverRand(): random number generator */
+void serverRand(Thread *t, int sd, const MessageHeader *req, void *res) {
+    RandCommand *response = (RandCommand *) res;
+    memcpy(response, req, sizeof(MessageHeader));
+    response->header.response = 1;
+    response->header.length = sizeof(RandCommand);
+    response->number = platformRand();
+
+    send(NULL, sd, response, sizeof(RandCommand), 0);
+}
+
 /* getFramebuffer(): provides frame buffer access to the requesting thread */
 
 void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
@@ -102,7 +113,7 @@ void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
 static void (*generalRequests[])(Thread *, int, const MessageHeader *req, void *res) = {
     serverLog,          // 0 - log
     NULL,               // 1 - sysinfo
-    NULL,               // 2 - rand
+    serverRand,         // 2 - rand
     NULL,               // 3 - request I/O access
     NULL,               // 4 - get process I/O privileges
     NULL,               // 5 - get list of processes/threads
