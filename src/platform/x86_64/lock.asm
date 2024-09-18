@@ -24,16 +24,21 @@ lockStatus:
 global acquireLock
 align 16
 acquireLock:
+    pushfq
+    cli
+
     test dword [rdi], 1
     jnz .fail
 
     lock bts dword [rdi], 0
     jc .fail
 
+    popfq
     mov rax, 1
     ret
 
 .fail:
+    popfq
     xor rax, rax
     ret
 
@@ -42,21 +47,23 @@ acquireLock:
 global acquireLockBlocking
 align 16
 acquireLockBlocking:
+    pushfq
+    cli
+
+.spin:
     test dword [rdi], 1
     jnz .wait
 
     lock bts dword [rdi], 0
     jc .wait
 
+    popfq
     mov rax, 1
     ret
 
-align 16
 .wait:
     pause
-    test dword [rdi], 1
-    jnz .wait
-    jmp acquireLockBlocking
+    jmp .spin
 
 ; int releaseLock(lock_t *lock)
 ; releases a lock, always returns zero

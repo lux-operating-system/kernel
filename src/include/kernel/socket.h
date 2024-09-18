@@ -51,6 +51,7 @@ typedef struct SocketDescriptor {
     Process *process;
     struct sockaddr address;
     bool listener;
+    int globalIndex;
     int type, protocol, backlogMax, backlogCount;
     int inboundCount, outboundCount;
     void **inbound, **outbound;
@@ -64,6 +65,7 @@ SocketDescriptor *getLocalSocket(const struct sockaddr *, socklen_t);
 void socketLock();
 void socketRelease();
 int socketRegister(SocketDescriptor *);
+SocketDescriptor *socketUnregister(int);
 
 /* socket system calls */
 int socket(Thread *, int, int, int);
@@ -73,3 +75,4 @@ int listen(Thread *, int, int);
 int accept(Thread *, int, struct sockaddr *, socklen_t *);
 ssize_t recv(Thread *, int, void *, size_t, int);
 ssize_t send(Thread *, int, const void *, size_t, int);
+int closeSocket(Thread *, int);

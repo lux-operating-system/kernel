@@ -83,14 +83,41 @@ void socketRelease() {
 
 /* socketRegister(): registers an open socket
  * params: sock - socket descriptor structure
- * returns: zero on success
+ * returns: positive socket index on success, negative error code on fail
  */
 
 int socketRegister(SocketDescriptor *sock) {
     if(socketCount >= MAX_SOCKETS) return -ENFILE;
-    sockets[socketCount] = sock;
-    socketCount++;
-    return 0;
+
+    for(int i = 0; i < MAX_SOCKETS; i++) {
+        if(!sockets[i]) {
+            sockets[i] = sock;
+            socketCount++;
+            return i;
+        }
+    }
+
+    return -ENFILE;
+}
+
+/* socketUnregister(): unregisters an open socket
+ * params: index - global index
+ * returns: pointer to the socket on success, NULL on fail
+ */
+
+SocketDescriptor *socketUnregister(int index) {
+    if(!socketCount) return NULL;
+
+    for(int i = 0; i < MAX_SOCKETS; i++) {
+        SocketDescriptor *sd = sockets[i];
+        if(sd && (sd->globalIndex == index)) {
+            sockets[i] = NULL;
+            socketCount--;
+            return sd;
+        }
+    }
+
+    return NULL;
 }
 
 /* socket(): opens a communication socket
@@ -120,8 +147,9 @@ int socket(Thread *t, int domain, int type, int protocol) {
     iod->data = calloc(1, sizeof(SocketDescriptor));
     iod->flags = type >> 8;
     if(!iod->data) {
-        releaseLock(lock);
         closeIO(p, iod);
+        releaseLock(lock);
+        return -ENOMEM;
     }
 
     // set up the socket family for now
@@ -130,9 +158,13 @@ int socket(Thread *t, int domain, int type, int protocol) {
     sock->address.sa_family = domain;
     sock->type = type & 0xFF;
     sock->protocol = protocol;
+    sock->globalIndex = socketRegister(sock);
 
-    sockets[socketCount] = sock;
-    socketCount++;
+    if(sock->globalIndex < 0) {
+        closeIO(p, iod);
+        releaseLock(lock);
+        return -ENFILE;
+    }
 
     releaseLock(lock);
     return sd;
@@ -160,11 +192,51 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     acquireLockBlocking(lock);
 
     SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
-    if(!sock) return -ENOTSOCK;
-    if(addr->sa_family != sock->address.sa_family) return -EAFNOSUPPORT;
+    if(!sock) {
+        releaseLock(lock);
+        return -ENOTSOCK;
+    }
+
+    if(addr->sa_family != sock->address.sa_family) {
+        releaseLock(lock);
+        return -EAFNOSUPPORT;
+    }
 
     // finally
     memcpy(&sock->address, addr, len);
+    releaseLock(lock);
+    return 0;
+}
+
+/* closeSocket(): closes a socket
+ * params: t - calling thread
+ * params: sd - socket descriptor
+ * returns: zero on success, negative error code on fail
+ */
+
+int closeSocket(Thread *t, int sd) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getKernelPID());
+    if(!p) return -ESRCH;
+
+    acquireLockBlocking(lock);
+    SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
+    if(!sock) {
+        releaseLock(lock);
+        return -EBADF;
+    }
+
+    if(sock->peer) {
+        // disconnect the socket from its peer
+        // TODO: for future TCP sockets, terminate the connection here
+        sock->peer->peer = NULL;
+        sock->peer = NULL;
+    }
+
+    // and delete the socket
+    socketUnregister(sock->globalIndex);
+    closeIO(p, &p->io[sd]);
     releaseLock(lock);
     return 0;
 }

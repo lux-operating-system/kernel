@@ -25,7 +25,7 @@ void platformInitialSeed() {
  */
 
 uint64_t platformRand() {
-    seed *= (uint64_t)lapicRead(LAPIC_TIMER_CURRENT);
+    seed += (uint64_t)lapicRead(LAPIC_TIMER_CURRENT);
 
     uint8_t *bytes = (uint8_t *)&seed;
     for(int i = 0; i < 4; i++) {
