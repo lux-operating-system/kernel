@@ -110,7 +110,7 @@ int apicInit() {
             dev->apicID = ioapic->apicID;
             dev->gsi = ioapic->gsi;
             dev->mmio = ioapic->mmioBase;
-            registerIOAPIC(dev);
+            ioapicRegister(dev);
             break;
         case MADT_TYPE_INTERRUPT_OVERRIDE:
             ACPIMADTInterruptOverride *override = (ACPIMADTInterruptOverride *)ptr;

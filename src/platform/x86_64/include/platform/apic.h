@@ -184,5 +184,6 @@ int apicTimerInit();
 uint64_t apicTimerFrequency();
 void timerHandlerStub();
 
-int registerIOAPIC(IOAPIC *);
-int countIOAPIC();
+int ioapicRegister(IOAPIC *);
+int ioapicCount();
+int ioapicInit();

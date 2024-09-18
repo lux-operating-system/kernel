@@ -12,14 +12,14 @@
 #include <kernel/logger.h>
 
 static IOAPIC *ioapics = NULL;
-static int ioapicCount = 0;
+static int count = 0;
 
-/* registerIOAPIC(): registers an I/O APIC device
+/* ioapicRegister(): registers an I/O APIC device
  * params: dev - pointer to the device structure
  * returns: total count of I/O APICs
  */
 
-int registerIOAPIC(IOAPIC *dev) {
+int ioapicRegister(IOAPIC *dev) {
     if(!ioapics) ioapics = dev;
     else {
         IOAPIC *ioapic = ioapics;
@@ -27,15 +27,15 @@ int registerIOAPIC(IOAPIC *dev) {
         ioapic->next = dev;
     }
 
-    return ioapicCount++;
+    return count++;
 }
 
-/* countIOAPIC(): returns the number of I/O APICs present
+/* ioapicConut(): returns the number of I/O APICs present
  * params: none
  * returns: number of I/O APICs
  */
 
-int countIOAPIC() {
-    return ioapicCount;
+int ioapicConut() {
+    return count;
 }
 
