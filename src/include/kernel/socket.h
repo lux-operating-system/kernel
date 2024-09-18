@@ -73,3 +73,4 @@ int listen(Thread *, int, int);
 int accept(Thread *, int, struct sockaddr *, socklen_t *);
 ssize_t recv(Thread *, int, void *, size_t, int);
 ssize_t send(Thread *, int, const void *, size_t, int);
+int closeSocket(Thread *, int);

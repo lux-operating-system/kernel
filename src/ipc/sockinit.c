@@ -175,3 +175,34 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     releaseLock(lock);
     return 0;
 }
+
+/* closeSocket(): closes a socket
+ * params: t - calling thread
+ * params: sd - socket descriptor
+ * returns: zero on success, negative error code on fail
+ */
+
+int closeSocket(Thread *t, int sd) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getKernelPID());
+    if(!p) return -ESRCH;ß
+
+    acquireLockBlocking(lock);
+    SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
+    if(!sock) {
+        releaseLock(lock);
+        return -EBADF;
+    }
+
+    if(sock->peer) {
+        // disconnect the socket from its peer
+        // TODO: for future TCP sockets, terminate the connection here
+        sock->peer->peer = NULL;
+        sock->peer = NULL;
+    }
+
+    closeIO(p, &p->io[sd]);
+    releaseLock(lock);
+    return 0;
+}
