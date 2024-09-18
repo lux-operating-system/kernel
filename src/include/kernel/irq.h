@@ -8,9 +8,11 @@
 #pragma once
 
 #include <stdint.h>
+#include <kernel/sched.h>
 
 /* Generic platform-independent structure for IRQ handlers */
 typedef struct {
+    char name[256];     // device/driver name
     int kernel;         // 1 for kernel-level IRQ handler, 0 for user space
     uintptr_t khandler; // entry point for kernel IRQ handlers
     int socket;         // socket for user space driver
@@ -21,3 +23,5 @@ typedef struct {
     int devices;        // number of devices sharing this IRQ
     IRQHandler *handlers;
 } IRQ;
+
+int installIRQ(Thread *, int, IRQHandler *);
