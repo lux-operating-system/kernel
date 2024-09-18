@@ -36,3 +36,4 @@ int mount(Thread *, uint64_t, const char *, const char *, const char *, int);
 
 ssize_t readFile(Thread *, uint64_t, IODescriptor *, void *, size_t);
 ssize_t writeFile(Thread *, uint64_t, IODescriptor *, const void *, size_t);
+int closeFile(Thread *, int);

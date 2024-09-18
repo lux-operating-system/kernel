@@ -135,3 +135,18 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     free(command);
     return status;
 }
+
+int closeFile(Thread *t, int fd) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getKernelPID());
+    if(!p) return -ESRCH;
+
+    FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
+    if(!file) return -EBADF;
+
+    // TODO: flush the file buffers here to allow drivers to implement caching
+
+    closeIO(p, &p->io[fd]);
+    return 0;
+}
