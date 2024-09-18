@@ -160,8 +160,15 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
     acquireLockBlocking(lock);
 
     SocketDescriptor *sock = (SocketDescriptor *) p->io[sd].data;
-    if(!sock) return -ENOTSOCK;
-    if(addr->sa_family != sock->address.sa_family) return -EAFNOSUPPORT;
+    if(!sock) {
+        releaseLock();
+        return -ENOTSOCK;
+    }
+
+    if(addr->sa_family != sock->address.sa_family) {
+        releaseLock();
+        return -EAFNOSUPPORT;
+    }
 
     // finally
     memcpy(&sock->address, addr, len);
