@@ -9,6 +9,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <platform/platform.h>
 #include <kernel/sched.h>
 #include <kernel/io.h>
 #include <kernel/socket.h>
@@ -124,4 +125,24 @@ int close(Thread *t, int fd) {
     if(p->io[fd].type == IO_SOCKET) return closeSocket(t, fd);
     else if(p->io[fd].type == IO_FILE) return closeFile(t, fd);
     else return -EBADF;
+}
+
+/* ioperm(): sets the I/O permissions for the current thread
+ * params: t - calling thread
+ * params: from - base I/O port
+ * params: count - number of I/O ports to change permissions
+ * params: enable - 0 to disable access, 1 to enable
+ * returns: zero on success, negative error code on fail
+ */
+
+int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
+    // not all platforms implement I/O ports and this is really relevant to x86
+    // on platforms that don't implement I/O ports, simply return -EIO
+
+    // check permissions
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(p->user) return -EPERM;  // only root is allowed to access I/O ports
+
+    return platformIoperm(t, from, count, enable);
 }
