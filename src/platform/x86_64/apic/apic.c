@@ -80,10 +80,10 @@ int apicInit() {
 
             // register the CPU with the platform-independent code if it's enabled
             if(localAPIC->flags & MADT_LOCAL_APIC_ENABLED) {
-                PlatformCPU *cpu = malloc(sizeof(PlatformCPU));
+                PlatformCPU *cpu = calloc(1, sizeof(PlatformCPU));
                 if(!cpu) {
                     KERROR("could not allocate memory to register CPU\n");
-                    break;
+                    while(1);
                 }
 
                 cpu->apicID = localAPIC->apicID;
@@ -99,6 +99,18 @@ int apicInit() {
             ACPIMADTIOAPIC *ioapic = (ACPIMADTIOAPIC *)ptr;
             KDEBUG("I/O APIC with APIC ID 0x%02X GSI base %d MMIO base 0x%08X\n", ioapic->apicID,
                 ioapic->gsi, ioapic->mmioBase);
+
+            // register the I/O APIC
+            IOAPIC *dev = calloc(1, sizeof(IOAPIC));
+            if(!dev) {
+                KERROR("could not allocate memory to register I/O APIC\n");
+                while(1);
+            }
+
+            dev->apicID = ioapic->apicID;
+            dev->gsi = ioapic->gsi;
+            dev->mmio = ioapic->mmioBase;
+            registerIOAPIC(dev);
             break;
         case MADT_TYPE_INTERRUPT_OVERRIDE:
             ACPIMADTInterruptOverride *override = (ACPIMADTInterruptOverride *)ptr;

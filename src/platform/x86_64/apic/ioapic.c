@@ -7,6 +7,7 @@
 
 /* I/O APIC Driver */
 
+#include <stddef.h>
 #include <platform/apic.h>
 #include <kernel/logger.h>
 
