@@ -106,3 +106,22 @@ ssize_t write(Thread *t, uint64_t id, int fd, const void *buffer, size_t count) 
     else if(p->io[fd].type == IO_FILE) return writeFile(t, id, &p->io[fd], buffer, count);
     else return -EBADF;
 }
+
+/* close(): closes an I/O descriptor
+ * params: t - calling thread, NULL for kernel threads
+ * params: fd - file or socket descriptor
+ * returns: zero on success, negative error code on fail
+ */
+
+int close(Thread *t, int fd) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getKernelPID());
+    if(!p) return -ESRCH;
+
+    if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;
+
+    if(p->io[fd].type == IO_SOCKET) return closeSocket(t, fd);
+    else if(p->io[fd].type == IO_FILE) return closeFile(t, fd);
+    else return -EBADF;
+}
