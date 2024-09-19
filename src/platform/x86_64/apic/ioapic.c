@@ -217,8 +217,8 @@ int platformConfigureIRQ(Thread *t, int pin, IRQHandler *h) {
     uint32_t high = cpuIndex << 24;
 
     // write the high dword first because the low will unmask
-    ioapicWrite(ioapic, IOAPIC_REDIRECTION + (pin*2) + 1, high);
-    ioapicWrite(ioapic, IOAPIC_REDIRECTION + (pin*2), low);
+    ioapicWrite(ioapic, IOAPIC_REDIRECTION + (line*2) + 1, high);
+    ioapicWrite(ioapic, IOAPIC_REDIRECTION + (line*2), low);
 
     return pin;
 }
