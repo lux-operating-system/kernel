@@ -6,11 +6,11 @@
 
 section .text
 
-; memcpy(void *dst, const void *src, size_t n)
+; void *memcpy(void *dst, const void *src, size_t n)
 global memcpy
 align 16
 memcpy:
-    mov rax, rdi
+    mov rax, rdi        ; return value
 
     cmp rdx, 8
     jl .low
