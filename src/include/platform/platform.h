@@ -56,3 +56,4 @@ void platformSetContextStatus(void *, uint64_t);    // store syscall return valu
 int platformIoperm(Thread *, uintptr_t, uintptr_t, int);    // request I/O port access
 int platformGetMaxIRQ();        // maximum interrupt implemented by hardware
 int platformConfigureIRQ(Thread *, int, IRQHandler *);  // configure an IRQ pin
+IRQCommand *platformGetIRQCommand();    // per-CPU IRQ command structure
