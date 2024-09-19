@@ -38,7 +38,7 @@ int installIRQ(Thread *t, int pin, IRQHandler *h) {
     if(pin < 0 || pin > platformGetMaxIRQ()) return -EIO;
 
     if(!irqs) {
-        irqs = calloc(platformGetMaxIRQ(), sizeof(IRQ));
+        irqs = calloc(platformGetMaxIRQ() + 1, sizeof(IRQ));
         if(!irqs) return -ENOMEM;
 
         for(int i = 0; i < platformGetMaxIRQ(); i++) irqs[i].pin = i;
