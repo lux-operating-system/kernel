@@ -34,14 +34,6 @@ char *strcpy(char *dst, const char *src) {
     return (char *)memcpy(dst, src, strlen(src)+1);
 }
 
-void *memset(void *dst, int v, size_t n) {
-    uint8_t *dstc = (uint8_t *)dst;
-    for(size_t i = 0; i < n; i++) {
-        dstc[i] = v;
-    }
-    return dst;
-}
-
 int strcmp(const char *s1, const char *s2) {
     while(*s1 == *s2) {
         if(!*s1) return 0;
