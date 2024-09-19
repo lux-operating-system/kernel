@@ -196,22 +196,31 @@ int platformGetMaxIRQ() {
  */
 
 int platformConfigureIRQ(Thread *t, int pin, IRQHandler *h) {
+    // check for IRQ overrides
+    uint32_t low = 0;
+    IRQOverride *override = findOverrideIRQ(pin);
+    if(override) {
+        if(override->level) low |= IOAPIC_RED_LEVEL;
+        if(override->low) low |= IOAPIC_RED_ACTIVE_LOW;
+        pin = override->gsi;
+    } else {
+        if(h->level) low |= IOAPIC_RED_LEVEL;
+        if(!h->high) low |= IOAPIC_RED_ACTIVE_LOW;
+    }
+
     // find which I/O APIC implements this IRQ line
     IOAPIC *ioapic = ioapicFindIRQ(pin);
     if(!ioapic) return -EIO;
 
     int line = pin - ioapic->gsi;   // line on this particular I/O APIC
 
-    // configure the interrupt pin on the I/O APIC
-    uint32_t low = 0;
-    if(h->level) low |= IOAPIC_RED_LEVEL;
-    if(!h->high) low |= IOAPIC_RED_ACTIVE_LOW;
+    // map the IRQ to a CPU interrupt
     low |= (pin + IOAPIC_INT_BASE);
 
     // cycle through CPUs that handle IRQs
     int cpuIndex = pin % platformCountCPU();
     PlatformCPU *cpu = platformGetCPU(cpuIndex);
-    if(!cpu) cpuIndex = 0;  // boot
+    if(!cpu) cpu = platformGetCPU(0);       // boot CPU
     else cpuIndex = cpu->apicID & 0x0F;     // I/O APIC can only target 16 cpus in physical mode
 
     uint32_t high = cpuIndex << 24;
