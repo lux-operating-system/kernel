@@ -221,7 +221,8 @@ int platformConfigureIRQ(Thread *t, int pin, IRQHandler *h) {
     int cpuIndex = pin % platformCountCPU();
     PlatformCPU *cpu = platformGetCPU(cpuIndex);
     if(!cpu) cpu = platformGetCPU(0);       // boot CPU
-    else cpuIndex = cpu->apicID & 0x0F;     // I/O APIC can only target 16 cpus in physical mode
+    
+    cpuIndex = cpu->apicID & 0x0F;     // I/O APIC can only target 16 cpus in physical mode
 
     uint32_t high = cpuIndex << 24;
 
