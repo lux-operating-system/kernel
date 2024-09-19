@@ -180,6 +180,13 @@ typedef struct IOAPIC {
     struct IOAPIC *next;
 } IOAPIC;
 
+typedef struct IRQOverride {
+    uint8_t bus, source;
+    uint8_t gsi;
+    int level, low;
+    struct IRQOverride *next;
+} IRQOverride;
+
 int apicInit();
 void lapicWrite(uint32_t, uint32_t);
 uint32_t lapicRead(uint32_t);
@@ -195,3 +202,7 @@ IOAPIC *ioapicFindIRQ(int);
 void ioapicWrite(IOAPIC *, uint32_t, uint32_t);
 uint32_t ioapicRead(IOAPIC *, uint32_t);
 int ioapicMask(int, int);
+
+int overrideIRQRegister(IRQOverride *);
+int overrideIRQCount();
+IRQOverride *findOverrideIRQ();
