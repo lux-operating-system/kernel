@@ -118,6 +118,20 @@ int apicInit() {
                 override->sourceIRQ, override->bus, override->gsi, override->flags,
                 override->flags & MADT_INTERRUPT_LEVEL ? "level" : "edge",
                 override->flags & MADT_INTERRUPT_LOW ? "low" : "high");
+            
+            IRQOverride *irqor = calloc(1, sizeof(IRQOverride));
+            if(!irqor) {
+                KERROR("could not allocate memory for IRQ override\n");
+                while(1);
+            }
+
+            irqor->bus = override->bus;
+            irqor->gsi = override->gsi;
+            irqor->source = override->sourceIRQ;
+            if(override->flags & MADT_INTERRUPT_LEVEL) irqor->level = 1;
+            if(override->flags & MADT_INTERRUPT_LOW) irqor->low = 0;
+
+            overrideIRQRegister(irqor);
             break;
         default:
             KWARN("unimplemented MADT entry type 0x%02X with length %d, skipping...\n", ptr[0], ptr[1]);
