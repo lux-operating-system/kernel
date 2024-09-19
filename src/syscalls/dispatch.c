@@ -16,6 +16,7 @@
 #include <kernel/logger.h>
 #include <kernel/memory.h>
 #include <kernel/file.h>
+#include <kernel/irq.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -357,6 +358,13 @@ void syscallDispatchIoperm(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchIRQ(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], sizeof(IRQHandler))) {
+        req->ret = installIRQ(req->thread, req->params[0], (IRQHandler *) req->params[1]);
+        req->unblock = true;
+    }
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -415,4 +423,5 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
 
     /* group 5: driver I/O functions */
     syscallDispatchIoperm,      // 47 - ioperm()
+    syscallDispatchIRQ,         // 48 - irq()
 };
