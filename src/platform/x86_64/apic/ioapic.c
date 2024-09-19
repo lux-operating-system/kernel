@@ -14,6 +14,7 @@
 
 static IOAPIC *ioapics = NULL;
 static int count = 0;
+static int max = 0;
 
 /* ioapicRegister(): registers an I/O APIC device
  * params: dev - pointer to the device structure
@@ -145,6 +146,9 @@ int ioapicInit() {
         ioapic->version = val & 0xFF;
         ioapic->count = ((val >> 16) & 0xFF) + 1;
 
+        if((ioapic->gsi + ioapic->count - 1) > max) 
+            max = ioapic->gsi + ioapic->count - 1;
+
         // and mask all IRQs
         for(int j = ioapic->gsi; j < (ioapic->gsi + ioapic->count); j++)
             ioapicMask(j, 1);
@@ -152,5 +156,15 @@ int ioapicInit() {
         KDEBUG("I/O APIC version 0x%02X @ 0x%X routing IRQs %d-%d\n", ioapic->version, ioapic->mmio, ioapic->gsi, ioapic->gsi+ioapic->count-1);
     }
 
+    KDEBUG("%d I/O APIC%s can route a total of %d IRQs\n", count, count != 1 ? "s" : "", max+1);
     return count;
+}
+
+/* platformGetMaxIRQ(): returns the maximum IRQ on the system
+ * params: none
+ * returns: maximum IRQ pin
+ */
+
+int platformGetMaxIRQ() {
+    return max;
 }
