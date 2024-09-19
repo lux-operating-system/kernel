@@ -42,6 +42,9 @@
 
 #define MAX_SYSCALL_COMMAND     0x8006
 
+/* these commands are for device drivers */
+#define COMMAND_IRQ             0xC000
+
 typedef struct {
     uint16_t command;
     uint16_t length;
@@ -130,6 +133,12 @@ typedef struct {
     size_t length;
     uint8_t data[];
 } RWCommand;
+
+/* IRQ Notification */
+typedef struct {
+    MessageHeader header;
+    uint64_t pin;
+} IRQCommand;
 
 void serverInit();
 void serverIdle();
