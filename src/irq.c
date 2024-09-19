@@ -32,6 +32,9 @@ int installIRQ(Thread *t, int pin, IRQHandler *h) {
     if(!p) return -ESRCH;
     if(p->user) return -EPERM;      // only root can do this
 
+    // only the kernel can install kernel-level IRQ handlers
+    if(h->kernel && t != getKernelThread()) return -EPERM;
+
     if(pin < 0 || pin > platformGetMaxIRQ()) return -EIO;
 
     if(!irqs) {
