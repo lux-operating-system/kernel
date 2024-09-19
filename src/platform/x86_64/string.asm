@@ -31,7 +31,7 @@ memcpy:
 global memset
 align 16
 memset:
-    mov r8, rdx         ; r8 = count
+    mov r8, rdi         ; r8 = dst
 
     and rsi, 0xFF
     mov rax, rsi        ; low 8 bits
@@ -58,6 +58,5 @@ memset:
     mov rcx, rdx
     rep stosb
 
-    mov rax, rdi
-    sub rax, r8
+    mov rax, r8         ; return value
     ret
