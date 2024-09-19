@@ -107,6 +107,9 @@
 #define IOAPIC_RED_EDGE                 0x00000000
 #define IOAPIC_RED_MASK                 0x00010000
 
+// Base of IRQ Routing
+#define IOAPIC_INT_BASE                 0x20    // map IRQ 0 to INT 0x20, and so on
+
 typedef struct {
     ACPIStandardHeader header;
     uint32_t localAPIC;

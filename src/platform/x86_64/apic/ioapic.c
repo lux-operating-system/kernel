@@ -7,14 +7,21 @@
 
 /* I/O APIC Driver */
 
+#define MAX_IRQS            47      // TODO: bump this up
+
+#include <errno.h>
 #include <stddef.h>
 #include <platform/apic.h>
+#include <platform/x86_64.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/irq.h>
 
 static IOAPIC *ioapics = NULL;
 static int count = 0;
 static int max = 0;
+
+extern uint64_t dispatchIRQTable[];
 
 /* ioapicRegister(): registers an I/O APIC device
  * params: dev - pointer to the device structure
@@ -157,6 +164,16 @@ int ioapicInit() {
     }
 
     KDEBUG("%d I/O APIC%s can route a total of %d IRQs\n", count, count != 1 ? "s" : "", max+1);
+
+    if(max > MAX_IRQS) {
+        KWARN("kernel is currently limited to %d IRQs, only figuring the first %d\n", MAX_IRQS+1, MAX_IRQS+1);
+        max = MAX_IRQS;
+    }
+
+    // install IRQ handler stubs
+    for(int i = 0; i < max; i++)
+        installInterrupt(dispatchIRQTable[i], GDT_KERNEL_CODE, PRIVILEGE_KERNEL, INTERRUPT_TYPE_INT, i + IOAPIC_INT_BASE);
+
     return count;
 }
 
@@ -167,4 +184,22 @@ int ioapicInit() {
 
 int platformGetMaxIRQ() {
     return max;
+}
+
+/* platformConfigureIRQ(): configures an IRQ on the I/O APIC
+ * params: t - calling thread
+ * params: pin - IRQ number, platform-dependent
+ * params: h - IRQ handler structure
+ * returns: 0 on success, negative error code on fail
+ */
+
+int platformConfigureIRQ(Thread *t, int pin, IRQHandler *h) {
+    // find which I/O APIC implements this IRQ line
+    IOAPIC *ioapic = ioapicFindIRQ(pin);
+    if(!ioapic) return -EIO;
+
+    int line = pin - ioapic->gsi;   // line on this particular I/O APIC
+
+    // TODO
+    return -EIO;
 }
