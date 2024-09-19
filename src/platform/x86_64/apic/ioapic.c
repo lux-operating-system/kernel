@@ -13,6 +13,8 @@
 #include <stddef.h>
 #include <platform/apic.h>
 #include <platform/x86_64.h>
+#include <platform/smp.h>
+#include <platform/platform.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
 #include <kernel/irq.h>
@@ -186,11 +188,11 @@ int platformGetMaxIRQ() {
     return max;
 }
 
-/* platformConfigureIRQ(): configures an IRQ on the I/O APIC
+/* platformConfigureIRQ(): configures and unmasks an IRQ on the I/O APIC
  * params: t - calling thread
  * params: pin - IRQ number, platform-dependent
  * params: h - IRQ handler structure
- * returns: 0 on success, negative error code on fail
+ * returns: interrupt pin on success, negative error code on fail
  */
 
 int platformConfigureIRQ(Thread *t, int pin, IRQHandler *h) {
@@ -200,6 +202,23 @@ int platformConfigureIRQ(Thread *t, int pin, IRQHandler *h) {
 
     int line = pin - ioapic->gsi;   // line on this particular I/O APIC
 
-    // TODO
-    return -EIO;
+    // configure the interrupt pin on the I/O APIC
+    uint32_t low = 0;
+    if(h->level) low |= IOAPIC_RED_LEVEL;
+    if(!h->high) low |= IOAPIC_RED_ACTIVE_LOW;
+    low |= (pin + IOAPIC_INT_BASE);
+
+    // cycle through CPUs that handle IRQs
+    int cpuIndex = pin % platformCountCPU();
+    PlatformCPU *cpu = platformGetCPU(cpuIndex);
+    if(!cpu) cpuIndex = 0;  // boot
+    else cpuIndex = cpu->apicID & 0x0F;     // I/O APIC can only target 16 cpus in physical mode
+
+    uint32_t high = cpuIndex << 24;
+
+    // write the high dword first because the low will unmask
+    ioapicWrite(ioapic, IOAPIC_REDIRECTION + (pin*2) + 1, high);
+    ioapicWrite(ioapic, IOAPIC_REDIRECTION + (pin*2), low);
+
+    return pin;
 }
