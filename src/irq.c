@@ -11,6 +11,8 @@
 #include <kernel/irq.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
+#include <kernel/servers.h>
+#include <kernel/socket.h>
 #include <platform/platform.h>
 #include <platform/lock.h>
 
@@ -71,6 +73,22 @@ int installIRQ(Thread *t, int pin, IRQHandler *h) {
  */
 
 void dispatchIRQ(uint64_t pin) {
-    // TODO
-    platformAcknowledgeIRQ(NULL);   // just send EOI for now
+    if(!irqs[pin].devices) {
+        KWARN("IRQ %d fired but no devices are using it\n", pin);
+        platformAcknowledgeIRQ(NULL);
+        return;
+    }
+
+    // dispatch the interrupt to the appropriate servers (possible shared IRQs)
+    Thread *k = getKernelThread();  // for socket context
+    IRQCommand *irqcmd = platformGetIRQCommand();
+    irqcmd->pin = pin;
+
+    for(int i = 0; i < irqs[pin].devices; i++) {
+        // notify all driver sharing this IRQ
+        int sd = serverSocket(irqs[pin].handlers[i].driver);
+        if(sd > 0) send(k, sd, irqcmd, sizeof(IRQCommand), 0);
+    }
+
+    platformAcknowledgeIRQ(NULL);   // end of interrupt
 }
