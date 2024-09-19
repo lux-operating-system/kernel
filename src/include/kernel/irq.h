@@ -16,6 +16,7 @@ typedef struct {
     int kernel;         // 1 for kernel-level IRQ handler, 0 for user space
     uintptr_t khandler; // entry point for kernel IRQ handlers
     int socket;         // socket for user space driver
+    int level, high;    // trigger mode
 } IRQHandler;
 
 typedef struct {
