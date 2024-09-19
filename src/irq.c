@@ -37,6 +37,13 @@ int installIRQ(Thread *t, int pin, IRQHandler *h) {
 
     // install the new handler
     acquireLockBlocking(&lock);
+
+    int status = platformConfigureIRQ(t, pin, h);
+    if(status) {
+        releaseLock(&lock);
+        return status;
+    }
+
     IRQHandler *newHandlers = realloc(irqs[pin].handlers, (irqs[pin].devices+1)*sizeof(IRQHandler));
     if(!newHandlers) {
         releaseLock(&lock);
