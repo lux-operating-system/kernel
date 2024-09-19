@@ -149,7 +149,7 @@ int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
 
     int status = platformIoperm(t, from, count, enable);
     if(!status)
-        KDEBUG("thread %d was %s access to I/O ports 0x%04X-0x%04X\n", t->tid, enable ? "granted" : "revoked", from, from+count-1);
+        KDEBUG("thread %d %s access to I/O ports 0x%04X-0x%04X\n", t->tid, enable ? "was granted" : "revoked", from, from+count-1);
     else
         KWARN("thread %d was denied access to I/O ports 0x%04X-0x%04X\n", t->tid, from, from+count-1);
 
