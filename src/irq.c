@@ -21,7 +21,7 @@ static IRQ *irqs = NULL;
  * params: t - calling thread
  * params: pin - IRQ number, platform-dependent
  * params: h - IRQ handler structure
- * returns: 0 on success, negative error code on fail
+ * returns: interrupt pin on success, negative error code on fail
  */
 
 int installIRQ(Thread *t, int pin, IRQHandler *h) {
@@ -38,10 +38,10 @@ int installIRQ(Thread *t, int pin, IRQHandler *h) {
     // install the new handler
     acquireLockBlocking(&lock);
 
-    int status = platformConfigureIRQ(t, pin, h);
-    if(status) {
+    int actual = platformConfigureIRQ(t, pin, h);   // allow the platform to redirect IRQs
+    if(actual < 0) {
         releaseLock(&lock);
-        return status;
+        return actual;
     }
 
     IRQHandler *newHandlers = realloc(irqs[pin].handlers, (irqs[pin].devices+1)*sizeof(IRQHandler));
@@ -54,9 +54,11 @@ int installIRQ(Thread *t, int pin, IRQHandler *h) {
     memcpy(&newHandlers[irqs[pin].devices], h, sizeof(IRQHandler));
     irqs[pin].devices++;
     
-    KDEBUG("device '%s' is using IRQ %d\n", h->name, pin);
+    if(actual == pin) KDEBUG("device '%s' is using IRQ %d\n", h->name, actual);
+    else KDEBUG("device '%s' is using IRQ %d (redirected from IRQ %d)\n", h->name, actual, pin);
+
     releaseLock(&lock);
-    return 0;
+    return actual;
 }
 
 /* dispatchIRQ(): dispatches an IRQ to its handler
