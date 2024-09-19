@@ -30,7 +30,6 @@ platformSaveContext:
 
     add rdi, 520
     mov rcx, 160/8
-    cld
     rep movsq
 
     ret
