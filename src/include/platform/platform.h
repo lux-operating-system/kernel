@@ -53,3 +53,4 @@ SyscallRequest *platformCreateSyscallContext(Thread *);
 void *platformCloneContext(void *, const void *);
 void platformSetContextStatus(void *, uint64_t);
 int platformIoperm(Thread *, uintptr_t, uintptr_t, int);
+int platformGetMaxIRQ();
