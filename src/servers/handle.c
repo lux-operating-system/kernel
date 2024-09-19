@@ -127,3 +127,18 @@ void serverIdle() {
 
     setLocalSched(true);
 }
+
+/* serverSocket(): returns the socket descriptor associated with a server
+ * params: path - path to the server's socket
+ * returns: socket descriptor, -1 if non-existent
+ */
+
+int serverSocket(const char *path) {
+    if(!connectionCount) return -1;
+
+    for(int i = 0; i < connectionCount; i++) {
+        if(!strcmp(connaddr[i].sa_data, path)) return connections[i];
+    }
+
+    return -1;
+}
