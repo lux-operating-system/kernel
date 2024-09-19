@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/sched.h>
+#include <kernel/servers.h>
 #include <platform/tss.h>
 
 // every platform must define some kind of structure that allows it to identify
@@ -35,6 +36,9 @@ typedef struct {
     Process *process;
     Thread *thread;
     TSS *tss;
+
+    // IRQ command structure
+    IRQCommand *irqcmd;
 
     int cpuIndex;
 } KernelCPUInfo;
