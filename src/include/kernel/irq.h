@@ -13,7 +13,7 @@
 /* Generic platform-independent structure for IRQ handlers */
 typedef struct {
     char name[256];     // device name
-    char driver[256];   // name of server/driver prefixed with "lux://ks"
+    char driver[256];   // name of server/driver prefixed with "lux:///ks"
     int kernel;         // 1 for kernel-level IRQ handler, 0 for user space
     uintptr_t khandler; // entry point for kernel IRQ handlers
     int level, high;    // trigger mode
