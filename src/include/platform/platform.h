@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <kernel/sched.h>
 #include <kernel/irq.h>
+#include <kernel/servers.h>
 
 /* routines that must be implemented and constants tha must be defined by any
  * platform-specific code, abstracting the difference between different platforms;
