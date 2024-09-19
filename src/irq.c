@@ -25,7 +25,11 @@ static IRQ *irqs = NULL;
  */
 
 int installIRQ(Thread *t, int pin, IRQHandler *h) {
-    if(!t) return -ESRCH;
+    if(!t) t = getKernelThread();
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(p->user) return -EPERM;      // only root can do this
+
     if(pin < 0 || pin > platformGetMaxIRQ()) return -EIO;
 
     if(!irqs) {
