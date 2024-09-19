@@ -103,6 +103,7 @@ pid_t getKernelPID();
 int schedException(pid_t, pid_t);
 void terminateThread(Thread *, int, bool);
 void schedSleepTimer();
+Thread *getKernelThread();
 
 // these functions are exposed as system calls, but some will need to take
 // the thread as an argument from the system call handler - the actual user
