@@ -205,4 +205,4 @@ int ioapicMask(int, int);
 
 int overrideIRQRegister(IRQOverride *);
 int overrideIRQCount();
-IRQOverride *findOverrideIRQ();
+IRQOverride *findOverrideIRQ(uint64_t);

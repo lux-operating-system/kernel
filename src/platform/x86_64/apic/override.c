@@ -36,3 +36,20 @@ int overrideIRQRegister(IRQOverride *override) {
 int overrideIRQCount() {
     return count;
 }
+
+/* findOverrideIRQ(): returns an IRQ override for an ISA IRQ
+ * params: pin - ISA IRQ number
+ * returns: pointer to the IRQ override structure, NULL if not overridden
+ */
+
+IRQOverride *findOverrideIRQ(uint64_t pin) {
+    if(!count) return NULL;
+
+    IRQOverride *override = overrides;
+    while(override) {
+        if(override->gsi == pin) return override;
+        else override = override->next;
+    }
+
+    return NULL;
+}
