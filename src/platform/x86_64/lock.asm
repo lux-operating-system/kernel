@@ -50,10 +50,7 @@ acquireLockBlocking:
     pushfq
     cli
 
-.spin:
-    test dword [rdi], 1
-    jnz .wait
-
+.try:
     lock bts dword [rdi], 0
     jc .wait
 
@@ -63,7 +60,9 @@ acquireLockBlocking:
 
 .wait:
     pause
-    jmp .spin
+    test dword [rdi], 1
+    jnz .wait
+    jmp .try
 
 ; int releaseLock(lock_t *lock)
 ; releases a lock, always returns zero

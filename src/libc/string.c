@@ -7,17 +7,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
-void *memcpy(void *dst, const void *src, size_t n) {
-    uint8_t *dstc = (uint8_t *)dst;
-    uint8_t *srcc = (uint8_t *)src;
-
-    for(size_t i = 0; i < n; i++) {
-        dstc[i] = srcc[i];
-    }
-
-    return dst;
-}
+#include <string.h>
 
 void *memmove(void *dst, const void *src, size_t n) {
     // force volatile here so it only uses byte-by-byte accesses
@@ -42,14 +32,6 @@ size_t strlen(const char *s) {
 
 char *strcpy(char *dst, const char *src) {
     return (char *)memcpy(dst, src, strlen(src)+1);
-}
-
-void *memset(void *dst, int v, size_t n) {
-    uint8_t *dstc = (uint8_t *)dst;
-    for(size_t i = 0; i < n; i++) {
-        dstc[i] = v;
-    }
-    return dst;
 }
 
 int strcmp(const char *s1, const char *s2) {

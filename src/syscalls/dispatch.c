@@ -16,6 +16,7 @@
 #include <kernel/logger.h>
 #include <kernel/memory.h>
 #include <kernel/file.h>
+#include <kernel/irq.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -202,6 +203,24 @@ void syscallDispatchStat(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchFStat(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], sizeof(struct stat))) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+
+        int status = fstat(req->thread, id, req->params[0], (struct stat *)req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;      // error code
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchMount(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
     syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH) &&
@@ -332,6 +351,20 @@ void syscallDispatchSBrk(SyscallRequest *req) {
     req->unblock = true;
 }
 
+/* Group 5: Driver I/O Functions */
+
+void syscallDispatchIoperm(SyscallRequest *req) {
+    req->ret = ioperm(req->thread, req->params[0], req->params[1], req->params[2]);
+    req->unblock = true;
+}
+
+void syscallDispatchIRQ(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], sizeof(IRQHandler))) {
+        req->ret = installIRQ(req->thread, req->params[0], (IRQHandler *) req->params[1]);
+        req->unblock = true;
+    }
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -347,41 +380,48 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 10 - setuid()
     NULL,                       // 11 - setgid()
     syscallDispatchMSleep,      // 12 - msleep()
+    NULL,                       // 13 - times()
 
     /* group 2: file system manipulation */
-    syscallDispatchOpen,        // 13 - open()
-    syscallDispatchClose,       // 14 - close()
-    syscallDispatchRead,        // 15 - read()
-    syscallDispatchWrite,       // 16 - write()
-    syscallDispatchStat,        // 17 - stat()
-    NULL,                       // 18 - lseek()
-    NULL,                       // 19 - chown()
-    NULL,                       // 20 - chmod()
-    NULL,                       // 21 - link()
-    NULL,                       // 22 - unlink()
-    NULL,                       // 23 - mknod()
-    NULL,                       // 24 - mkdir()
-    NULL,                       // 25 - rmdir()
-    NULL,                       // 26 - utime()
-    NULL,                       // 27 - chroot()
-    syscallDispatchMount,       // 28 - mount()
-    NULL,                       // 29 - umount()
-    NULL,                       // 30 - fnctl()
+    syscallDispatchOpen,        // 14 - open()
+    syscallDispatchClose,       // 15 - close()
+    syscallDispatchRead,        // 16 - read()
+    syscallDispatchWrite,       // 17 - write()
+    syscallDispatchStat,        // 18 - stat()
+    syscallDispatchFStat,       // 19 - fstat()
+    NULL,                       // 20 - lseek()
+    NULL,                       // 21 - chown()
+    NULL,                       // 22 - chmod()
+    NULL,                       // 23 - link()
+    NULL,                       // 24 - unlink()
+    NULL,                       // 25 - mknod()
+    NULL,                       // 26 - mkdir()
+    NULL,                       // 27 - rmdir()
+    NULL,                       // 28 - utime()
+    NULL,                       // 29 - chroot()
+    syscallDispatchMount,       // 30 - mount()
+    NULL,                       // 31 - umount()
+    NULL,                       // 32 - fnctl()
+    NULL,                       // 33 - isatty()
 
     /* group 3: interprocess communication */
-    syscallDispatchSocket,      // 31 - socket()
-    syscallDispatchConnect,     // 32 - connect()
-    syscallDispatchBind,        // 33 - bind()
-    syscallDispatchListen,      // 34 - listen()
-    syscallDispatchAccept,      // 35 - accept()
-    syscallDispatchRecv,        // 36 - recv()
-    syscallDispatchSend,        // 37 - send()
-    NULL,                       // 38 - kill()
+    syscallDispatchSocket,      // 34 - socket()
+    syscallDispatchConnect,     // 35 - connect()
+    syscallDispatchBind,        // 36 - bind()
+    syscallDispatchListen,      // 37 - listen()
+    syscallDispatchAccept,      // 38 - accept()
+    syscallDispatchRecv,        // 39 - recv()
+    syscallDispatchSend,        // 40 - send()
+    NULL,                       // 41 - kill()
 
     /* group 4: memory management */
-    syscallDispatchSBrk,        // 39 - sbrk()
-    NULL,                       // 40 - mmap()
-    NULL,                       // 41 - munmap()
-    NULL,                       // 42 - mlock()
-    NULL,                       // 43 - munlock()
+    syscallDispatchSBrk,        // 42 - sbrk()
+    NULL,                       // 43 - mmap()
+    NULL,                       // 44 - munmap()
+    NULL,                       // 45 - mlock()
+    NULL,                       // 46 - munlock()
+
+    /* group 5: driver I/O functions */
+    syscallDispatchIoperm,      // 47 - ioperm()
+    syscallDispatchIRQ,         // 48 - irq()
 };

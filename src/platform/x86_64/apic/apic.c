@@ -80,10 +80,10 @@ int apicInit() {
 
             // register the CPU with the platform-independent code if it's enabled
             if(localAPIC->flags & MADT_LOCAL_APIC_ENABLED) {
-                PlatformCPU *cpu = malloc(sizeof(PlatformCPU));
+                PlatformCPU *cpu = calloc(1, sizeof(PlatformCPU));
                 if(!cpu) {
                     KERROR("could not allocate memory to register CPU\n");
-                    break;
+                    while(1);
                 }
 
                 cpu->apicID = localAPIC->apicID;
@@ -99,6 +99,18 @@ int apicInit() {
             ACPIMADTIOAPIC *ioapic = (ACPIMADTIOAPIC *)ptr;
             KDEBUG("I/O APIC with APIC ID 0x%02X GSI base %d MMIO base 0x%08X\n", ioapic->apicID,
                 ioapic->gsi, ioapic->mmioBase);
+
+            // register the I/O APIC
+            IOAPIC *dev = calloc(1, sizeof(IOAPIC));
+            if(!dev) {
+                KERROR("could not allocate memory to register I/O APIC\n");
+                while(1);
+            }
+
+            dev->apicID = ioapic->apicID;
+            dev->gsi = ioapic->gsi;
+            dev->mmio = ioapic->mmioBase;
+            ioapicRegister(dev);
             break;
         case MADT_TYPE_INTERRUPT_OVERRIDE:
             ACPIMADTInterruptOverride *override = (ACPIMADTInterruptOverride *)ptr;
@@ -106,6 +118,20 @@ int apicInit() {
                 override->sourceIRQ, override->bus, override->gsi, override->flags,
                 override->flags & MADT_INTERRUPT_LEVEL ? "level" : "edge",
                 override->flags & MADT_INTERRUPT_LOW ? "low" : "high");
+            
+            IRQOverride *irqor = calloc(1, sizeof(IRQOverride));
+            if(!irqor) {
+                KERROR("could not allocate memory for IRQ override\n");
+                while(1);
+            }
+
+            irqor->bus = override->bus;
+            irqor->gsi = override->gsi;
+            irqor->source = override->sourceIRQ;
+            if(override->flags & MADT_INTERRUPT_LEVEL) irqor->level = 1;
+            if(override->flags & MADT_INTERRUPT_LOW) irqor->low = 0;
+
+            overrideIRQRegister(irqor);
             break;
         default:
             KWARN("unimplemented MADT entry type 0x%02X with length %d, skipping...\n", ptr[0], ptr[1]);
@@ -119,6 +145,7 @@ int apicInit() {
     smpCPUInfoSetup();      // info structure for the boot CPU
     apicTimerInit();        // local APIC timer
     smpBoot();              // start up other non-boot CPUs
+    ioapicInit();           // I/O APICs
 
     return 0;
 }

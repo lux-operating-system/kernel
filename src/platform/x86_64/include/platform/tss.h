@@ -20,7 +20,9 @@ typedef struct {
     uint64_t ist[7];
     uint64_t reserved3;
     uint16_t reserved4;
-    uint16_t ioports;
+    uint16_t iomap;
+    uint8_t ioports[8192];      // I/O port bitmap, 0 = allowed, 1 = deny
+    uint8_t ones;               // final byte must be all ones
 } __attribute__((packed)) TSS;
 
 void tssSetup();

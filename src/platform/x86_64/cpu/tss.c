@@ -48,6 +48,11 @@ void tssSetup() {
         tss->ist[i] = (uint64_t)stack + KENREL_STACK_SIZE-16;
     }
 
+    // I/O port privileges
+    tss->iomap = 0x68;                  // offset from TSS start address
+    memset(tss->ioports, 0xFF, 8192);   // deny I/O port access by default
+    tss->ones = 0xFF;
+
     // store the TSS pointer in the GDT so the CPU knows where to find it
     gdt[GDT_TSS_LOW].baseLo = (uintptr_t)tss;
     gdt[GDT_TSS_LOW].baseMi = (uintptr_t)tss >> 16;
@@ -65,4 +70,5 @@ void tssSetup() {
     // store the stack pointer in the per-CPU info structure as well
     KernelCPUInfo *info = getKernelCPUInfo();
     info->kernelStack = (void *)tss->rsp0;
+    info->tss = tss;
 }

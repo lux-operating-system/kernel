@@ -17,6 +17,7 @@
 #include <platform/apic.h>
 #include <kernel/logger.h>
 #include <kernel/memory.h>
+#include <kernel/servers.h>
 
 static PlatformCPU *cpus = NULL;
 static PlatformCPU *last = NULL;
@@ -123,6 +124,15 @@ void smpCPUInfoSetup() {
 
     info->cpuIndex = i;
     info->cpu = cpu;
+
+    info->irqcmd = calloc(1, sizeof(IRQCommand));
+    if(!info->irqcmd) {
+        KERROR("could not allocate memory for per-CPU IRQ command for CPU %d\n", i);
+        while(1);
+    }
+
+    info->irqcmd->header.command = COMMAND_IRQ;
+    info->irqcmd->header.length = sizeof(IRQCommand);
     
     writeMSR(MSR_FS_BASE, 0);
     writeMSR(MSR_GS_BASE, 0);
@@ -320,4 +330,13 @@ int platformWhichCPU() {
 uint64_t platformUptime() {
     if(!bootCPUInfo) return 0;
     return bootCPUInfo->uptime;
+}
+
+/* platformGetIRQCommand(): returns a pointer to the CPU's IRQ command
+ * params: none
+ * returns: pointer to the IRQ command structure
+ */
+
+IRQCommand *platformGetIRQCommand() {
+    return getKernelCPUInfo()->irqcmd;
 }

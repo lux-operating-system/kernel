@@ -82,6 +82,34 @@
 #define MSR_LAPIC                       0x1B
 #define MSR_LAPIC_ENABLED               (1 << 11)
 
+// I/O APIC Registers
+#define IOAPIC_REGSEL                   0x00
+#define IOAPIC_IOWIN                    0x10
+
+#define IOAPIC_ID                       0x00
+#define IOAPIC_VER                      0x01
+#define IOAPIC_ARB_ID                   0x02
+#define IOAPIC_REDIRECTION              0x10
+
+// I/O APIC Redirection Register
+#define IOAPIC_RED_FIXED                (0x00 << 8)
+#define IOAPIC_RED_LOWEST               (0x01 << 8)
+#define IOAPIC_RED_SMI                  (0x02 << 8)
+#define IOAPIC_RED_NMI                  (0x04 << 8)
+#define IOAPIC_RED_INIT                 (0x05 << 8)
+
+#define IOAPIC_RED_PHYSICAL             0x00000000
+#define IOAPIC_RED_LOGICAL              0x00000800
+#define IOAPIC_RED_BUSY                 0x00001000
+#define IOAPIC_RED_ACTIVE_LOW           0x00002000
+#define IOAPIC_RED_ACTIVE_HIGH          0x00000000
+#define IOAPIC_RED_LEVEL                0x00008000
+#define IOAPIC_RED_EDGE                 0x00000000
+#define IOAPIC_RED_MASK                 0x00010000
+
+// Base of IRQ Routing
+#define IOAPIC_INT_BASE                 0x20    // map IRQ 0 to INT 0x20, and so on
+
 typedef struct {
     ACPIStandardHeader header;
     uint32_t localAPIC;
@@ -145,9 +173,36 @@ typedef struct {
     uint64_t mmioBase;
 } __attribute__((packed)) ACPIMADTLocalAPICOverride;
 
+typedef struct IOAPIC {
+    uint8_t version, apicID;
+    uintptr_t mmio;
+    uint8_t gsi, count;
+    struct IOAPIC *next;
+} IOAPIC;
+
+typedef struct IRQOverride {
+    uint8_t bus, source;
+    uint8_t gsi;
+    int level, low;
+    struct IRQOverride *next;
+} IRQOverride;
+
 int apicInit();
 void lapicWrite(uint32_t, uint32_t);
 uint32_t lapicRead(uint32_t);
 int apicTimerInit();
 uint64_t apicTimerFrequency();
 void timerHandlerStub();
+
+int ioapicRegister(IOAPIC *);
+int ioapicCount();
+int ioapicInit();
+IOAPIC *ioapicFindIndex(int);
+IOAPIC *ioapicFindIRQ(int);
+void ioapicWrite(IOAPIC *, uint32_t, uint32_t);
+uint32_t ioapicRead(IOAPIC *, uint32_t);
+int ioapicMask(int, int);
+
+int overrideIRQRegister(IRQOverride *);
+int overrideIRQCount();
+IRQOverride *findOverrideIRQ(uint64_t);
