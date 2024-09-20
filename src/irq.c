@@ -63,8 +63,13 @@ int installIRQ(Thread *t, int pin, IRQHandler *h) {
     memcpy(&newHandlers[irqs[pin].devices], h, sizeof(IRQHandler));
     irqs[pin].devices++;
     
-    if(actual == pin) KDEBUG("device '%s' is using IRQ %d, currently used by %d device%s\n", h->name, actual, irqs[pin].devices, irqs[pin].devices != 1 ? "s" : "");
-    else KDEBUG("device '%s' is using IRQ %d (redirected from IRQ %d), currently used by %d device%s\n", h->name, actual, pin, irqs[pin].devices, irqs[pin].devices != 1 ? "s" : "");
+    if(actual == pin) {
+        KDEBUG("device '%s' is using IRQ %d, currently used by %d device%s\n",
+        h->name, actual, irqs[pin].devices, irqs[pin].devices != 1 ? "s" : "");
+    } else {
+        KDEBUG("device '%s' is using IRQ %d (redirected from IRQ %d), currently used by %d device%s\n",
+        h->name, actual, pin, irqs[pin].devices, irqs[pin].devices != 1 ? "s" : "");
+    }
 
     releaseLock(&lock);
     return actual;
