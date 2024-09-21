@@ -16,6 +16,7 @@
 typedef struct SyscallRequest {
     bool busy, queued, unblock;
     bool external;          // set for syscalls that are handled in user space
+    bool retry;             // for async syscalls
 
     uint64_t requestID;     // unique random ID for user space syscalls
     uint64_t function;
