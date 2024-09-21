@@ -112,8 +112,18 @@ void serverIdle() {
     MessageHeader *h = (MessageHeader *) in;
     for(int i = 0; i < connectionCount; i++) {
         sd = connections[i];
-        ssize_t s = recv(NULL, sd, in, SERVER_MAX_SIZE, 0);
+        ssize_t s = recv(NULL, sd, in, SERVER_MAX_SIZE, MSG_PEEK);  // peek to check size
         while(s > 0 && s < SERVER_MAX_SIZE) {
+            if(h->length > SERVER_MAX_SIZE) {
+                void *newptr = realloc(in, h->length);
+                if(!newptr) KPANIC("ran out of physical memory while handling incoming requests\n");
+
+                in = newptr;
+                h = (MessageHeader *) in;
+            }
+
+            recv(NULL, sd, in, h->length, 0);       // read the actual message
+
             if(h->command <= MAX_GENERAL_COMMAND) handleGeneralRequest(sd, in, out);
             else if(h->command >= 0x8000 && h->command <= MAX_SYSCALL_COMMAND) handleSyscallResponse((SyscallHeader *)h);
             else {
@@ -121,7 +131,7 @@ void serverIdle() {
                 KWARN("unimplemented message command 0x%02X, dropping...\n", h->command);
             }
 
-            s = recv(NULL, sd, in, SERVER_MAX_SIZE, 0);
+            s = recv(NULL, sd, in, SERVER_MAX_SIZE, MSG_PEEK);
         }
     }
 
