@@ -47,7 +47,7 @@
 
 typedef struct {
     uint16_t command;
-    uint16_t length;
+    uint64_t length;
     uint8_t response;       // 0 for requests, 1 for response
     uint8_t reserved[3];    // for alignment
     uint64_t latency;       // in ms, for responses
