@@ -32,8 +32,9 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         return;
     }
 
-    // unblock the thread
+    // default action is to unblock the thread
     schedLock();
+    Process *p = getProcess(req->thread->pid);
     req->ret = hdr->header.status;
     req->external = false;
     req->unblock = true;
@@ -41,6 +42,8 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     req->thread->status = THREAD_QUEUED;
 
     // some syscalls will require special handling
+    ssize_t status;
+
     switch(hdr->header.command) {
     case COMMAND_STAT:
         if(hdr->header.status) break;
@@ -52,8 +55,6 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     case COMMAND_OPEN:
         if(hdr->header.status) break;
         OpenCommand *opencmd = (OpenCommand *) hdr;
-        Process *p = getProcess(req->thread->pid);
-        if(!p) req->ret = -ESRCH;
 
         // set up a file descriptor for the process
         IODescriptor *iod = NULL;
@@ -80,7 +81,21 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         break;
 
     case COMMAND_READ:
-        if((ssize_t)hdr->header.status <= 0) break;
+        status = (ssize_t) hdr->header.status;
+
+        if((status == -EWOULDBLOCK || status == -EAGAIN) && !(p->io[req->params[0]].flags & O_NONBLOCK)) {
+            // continue blocking the thread if necessary
+            req->thread->status = THREAD_BLOCKED;
+            req->unblock = false;
+            req->busy = false;
+            req->queued = true;
+            req->next = NULL;
+            req->retry = true;
+            schedRelease();
+            syscallEnqueue(req);
+            break;
+        } else if(status < 0) break;  // here an actual error happened
+        
         RWCommand *readcmd = (RWCommand *) hdr;
         threadUseContext(req->thread->tid);
         memcpy((void *)req->params[1], readcmd->data, hdr->header.status);
