@@ -106,6 +106,29 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         file->position = readcmd->position;
 
         break;
+
+    case COMMAND_WRITE:
+        status = (ssize_t) hdr->header.status;
+
+        if((status == -EWOULDBLOCK || status == -EAGAIN) && !(p->io[req->params[0]].flags & O_NONBLOCK)) {
+            // continue blocking the thread if necessary
+            req->thread->status = THREAD_BLOCKED;
+            req->unblock = false;
+            req->busy = false;
+            req->queued = true;
+            req->next = NULL;
+            req->retry = true;
+            schedRelease();
+            syscallEnqueue(req);
+            break;
+        } else if(status < 0) break;  // here an actual error happened
+
+        RWCommand *writecmd = (RWCommand *) hdr;
+
+        // update file position
+        file = (FileDescriptor *) p->io[req->params[0]].data;
+        file->position = writecmd->position;
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
