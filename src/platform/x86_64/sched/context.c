@@ -180,6 +180,7 @@ SyscallRequest *platformCreateSyscallContext(Thread *t) {
     t->syscall.params[2] = ctx->regs.rdx;
     t->syscall.params[3] = ctx->regs.r8;
     t->syscall.thread = t;      // back pointer to the thread
+    t->syscall.retry = false;
 
     return &t->syscall;
 }
