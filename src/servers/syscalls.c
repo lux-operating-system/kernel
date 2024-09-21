@@ -43,6 +43,7 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
 
     // some syscalls will require special handling
     ssize_t status;
+    FileDescriptor *file;
 
     switch(hdr->header.command) {
     case COMMAND_STAT:
@@ -70,7 +71,7 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             break;
         }
 
-        FileDescriptor *file = (FileDescriptor *) iod->data;
+        file = (FileDescriptor *) iod->data;
         file->process = p;
         strcpy(file->abspath, opencmd->abspath);
         strcpy(file->device, opencmd->device);
@@ -99,6 +100,11 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         RWCommand *readcmd = (RWCommand *) hdr;
         threadUseContext(req->thread->tid);
         memcpy((void *)req->params[1], readcmd->data, hdr->header.status);
+
+        // update file position
+        file = (FileDescriptor *) p->io[req->params[0]].data;
+        file->position = readcmd->position;
+
         break;
     }
 
