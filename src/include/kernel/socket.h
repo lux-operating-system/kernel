@@ -31,6 +31,11 @@
 #define SOCK_NONBLOCK           0x100
 #define SOCK_CLOEXEC            0x200
 
+/* flags for socket I/O */
+#define MSG_PEEK                0x01
+#define MSG_OOB                 0x02
+#define MSG_WAITALL             0x04
+
 typedef uint16_t sa_family_t;
 typedef size_t socklen_t;
 

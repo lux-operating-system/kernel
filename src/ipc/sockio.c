@@ -130,20 +130,22 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
         if(truelen > len) truelen = len;    // truncate longer messages
         memcpy(buffer, message, truelen);
 
-        // and remove the received message from the queue
-        free(message);
+        // remove the received message from the queue if we're in non-peek mode
+        if(!(flags & MSG_PEEK)) {
+            free(message);
 
-        self->inboundCount--;
-        if(!self->inboundCount) {
-            free(self->inbound);
-            free(self->inboundLen);
-            self->inbound = NULL;
-            self->inboundLen = NULL;
-        } else {
-            memmove(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
-            memmove(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
-            self->inbound = realloc(self->inbound, self->inboundCount * sizeof(void *));
-            self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(size_t));
+            self->inboundCount--;
+            if(!self->inboundCount) {
+                free(self->inbound);
+                free(self->inboundLen);
+                self->inbound = NULL;
+                self->inboundLen = NULL;
+            } else {
+                memmove(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
+                memmove(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
+                self->inbound = realloc(self->inbound, self->inboundCount * sizeof(void *));
+                self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(size_t));
+            }
         }
 
         socketRelease();
