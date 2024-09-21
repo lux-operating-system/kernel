@@ -8,8 +8,8 @@ In little over 4,000 lines <sup>[1]</sup> of code, lux implements **memory manag
 
 ## Features
 
-- [x] **Portability:** At the foundation of lux is a platform abstraction layer with a set of functions and constants to be implemented and defined for each platform. This enables ease of porting lux to other CPU architectures.
-- [x] **Memory management:** lux implements a future-proof memory manager that can manage up to 128 TiB of physical memory (assuming hardware support is present) and virtual address spaces of up to 256 TiB divided into 128 TiB for each of the kernel and user threads.
+- [x] **Portability:** At the heart of lux is a platform abstraction layer with a set of functions and constants to be implemented and defined for each platform. This enables ease of porting lux to other CPU architectures.
+- [x] **Memory management:** lux implements a future-proof memory manager that can manage up to 128 TiB of physical memory and virtual address spaces of up to 256 TiB divided into 128 TiB for each of the kernel and user threads.
 - [x] **Multiprocessor priority scheduling:** The scheduler of lux was designed with multiprocessor support from the start, and lux currently supports CPUs with up to 256 cores on x86_64 platforms. The microkernel itself is also multithreaded and can be preempted.
 - [x] **Interprocess communication:** lux implements kernel-level support for local Unix domain sockets to facilitate communication with the servers.
 - [x] **Unix-like system calls:** lux provides a minimal Unix-like API for the common system calls, namely those related to files, sockets, and process and thread management. Many of the system calls wrap around user space servers implementing the actual functionality.
@@ -17,9 +17,9 @@ In little over 4,000 lines <sup>[1]</sup> of code, lux implements **memory manag
 
 ## Software Architecture
 
-lux is a microkernel that provides minimal kernel-level functionality and behaves as a wrapper for a [variety of standalone servers](https://github.com/lux-operating-system/servers) running in user space, which provide the expected OS functionality. This design depends on a user space router ([lux-operating-system/lumen](https://github.com/lux-operating-system/lumen)) to forward or "route" messages between the kernel and the servers, which also functions as an [init program](https://en.wikipedia.org/wiki/Init). The servers implement driver functionality, such as device drivers, file system drivers, networking stacks, and other higher-level abstractions. lux, lumen, and the servers follow the client-server paradigm and communicate via standard Unix domain sockets.
+lux is a microkernel that provides minimal kernel-level functionality and behaves as a wrapper for a [variety of standalone servers](https://github.com/lux-operating-system/servers) running in user space, which provide the expected OS functionality. This design depends on a user space router ([lux-operating-system/lumen](https://github.com/lux-operating-system/lumen)) to forward or "route" messages between the kernel and the servers. The router additionally doubles as an [init program](https://en.wikipedia.org/wiki/Init). The servers implement driver functionality, such as device drivers, file system drivers, networking stacks, and other higher-level abstractions. lux, lumen, and the servers follow the client-server paradigm and communicate via standard Unix domain sockets.
 
-This diagram illustrates the architecture of the various components in an operating system built on lux and lumen. It is subject to change as more components are developed.
+This diagram illustrates the architecture of the various components in an operating system built on lux and lumen. It is a work in progress and is subject to change as more components are developed.
 
 ![Diagram showing the software architecture of lux](https://jewelcodes.io/res/posts/postdata/7d0ff176d0a68f16603c5030937b325f66d8bd777193d.png)
 
