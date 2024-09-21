@@ -127,8 +127,13 @@ void syscallDispatchClose(SyscallRequest *req) {
 
 void syscallDispatchRead(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        uint64_t id;
+        if(!req->retry) {
+            id = platformRand();
+            req->requestID = id;
+        } else {
+            id = req->requestID;
+        }
 
         ssize_t status = read(req->thread, id, req->params[0], (void *) req->params[1], req->params[2]);
         if(status == -EWOULDBLOCK || status == -EAGAIN) {
@@ -140,6 +145,7 @@ void syscallDispatchRead(SyscallRequest *req) {
                 req->busy = false;
                 req->queued = true;
                 req->next = NULL;
+                req->retry = true;
                 syscallEnqueue(req);
                 return;
             }
@@ -157,8 +163,13 @@ void syscallDispatchRead(SyscallRequest *req) {
 
 void syscallDispatchWrite(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        uint64_t id;
+        if(!req->retry) {
+            id = platformRand();
+            req->requestID = id;
+        } else {
+            id = req->requestID;
+        }
 
         ssize_t status = write(req->thread, id, req->params[0], (void *) req->params[1], req->params[2]);
         if(status == -EWOULDBLOCK || status == -EAGAIN) {
@@ -170,6 +181,7 @@ void syscallDispatchWrite(SyscallRequest *req) {
                 req->busy = false;
                 req->queued = true;
                 req->next = NULL;
+                req->retry = true;
                 syscallEnqueue(req);
                 return;
             }
