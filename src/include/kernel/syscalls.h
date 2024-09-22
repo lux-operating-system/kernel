@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <kernel/sched.h>
 
-#define MAX_SYSCALL             48
+#define MAX_SYSCALL             49
 
 typedef struct SyscallRequest {
     bool busy, queued, unblock;
