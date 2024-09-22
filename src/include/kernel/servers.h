@@ -39,6 +39,7 @@
 #define COMMAND_OPEN            0x8004
 #define COMMAND_READ            0x8005
 #define COMMAND_WRITE           0x8006
+#define COMMAND_IOCTL           0x8007
 
 #define MAX_SYSCALL_COMMAND     0x8006
 
@@ -139,6 +140,18 @@ typedef struct {
     MessageHeader header;
     uint64_t pin;
 } IRQCommand;
+
+/* ioctl() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    int flags;
+    uid_t uid;
+    gid_t gid;
+    unsigned long opcode;
+    unsigned long parameter;
+} IOCTLCommand;
 
 void serverInit();
 void serverIdle();
