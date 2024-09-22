@@ -41,7 +41,7 @@
 #define COMMAND_WRITE           0x8006
 #define COMMAND_IOCTL           0x8007
 
-#define MAX_SYSCALL_COMMAND     0x8006
+#define MAX_SYSCALL_COMMAND     0x8007
 
 /* these commands are for device drivers */
 #define COMMAND_IRQ             0xC000
