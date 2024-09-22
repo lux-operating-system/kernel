@@ -40,6 +40,11 @@
 #define O_SYNC                  0x0400
 #define O_TRUNC                 0x0800
 
+/* Reserved bits in ioctl() opcodes */
+#define IOCTL_IN_PARAM          0x0001  /* third param is a value */
+#define IOCTL_OUT_PARAM         0x0002  /* third param is a pointer */
+#define IOCTL_RESERVED          0x000F  /* reserve the entire lowest 8 bits */
+
 // TODO: decide whether to implement named pipes as files or an independent type
 
 typedef struct IODescriptor {

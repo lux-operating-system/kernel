@@ -156,3 +156,15 @@ int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
     schedRelease();
     return status;
 }
+
+/* ioctl(): manipulate parameters of character special device files
+ * params: t - calling thread
+ * params: fd - file descriptor
+ * params: op - opcode, these are device-specific
+ * params: optional pointer (char *) argument is opcode-specific
+ * returns: zero on success, negative error code on fail
+ */
+
+int ioctl(struct Thread *t, int fd, unsigned long op, ...) {
+    return -EIO;    // stub
+}
