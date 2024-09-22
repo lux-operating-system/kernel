@@ -57,4 +57,4 @@ typedef struct IODescriptor {
 int openIO(void *, void **);
 void closeIO(void *, void *);
 int ioperm(struct Thread *, uintptr_t, uintptr_t, int);
-int ioctl(struct Thread *, int, unsigned long, ...);
+int ioctl(struct Thread *, uint64_t, int, unsigned long, ...);
