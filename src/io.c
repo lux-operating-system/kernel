@@ -192,6 +192,7 @@ int ioctl(struct Thread *t, uint64_t id, int fd, unsigned long op, ...) {
     cmd->uid = p->user;
     cmd->gid = p->group;
     cmd->flags = p->io[fd].flags;
+    cmd->id = file->id;
     strcpy(cmd->path, file->abspath);
     strcpy(cmd->device, file->device);
     cmd->opcode = op;
