@@ -130,6 +130,20 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         file = (FileDescriptor *) p->io[req->params[0]].data;
         file->position = writecmd->position;
         break;
+
+    case COMMAND_IOCTL:
+        // some ioctl() opcodes require us to write into an output buffer, so
+        // check for those but only if the command succeeded
+        IOCTLCommand *ioctlcmd = (IOCTLCommand *) hdr;
+        status = (ssize_t) hdr->header.status;
+
+        if((status >= 0) && (ioctlcmd->opcode & IOCTL_OUT_PARAM)) {
+            threadUseContext(req->thread->tid);
+            unsigned long *out = (unsigned long *) req->params[2];
+            *out = ioctlcmd->parameter;
+        }
+
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
