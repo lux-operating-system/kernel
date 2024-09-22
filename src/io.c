@@ -30,11 +30,13 @@ int openIO(void *pv, void **iodv) {
 
     if(p->iodCount >= MAX_IO_DESCRIPTORS) return -ESRCH;
 
-    /* randomly allocate descriptors instead of sequential numbering */
+    /* find the first free descriptor */
     int desc;
-    do {
-        desc = rand() % MAX_IO_DESCRIPTORS;
-    } while(p->io[desc].valid);
+    for(desc = 0; desc < MAX_IO_DESCRIPTORS; desc++) {
+        if(!p->io[desc].valid) break;
+    }
+
+    if(desc >= MAX_IO_DESCRIPTORS) return -EMFILE;
 
     p->io[desc].valid = true;
     p->io[desc].type = IO_WAITING;
