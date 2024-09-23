@@ -30,7 +30,7 @@ void syscallHandle(void *ctx) {
             setLocalSched(false);
             syscallDispatchTable[req->function](req);
             platformSetContextStatus(t->context, req->ret);
-            platformSwitchContext(t);
+            platformLoadContext(t->context);
         } else {
             syscallEnqueue(req);
             blockThread(t);     // block until we handle the syscall
