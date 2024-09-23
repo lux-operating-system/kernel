@@ -25,6 +25,7 @@ typedef struct {
     char device[MAX_FILE_PATH];     // device
     char path[MAX_FILE_PATH];       // path relative to device mountpount
     off_t position;
+    uint64_t id;                    // unique ID, this is for device files
 } FileDescriptor;
 
 /* file system syscalls */

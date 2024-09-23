@@ -73,6 +73,7 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
 
         file = (FileDescriptor *) iod->data;
         file->process = p;
+        file->id = opencmd->id;     // unique ID for device files
         strcpy(file->abspath, opencmd->abspath);
         strcpy(file->device, opencmd->device);
         strcpy(file->path, opencmd->path);
@@ -128,6 +129,20 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         // update file position
         file = (FileDescriptor *) p->io[req->params[0]].data;
         file->position = writecmd->position;
+        break;
+
+    case COMMAND_IOCTL:
+        // some ioctl() opcodes require us to write into an output buffer, so
+        // check for those but only if the command succeeded
+        IOCTLCommand *ioctlcmd = (IOCTLCommand *) hdr;
+        status = (ssize_t) hdr->header.status;
+
+        if((status >= 0) && (ioctlcmd->opcode & IOCTL_OUT_PARAM)) {
+            threadUseContext(req->thread->tid);
+            unsigned long *out = (unsigned long *) req->params[2];
+            *out = ioctlcmd->parameter;
+        }
+
         break;
     }
 

@@ -101,6 +101,7 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     command->position = fd->position;
     command->flags = iod->flags;
     command->length = count;
+    command->id = fd->id;
     strcpy(command->device, fd->device);
     strcpy(command->path, fd->abspath);
 
@@ -127,6 +128,7 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     command->position = fd->position;
     command->flags = iod->flags;
     command->length = count;
+    command->id = fd->id;
     strcpy(command->device, fd->device);
     strcpy(command->path, fd->abspath);
     memcpy(command->data, buffer, count);

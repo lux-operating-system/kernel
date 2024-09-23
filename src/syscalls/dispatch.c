@@ -377,6 +377,23 @@ void syscallDispatchIRQ(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchIoctl(SyscallRequest *req) {
+    unsigned long op = req->params[1];
+    uint64_t id = platformRand();
+    req->requestID = id;
+
+    if(op & IOCTL_OUT_PARAM) {
+        if(syscallVerifyPointer(req, req->params[2], sizeof(unsigned long))) {
+            ioctl(req->thread, req->requestID, req->params[0], req->params[1], (unsigned long *)req->params[2]);
+        }
+    } else {
+        ioctl(req->thread, req->requestID, req->params[0], req->params[1], req->params[2]);
+    }
+
+    req->external = true;
+    req->unblock = false;
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -436,4 +453,5 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 5: driver I/O functions */
     syscallDispatchIoperm,      // 47 - ioperm()
     syscallDispatchIRQ,         // 48 - irq()
+    syscallDispatchIoctl,       // 49 - ioctl()
 };

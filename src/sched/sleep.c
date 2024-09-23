@@ -9,6 +9,7 @@
 #include <string.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
+#include <platform/platform.h>
 
 static Thread **sleepingThreads = NULL;   // list of sleeping threads
 static int sleepingCount = 0;
@@ -20,6 +21,7 @@ static int sleepingCount = 0;
  */
 
 unsigned long msleep(Thread *t, unsigned long msec) {
+    msec *= (PLATFORM_TIMER_FREQUENCY / 1000);  // convert ms to timer ticks
     if(!msec) return 0;
 
     schedLock();
