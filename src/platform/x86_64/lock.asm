@@ -27,9 +27,6 @@ acquireLock:
     pushfq
     cli
 
-    test dword [rdi], 1
-    jnz .fail
-
     lock bts dword [rdi], 0
     jc .fail
 
