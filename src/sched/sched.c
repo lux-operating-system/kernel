@@ -310,22 +310,17 @@ uint64_t schedTimer() {
 bool schedBusy() {
     Process *qp = first;
     Thread *qt = NULL;
-    bool queued = false;
     while(qp) {
         if(qp->threads && qp->threadCount) qt = qp->threads[0];
         while(qt) {
-            if(qt->status == THREAD_QUEUED) {
-                queued = true;
-                break;
-            }
-
+            if(qt->status == THREAD_QUEUED) return true;
             qt = qt->next;
         }
 
         qp = qp->next;
     }
 
-    return queued;
+    return false;
 }
 
 /* schedule(): determines the next thread to run and performs a context switch
@@ -350,38 +345,37 @@ void schedule() {
     int cpu = platformWhichCPU();   // cpu index
     int rounds = 0;
 
-    if(!p || !t) {
-        // initial scheduling event
-        p = first;
-    }
+    if(!p || !t) p = first;         // initial scheduling event
 
-    while(rounds < 2) {
-        while(p) {
-            if(p->threadCount && p->threads) {
-                t = p->threads[0];
-
-                while(t) {
-                    if(t->status == THREAD_QUEUED) {
-                        if(current && (current->status == THREAD_RUNNING))
-                            current->status = THREAD_QUEUED;
-
-                        t->status = THREAD_RUNNING;
-                        t->time = schedTimeslice(t, t->priority);
-                        t->cpu = cpu;
-                        releaseLock(lock);
-                        platformSwitchContext(t);
-                    }
-
-                    t = t->next;
-                }
-            }
-
+    while(rounds < 2 && p) {
+        if(!p->threadCount || !p->threads) {
             p = p->next;
+            continue;
         }
 
-        // circular queue
-        rounds++;
-        p = first;
+        t = p->threads[0];
+
+        while(t) {
+            if(t->status == THREAD_QUEUED) {
+                if(current && (current->status == THREAD_RUNNING))
+                    current->status = THREAD_QUEUED;
+
+                t->status = THREAD_RUNNING;
+                t->time = schedTimeslice(t, t->priority);
+                t->cpu = cpu;
+                releaseLock(lock);
+                platformSwitchContext(t);
+            }
+
+            t = t->next;
+        }
+
+        p = p->next;
+        if(!p) {
+            // circular queue
+            p = first;
+            rounds++;
+        }
     }
 
     releaseLock(lock);
@@ -589,43 +583,4 @@ pid_t getKernelPID() {
 
 Thread *getKernelThread() {
     return kthread;
-}
-
-/* schedStatus(): dumps the queue of threads
- */
-
-void schedStatus() {
-    Process *p = first;
-
-    while(p) {
-        if(p->threadCount && p->threads) {
-            Thread *t = p->threads[0];
-
-            while(t) {
-                switch(t->status) {
-                case THREAD_BLOCKED:
-                    KDEBUG("pid %d tid %d: blocked\n", t->pid, t->tid);
-                    break;
-                case THREAD_RUNNING:
-                    KDEBUG("pid %d tid %d: running (%d)\n", t->pid, t->tid, t->time);
-                    break;
-                case THREAD_QUEUED:
-                    KDEBUG("pid %d tid %d: queued (%d)\n", t->pid, t->tid, t->time);
-                    break;
-                case THREAD_SLEEP:
-                    KDEBUG("pid %d tid %d: sleeping (%d)\n", t->pid, t->tid, t->time);
-                    break;
-                case THREAD_ZOMBIE:
-                    KDEBUG("pid %d tid %d: zombie\n", t->pid, t->tid);
-                    break;
-                default:
-                    KDEBUG("pid %d tid %d: undefined status %d\n", t->pid, t->tid, t->status);
-                }
-
-                t = t->next;
-            }
-        }
-
-        p = p->next;
-    }
 }
