@@ -16,6 +16,7 @@
 #include <kernel/sched.h>
 #include <kernel/memory.h>
 #include <kernel/tty.h>
+#include <kernel/version.h>
 
 static void (*generalRequests[])(Thread *, int, const MessageHeader *req, void *res);
 
@@ -52,6 +53,30 @@ void handleGeneralRequest(int sd, const MessageHeader *req, void *res) {
 void serverLog(Thread *t, int sd, const MessageHeader *req, void *res) {
     LogCommand *request = (LogCommand *) req;
     ksprint(request->level, request->server, request->message);
+}
+
+/* serverSysinfo(): returns system information */
+
+void serverSysinfo(Thread *t, int sd, const MessageHeader *req, void *res) {
+    SysInfoResponse *sysinfo = (SysInfoResponse *) res;
+    memcpy(sysinfo, req, sizeof(MessageHeader));
+    sysinfo->header.response = 1;
+    sysinfo->header.status = 0;
+    sysinfo->header.length = sizeof(SysInfoResponse);
+    sysinfo->maxFiles = MAX_IO_DESCRIPTORS;
+    sysinfo->maxSockets = MAX_IO_DESCRIPTORS;
+    sysinfo->maxPid = MAX_PID;
+    sysinfo->pageSize = PAGE_SIZE;
+    sysinfo->uptime = platformUptime();
+    
+    PhysicalMemoryStatus pmm;
+    pmmStatus(&pmm);
+    sysinfo->memorySize = pmm.usablePages;
+    sysinfo->memoryUsage = pmm.usedPages;
+    sysinfo->processes = processes;
+    sysinfo->threads = threads;
+    strcpy(sysinfo->kernel, KERNEL_VERSION);
+    send(NULL, sd, sysinfo, sizeof(SysInfoResponse), 0);
 }
 
 /* serverRand(): random number generator */
@@ -112,7 +137,7 @@ void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
 
 static void (*generalRequests[])(Thread *, int, const MessageHeader *req, void *res) = {
     serverLog,          // 0 - log
-    NULL,               // 1 - sysinfo
+    serverSysinfo,      // 1 - sysinfo
     serverRand,         // 2 - rand
     NULL,               // 3 - request I/O access
     NULL,               // 4 - get process I/O privileges
