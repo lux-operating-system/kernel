@@ -314,6 +314,29 @@ void schedule() {
     // that's called hundreds of times per second
     //acquireLockBlocking(lock);
     if(!acquireLock(lock)) return;
+    
+    /* check if there are any queued processes at all */
+    Process *qp = first;
+    Thread *qt = NULL;
+    int queued = 0;
+    while(qp) {
+        if(qp->threads && qp->threadCount) qt = qp->threads[0];
+        while(qt) {
+            if(qt->status == THREAD_QUEUED) {
+                queued = 1;
+                break;
+            }
+
+            qt = qt->next;
+        }
+
+        qp = qp->next;
+    }
+
+    if(!queued) {
+        releaseLock(lock);
+        return;
+    }
 
     /* determine the next process to be run */
     int cpu = platformWhichCPU();
