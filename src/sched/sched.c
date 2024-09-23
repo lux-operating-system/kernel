@@ -32,7 +32,7 @@ void schedInit() {
     // to-date copy of the lock, which prevents crashing by having multiple
     // CPUs attempt to run the same thread at the same time
     
-    lock = malloc(sizeof(lock_t));
+    lock = mallocUC(sizeof(lock_t));
     pidBitmap = calloc(1, (MAX_PID + 7) / 8);
     if(!lock || !pidBitmap) {
         KERROR("could not allocate memory for scheduler\n");
