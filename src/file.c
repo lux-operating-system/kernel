@@ -152,3 +152,31 @@ int closeFile(Thread *t, int fd) {
     closeIO(p, &p->io[fd]);
     return 0;
 }
+
+off_t lseek(Thread *t, int fd, off_t offset, int where) {
+    Process *p;
+    if(t) p = getProcess(t->pid);
+    else p = getProcess(getKernelPID());
+    if(!p) return -ESRCH;
+
+    FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
+    if(!file) return -EBADF;
+
+    off_t newOffset;
+
+    switch(where) {
+    case SEEK_SET:
+        newOffset = offset;
+        break;
+    case SEEK_CUR:
+        newOffset = file->position + offset;
+        break;
+    default:
+        /* TODO: SEEK_END */
+        newOffset = -1;
+    }
+
+    if(newOffset < 0) return -EINVAL;
+    file->position = newOffset;
+    return newOffset;
+}

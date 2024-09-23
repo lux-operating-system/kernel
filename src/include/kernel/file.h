@@ -18,6 +18,10 @@
 #define MAX_FILE                (1 << 18)   // 262k
 #define MAX_FILE_PATH           2048
 
+#define SEEK_SET                1
+#define SEEK_CUR                2
+#define SEEK_END                3
+
 /* file-specific I/O descriptor (see io.h) */
 typedef struct {
     Process *process;
@@ -33,6 +37,7 @@ int open(Thread *, uint64_t, const char *, int, mode_t);
 int close(Thread *, int);
 ssize_t read(Thread *, uint64_t, int, void *, size_t);
 ssize_t write(Thread *, uint64_t, int, const void *, size_t);
+off_t lseek(Thread *, int, off_t, int);
 int mount(Thread *, uint64_t, const char *, const char *, const char *, int);
 
 ssize_t readFile(Thread *, uint64_t, IODescriptor *, void *, size_t);
