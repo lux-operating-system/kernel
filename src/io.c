@@ -39,6 +39,7 @@ int openIO(void *pv, void **iodv) {
     if(desc >= MAX_IO_DESCRIPTORS) return -EMFILE;
 
     p->io[desc].valid = true;
+    p->io[desc].clone = false;
     p->io[desc].type = IO_WAITING;
     p->io[desc].data = NULL;
 
