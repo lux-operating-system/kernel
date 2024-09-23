@@ -18,12 +18,12 @@ platformIdle:
     sub rsp, 40         ; reserve iret frame
     pushaq
 
-    mov r8, rsp         ; rsp to be restored
+    mov rbp, rsp        ; rsp to be restored
 
     add rsp, 160        ; skip over the pushed reg state
 
     push qword 0x10     ; ss
-    push r8             ; rsp
+    push rbp             ; rsp
     pushfq
     pop r10
     or r10, 0x202
@@ -32,13 +32,36 @@ platformIdle:
     mov r10, .next
     push r10            ; rip
 
-    mov rsp, r8         ; restore stack frame
-    mov rdi, rsp        ; and pass it as a parameter
+    ; save this stack frame on the kernel's stack
+    rdgsbase r10
+    and r10, r10
+    jnz .stack
 
-    extern kernelYield  ; check for other queued threads
+    swapgs
+    rdgsbase r10
+
+.stack:
+    swapgs
+
+    mov r10, [r10]      ; r10 = top of kernel stack
+    mov rdi, r10
+    sub rdi, 160        ; rdi = bottom of kernel stack frame
+    mov rsi, rbp        ; rsi = stack we just created
+    mov rcx, 160/8
+    rep movsq
+
+    ; switch stacks
+    sub rdi, 160        ; rdi = bottom of kernel stack frame
+    mov rsp, rdi
+    sub rsp, 256
+
+    extern kernelYield
     call kernelYield
 
+    mov rsp, rbp
+
     ; if we get here then there is no work in the scheduler's queue
+    ; we need to restore the original stack
     ; so halt the CPU for one timer tick so it doesn't burn up
     sti
     hlt
