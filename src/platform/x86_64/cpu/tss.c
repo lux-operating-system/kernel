@@ -71,4 +71,11 @@ void tssSetup() {
     KernelCPUInfo *info = getKernelCPUInfo();
     info->kernelStack = (void *)tss->rsp0;
     info->tss = tss;
+
+    // allocate a switching stack as well
+    info->kernelSwitchStack = calloc(1, KENREL_STACK_SIZE/2);
+    if(!info->kernelSwitchStack) {
+        KERROR("failed to allocate memory for kernel switch stack\n");
+        while(1);
+    }
 }

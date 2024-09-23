@@ -29,6 +29,7 @@ typedef struct PlatformCPU {
 
 typedef struct {
     void *kernelStack;
+    void *kernelSwitchStack;
     PlatformCPU *cpu;
     uint64_t uptime;
 
