@@ -336,8 +336,7 @@ bool schedBusy() {
 void schedule() {
     if(!scheduling || !processes || !threads) return;
 
-    if(!acquireLock(lock)) return;
-
+    acquireLockBlocking(lock);
     setLocalSched(false);
 
     if(!schedBusy()) {
