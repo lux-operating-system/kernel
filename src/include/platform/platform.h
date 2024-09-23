@@ -58,3 +58,4 @@ int platformIoperm(Thread *, uintptr_t, uintptr_t, int);    // request I/O port 
 int platformGetMaxIRQ();        // maximum interrupt implemented by hardware
 int platformConfigureIRQ(Thread *, int, IRQHandler *);  // configure an IRQ pin
 IRQCommand *platformGetIRQCommand();    // per-CPU IRQ command structure
+void platformIdle();            // to be called when the CPU is idle
