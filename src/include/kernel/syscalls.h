@@ -13,6 +13,11 @@
 
 #define MAX_SYSCALL             49
 
+/* IPC syscall indexes, these will be used for immediate handling without
+ * waiting for the queue */
+#define SYSCALL_IPC_START       39      // recv()
+#define SYSCALL_IPC_END         40      // send()
+
 typedef struct SyscallRequest {
     bool busy, queued, unblock;
     bool external;          // set for syscalls that are handled in user space

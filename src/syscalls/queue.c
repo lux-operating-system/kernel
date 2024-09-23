@@ -22,8 +22,19 @@ void syscallHandle(void *ctx) {
     Thread *t = getThread(getTid());
     if(t) {
         platformSaveContext(t->context, ctx);
-        syscallEnqueue(platformCreateSyscallContext(t));    // queue the request
-        blockThread(t);     // block until we handle the syscall
+        
+        SyscallRequest *req = platformCreateSyscallContext(t);
+
+        // allow immediate handling of IPC syscalls for performance
+        if(req->function >= SYSCALL_IPC_START && req->function <= SYSCALL_IPC_END) {
+            setLocalSched(false);
+            syscallDispatchTable[req->function](req);
+            platformSetContextStatus(t->context, req->ret);
+            platformSwitchContext(t);
+        } else {
+            syscallEnqueue(req);
+            blockThread(t);     // block until we handle the syscall
+        }
     }
 
     for(;;) schedule();  // force context switch!
