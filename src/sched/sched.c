@@ -32,7 +32,7 @@ void schedInit() {
     // to-date copy of the lock, which prevents crashing by having multiple
     // CPUs attempt to run the same thread at the same time
     
-    lock = mallocUC(sizeof(lock_t));
+    lock = malloc(sizeof(lock_t));
     pidBitmap = calloc(1, (MAX_PID + 7) / 8);
     if(!lock || !pidBitmap) {
         KERROR("could not allocate memory for scheduler\n");
@@ -302,28 +302,20 @@ uint64_t schedTimer() {
     return time;
 }
 
-/* schedule(): determines the next thread to run and performs a context switch
+/* schedBusy(): determines if there are queued threads
  * params: none
- * returns: nothing
+ * returns: true/false
  */
 
-void schedule() {
-    if(!scheduling || !processes || !threads) return;
-
-    // we probably should not be locking the bus in a spinlock in a routine
-    // that's called hundreds of times per second
-    //acquireLockBlocking(lock);
-    if(!acquireLock(lock)) return;
-    
-    /* check if there are any queued processes at all */
+bool schedBusy() {
     Process *qp = first;
     Thread *qt = NULL;
-    int queued = 0;
+    bool queued = false;
     while(qp) {
         if(qp->threads && qp->threadCount) qt = qp->threads[0];
         while(qt) {
             if(qt->status == THREAD_QUEUED) {
-                queued = 1;
+                queued = true;
                 break;
             }
 
@@ -333,81 +325,68 @@ void schedule() {
         qp = qp->next;
     }
 
-    if(!queued) {
+    return queued;
+}
+
+/* schedule(): determines the next thread to run and performs a context switch
+ * params: none
+ * returns: nothing
+ */
+
+void schedule() {
+    if(!scheduling || !processes || !threads) return;
+
+    if(!acquireLock(lock)) return;
+
+    setLocalSched(false);
+
+    if(!schedBusy()) {
         releaseLock(lock);
         return;
     }
 
-    /* determine the next process to be run */
-    int cpu = platformWhichCPU();
-    pid_t pid = getPid();
-    pid_t tid = getTid();
-    Process *p = getProcess(pid);
-    Thread *t = getThread(tid);
+    Process *p = getProcess(getPid());
+    Thread *t = getThread(getTid());
+    Thread *current = t;
+    int cpu = platformWhichCPU();   // cpu index
+    int rounds = 0;
 
-    if(!pid || !tid || !p || !t) {
-        // special case for first process
+    if(!p || !t) {
+        // initial scheduling event
         p = first;
-        t = p->threads[0];
-
-        if(t->status == THREAD_QUEUED) {
-            //KDEBUG("initial for %d on CPU %d\n", t->tid, cpu);
-            t->status = THREAD_RUNNING;
-            t->cpu = cpu;
-            releaseLock(lock);
-            platformSwitchContext(t);
-        }
     }
 
-    // nope, now we try to look for a process to run
-    //KDEBUG("searching for queued threads on cpu %d\n", cpu);
-    Thread *current = getThread(getTid());
-
-    int tries = 0;
-
-    while(tries < 2) {
+    while(rounds < 2) {
         while(p) {
-            while(t) {
-                if(t != current && t->status == THREAD_QUEUED) {
-                    if(current && current->status == THREAD_RUNNING) {
-                        //KDEBUG("marking %d as queued\n", current->tid);
-                        current->status = THREAD_QUEUED;
-                        current->time = schedTimeslice(current, current->priority);
+            if(p->threadCount && p->threads) {
+                t = p->threads[0];
+
+                while(t) {
+                    if(t->status == THREAD_QUEUED) {
+                        if(current && (current->status == THREAD_RUNNING))
+                            current->status = THREAD_QUEUED;
+
+                        t->status = THREAD_RUNNING;
+                        t->time = schedTimeslice(t, t->priority);
+                        t->cpu = cpu;
+                        releaseLock(lock);
+                        platformSwitchContext(t);
                     }
 
-                    //KDEBUG("switch to %d on %d\n", t->tid, cpu);
-                    t->status = THREAD_RUNNING;
-                    t->cpu = cpu;
-                    releaseLock(lock);
-                    platformSwitchContext(t);
+                    t = t->next;
                 }
-
-                //KDEBUG("checking TID %d\n", t->tid);
-                t = t->next;
             }
 
             p = p->next;
-            if(p && p->threadCount && p->threads) {
-                //KDEBUG("checking PID %d\n", p->pid);
-                t = p->threads[0];
-            } else {
-                t = NULL;
-            }
         }
 
-        /* if we're here then attempt to try again but from the start */
+        // circular queue
+        rounds++;
         p = first;
-        t = first->threads[0];
-        tries++;
     }
 
-    // if we're here then we truly failed to load something, so just renew the
-    // time slice of the current thread
-    if(current) {
-        current->status = THREAD_RUNNING;
-        current->time = schedTimeslice(current, current->priority);
-    }
     releaseLock(lock);
+    return;
 }
 
 /* processCreate(): creates a blank process

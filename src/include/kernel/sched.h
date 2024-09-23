@@ -89,6 +89,7 @@ void blockThread(Thread *);
 void unblockThread(Thread *);
 Process *getProcessQueue();
 void schedStatus();
+bool schedBusy();
 
 pid_t kthreadCreate(void *(*)(void *), void *);
 pid_t processCreate();
