@@ -233,6 +233,11 @@ void syscallDispatchFStat(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchLSeek(SyscallRequest *req) {
+    req->ret = lseek(req->thread, req->params[0], req->params[1], req->params[2]);
+    req->unblock = true;
+}
+
 void syscallDispatchMount(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
     syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH) &&
@@ -418,7 +423,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchWrite,       // 17 - write()
     syscallDispatchStat,        // 18 - stat()
     syscallDispatchFStat,       // 19 - fstat()
-    NULL,                       // 20 - lseek()
+    syscallDispatchLSeek,       // 20 - lseek()
     NULL,                       // 21 - chown()
     NULL,                       // 22 - chmod()
     NULL,                       // 23 - link()
