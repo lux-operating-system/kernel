@@ -17,7 +17,7 @@
 
 void *idleThread(void *args) {
     for(;;) {
-        if(!syscallProcess()) platformHalt();
+        if(!syscallProcess()) platformIdle();
     }
 }
 
@@ -67,7 +67,7 @@ void *kernelThread(void *args) {
 
     for(;;) {
         serverIdle();
-        if(!syscallProcess()) platformHalt();
+        if(!syscallProcess()) platformIdle();
     }
 }
 
