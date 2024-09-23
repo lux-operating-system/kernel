@@ -210,6 +210,20 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
         return -1;
     }
 
+    // close file/socket descriptors marked as O_CLOEXEC
+    // this fixes a security risk i realized too late
+    Process *p = getProcess(t->tid);
+    for(int i = 0; i < MAX_IO_DESCRIPTORS; i++) {
+        if(p->io[i].valid && (p->io[i].flags & O_CLOEXEC)) {
+            p->io[i].valid = false;
+            p->io[i].data = NULL;
+            p->io[i].type = 0;
+            p->io[i].flags = 0;
+
+            p->iodCount--;
+        }
+    }
+
     // TODO: here we've successfully loaded the new program, but we also need
     // to free up memory used by the original program
     free(oldctx);
