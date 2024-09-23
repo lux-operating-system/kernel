@@ -22,7 +22,6 @@ static socklen_t *connlen;         // length of connected socket addresses
 static void *in, *out;
 static int connectionCount = 0;
 static bool lumenConnected = false;
-static struct sockaddr_un lumenAddr;
 
 /* serverInit(): initializes the server subsystem
  * params: none
@@ -65,18 +64,6 @@ void serverInit() {
     }
 
     KDEBUG("kernel is listening on socket %d: %s\n", kernelSocket, addr.sun_path);
-
-    // set up lumen's socket
-    lumenSocket = socket(NULL, AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-    if(lumenSocket < 0) {
-        KERROR("failed to open socket for lumen: error code %d\n", -1*lumenSocket);
-        for(;;) platformHalt();
-    }
-
-    // don't do anything else for now, we will try to connect to lumen later
-    // after lumen itself is running
-    lumenAddr.sun_family = AF_UNIX;
-    strcpy(lumenAddr.sun_path, SERVER_LUMEN_PATH);
     schedRelease();
 }
 
