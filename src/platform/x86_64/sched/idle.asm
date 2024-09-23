@@ -23,7 +23,7 @@ platformIdle:
     add rsp, 160        ; skip over the pushed reg state
 
     push qword 0x10     ; ss
-    push rbp             ; rsp
+    push rbp            ; rsp
     pushfq
     pop r10
     or r10, 0x202
@@ -31,6 +31,8 @@ platformIdle:
     push qword 0x08     ; cs
     mov r10, .next
     push r10            ; rip
+
+    iretq
 
     ; save this stack frame on the kernel's stack
     rdgsbase r10
@@ -43,7 +45,7 @@ platformIdle:
 .stack:
     swapgs
 
-    mov r10, [r10]      ; r10 = top of kernel stack
+    mov r10, [r10+8]    ; r10 = top of kernel switch stack
     mov rdi, r10
     sub rdi, 160        ; rdi = bottom of kernel stack frame
     mov rsi, rbp        ; rsi = stack we just created

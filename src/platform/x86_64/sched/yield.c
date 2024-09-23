@@ -17,10 +17,11 @@
 
 void kernelYield(void *stack) {
     // save the kernel thread's context
+    if(!schedBusy()) return;
+
     KernelCPUInfo *info = getKernelCPUInfo();
     if(info->thread && info->thread->context) {
         platformSaveContext(info->thread->context, stack);
+        schedule();
     }
-
-    schedule();
 }
