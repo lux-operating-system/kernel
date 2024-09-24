@@ -14,8 +14,8 @@
 #include <kernel/file.h>
 #include <sys/stat.h>
 
-#define SERVER_MAX_CONNECTIONS  512
-#define SERVER_MAX_SIZE         0x80000             // max msg size is 512 KiB
+#define SERVER_MAX_CONNECTIONS  128
+#define SERVER_MAX_SIZE         0x2000              // default max msg size is 8 KiB
 #define SERVER_KERNEL_PATH      "lux:///kernel"     // not a real file, special path
 #define SERVER_LUMEN_PATH       "lux:///lumen"      // likewise not a real file
 
