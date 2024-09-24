@@ -50,7 +50,6 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
     }
 
     // load the segments
-    setLocalSched(false);
     ELFProgramHeader *prhdr = (ELFProgramHeader *)(ptr + header->headerTable);
     for(int i = 0; i < header->headerEntryCount; i++) {
         if(prhdr->segmentType == ELF_SEGMENT_TYPE_NULL) {
@@ -59,7 +58,6 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
             // verify the segments are within the user space region of memory
             if((prhdr->virtualAddress < USER_BASE_ADDRESS) ||
             ((prhdr->virtualAddress+prhdr->memorySize) > USER_LIMIT_ADDRESS)) {
-                setLocalSched(true);
                 return 0;
             }
 
@@ -81,7 +79,6 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
 
             uintptr_t vp = vmmAllocate(prhdr->virtualAddress, USER_LIMIT_ADDRESS, pages, flags);
             if(!vp) {
-                setLocalSched(true);
                 return 0;
             }
 
@@ -101,7 +98,6 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
         } else {
             /* unimplemented header type */
             KERROR("unimplemented ELF header type %d\n", prhdr->segmentType);
-            setLocalSched(true);
             return 0;
         }
 
@@ -109,6 +105,5 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
     }
 
     *highest = addr;
-    setLocalSched(true);
     return header->entryPoint;
 }

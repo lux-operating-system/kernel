@@ -102,7 +102,7 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
 
     processes++;
     threads++;
-    schedAdjustTimeslice();
+    //schedAdjustTimeslice();
 
     threadUseContext(getTid());
     setScheduling(true);
