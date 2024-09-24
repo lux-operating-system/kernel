@@ -107,7 +107,7 @@ void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
     schedLock();
     if(threadUseContext(t->tid)) return;
 
-    uintptr_t phys = ((uintptr_t)ttyStatus.fb - KERNEL_MMIO_BASE);
+    uintptr_t phys = ((uintptr_t)ttyStatus.fbhw - KERNEL_MMIO_BASE);
 
     size_t pages = (ttyStatus.h * ttyStatus.pitch + PAGE_SIZE - 1) / PAGE_SIZE;
     uintptr_t base = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pages, VMM_USER | VMM_WRITE);
