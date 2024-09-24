@@ -8,12 +8,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <platform/platform.h>
-#include <platform/lock.h>
 #include <kernel/memory.h>
 #include <kernel/logger.h>
 
 static KernelHeapStatus status;
-static lock_t lock = LOCK_INITIAL;
 
 /* vmmInit(): initializes the virtual memory manager */
 
@@ -58,8 +56,6 @@ bool vmmIsUsed(uintptr_t addr) {
  */
 
 uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) {
-    acquireLockBlocking(&lock);
-
     // find free virtual memory
     base &= ~(PAGE_SIZE-1);
     limit &= ~(PAGE_SIZE-1);
@@ -83,19 +79,16 @@ uintptr_t vmmAllocate(uintptr_t base, uintptr_t limit, size_t count, int flags) 
         if(addr >= (start + (count*PAGE_SIZE))) {
             for(size_t i = 0; i < count; i++) {
                 if(!platformMapPage(start + (i*PAGE_SIZE), VMM_PAGE_ALLOCATE, platformFlags)) {
-                    releaseLock(&lock);
                     return 0;
                 }
             }
 
-            releaseLock(&lock);
             return start;
         }
 
         start += PAGE_SIZE;
     } while(start < end);
 
-    releaseLock(&lock);
     return 0;
 }
 
@@ -109,7 +102,6 @@ int vmmFree(uintptr_t addr, size_t count) {
     // force page alignment
     addr &= ~(PAGE_SIZE-1);
 
-    acquireLockBlocking(&lock);
 
     int status = 0;
     int pageStatus;
@@ -129,7 +121,6 @@ int vmmFree(uintptr_t addr, size_t count) {
         status |= platformUnmapPage(addr + (i * PAGE_SIZE));
     }
 
-    releaseLock(&lock);
     return status;
 }
 
@@ -166,7 +157,6 @@ int vmmPageFault(uintptr_t addr, int access) {
     // at this point we know there hasn't been any violations
     // so bring the page into memory if necessary
     int returnValue = -1;
-    acquireLockBlocking(&lock);
     if(status & PLATFORM_PAGE_SWAP) {
         uint64_t swapFlags = phys & VMM_PAGE_SWAP_MASK;
         switch(swapFlags) {
@@ -195,7 +185,6 @@ int vmmPageFault(uintptr_t addr, int access) {
         }
     }
 
-    releaseLock(&lock);
     return returnValue;
 }
 
