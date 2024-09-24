@@ -32,8 +32,6 @@ platformIdle:
     mov r10, .next
     push r10            ; rip
 
-    iretq
-
     ; save this stack frame on the kernel's stack
     rdgsbase r10
     and r10, r10
