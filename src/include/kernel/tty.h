@@ -19,6 +19,7 @@ typedef struct {
     uint16_t posx, posy;
     uint32_t fg, bg;
     uint32_t *fb;
+    uint32_t *fbhw;
     uint32_t pitch;
     char escape[256];
     bool escaping;
@@ -32,3 +33,4 @@ void ttyPutc(char);
 void ttyPuts(const char *);
 void ttyRemapFramebuffer();
 void getTtyStatus(KTTY *);
+void ttyCreateBackbuffer();

@@ -48,6 +48,8 @@ int platformMain(KernelBootInfo *k) {
     installExceptions();
     pmmInit(&boot);
     vmmInit();
+
+    ttyCreateBackbuffer();
     acpiInit(&boot);
     apicInit();
     platformInitialSeed();

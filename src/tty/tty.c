@@ -80,6 +80,40 @@ void ttyRemapFramebuffer() {
     ktty.fb = (uint32_t *)vmmMMIO((uintptr_t)ktty.fb, true);
 }
 
+/* ttyCreateBackbuffer(): creates the back buffer after the mm is initialized
+ */
+
+void ttyCreateBackbuffer() {
+    ktty.fbhw = malloc(ktty.pitch*ktty.h);
+    if(!ktty.fbhw) {
+        KERROR("unable to allocate memory for back buffer\n");
+        for(;;);
+    }
+
+    uint32_t *temp = ktty.fb;
+    ktty.fb = ktty.fbhw;
+    ktty.fbhw = temp;
+
+    memcpy(ktty.fb, ktty.fbhw, ktty.pitch*ktty.h);
+}
+
+/* ttyRedraw(): redraws the back buffer 
+ * params: line - line to redraw, -1 for entire screen
+ * returns: nothing
+ */
+
+void ttyRedraw(int line) {
+    if(!ktty.fbhw) return;
+    if(line < 0) {
+        memcpy(ktty.fbhw, ktty.fb, ktty.pitch*ktty.h);
+        return;
+    }
+
+    size_t size = ktty.pitch * FONT_HEIGHT;
+    uintptr_t offset = line * size;
+    memcpy((void *)((uintptr_t)ktty.fbhw + offset), (void *)((uintptr_t)ktty.fb + offset), size);
+}
+
 /* ttyCheckBoundaries(): checks for the cursor position and scrolls
  */
 
@@ -107,6 +141,8 @@ void ttyCheckBoundaries() {
 
         ktty.posx = 0;
         ktty.posy = ktty.hc - 1;
+
+        ttyRedraw(-1);
     }
 }
 
@@ -161,6 +197,7 @@ void ttyPutc(char c) {
     if(c == '\n') {             // new line
         ktty.posx = 0;
         ktty.posy++;
+        ttyRedraw(ktty.posy-1);
         ttyCheckBoundaries();
         releaseLock(&lock);
         return;
