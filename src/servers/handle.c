@@ -100,7 +100,7 @@ void serverIdle() {
     for(int i = 0; i < connectionCount; i++) {
         sd = connections[i];
         ssize_t s = recv(NULL, sd, in, SERVER_MAX_SIZE, MSG_PEEK);  // peek to check size
-        while(s > 0 && s < SERVER_MAX_SIZE) {
+        while(s > 0 && s <= SERVER_MAX_SIZE) {
             if(h->length > SERVER_MAX_SIZE) {
                 void *newptr = realloc(in, h->length);
                 if(!newptr) KPANIC("ran out of physical memory while handling incoming requests\n");
