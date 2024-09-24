@@ -25,12 +25,20 @@ void syscallHandle(void *ctx) {
         
         SyscallRequest *req = platformCreateSyscallContext(t);
 
-        // allow immediate handling of IPC syscalls for performance
-        if(req->function >= SYSCALL_IPC_START && req->function <= SYSCALL_IPC_END) {
+        // allow immediate handling of IPC syscalls without going through the
+        // syscall queue for performance
+        if((req->function >= SYSCALL_IPC_START && req->function <= SYSCALL_IPC_END) ||
+            (req->function >= SYSCALL_RW_START && req->function <= SYSCALL_RW_END)) {
             setLocalSched(false);
             syscallDispatchTable[req->function](req);
-            platformSetContextStatus(t->context, req->ret);
-            platformLoadContext(t->context);
+
+            if(req->unblock) {
+                req->thread->status = THREAD_RUNNING;
+                platformSetContextStatus(t->context, req->ret);
+                platformLoadContext(t->context);
+            } else {
+                req->thread->status = THREAD_BLOCKED;
+            }
         } else {
             syscallEnqueue(req);
             blockThread(t);     // block until we handle the syscall

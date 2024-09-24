@@ -18,6 +18,9 @@
 #define SYSCALL_IPC_START       39      // recv()
 #define SYSCALL_IPC_END         40      // send()
 
+#define SYSCALL_RW_START        16      // read()
+#define SYSCALL_RW_END          17      // write()
+
 typedef struct SyscallRequest {
     bool busy, queued, unblock;
     bool external;          // set for syscalls that are handled in user space
