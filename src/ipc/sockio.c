@@ -135,16 +135,11 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
             free(message);
 
             self->inboundCount--;
-            if(!self->inboundCount) {
-                free(self->inbound);
-                free(self->inboundLen);
-                self->inbound = NULL;
-                self->inboundLen = NULL;
-            } else {
+            if(self->inboundCount) {
                 memmove(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
                 memmove(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
-                self->inbound = realloc(self->inbound, self->inboundCount * sizeof(void *));
-                self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(size_t));
+                //self->inbound = realloc(self->inbound, self->inboundCount * sizeof(void *));
+                //self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(size_t));
             }
         }
 
