@@ -230,3 +230,46 @@ void setLocalSched(bool sched) {
     if(sched) enableIRQs();
     else disableIRQs();
 }
+
+/* freePT(): frees a page table
+ * params: base - base pointer to the page table
+ * params: depth - 0 for PML4, 1 for PDP, 2 for PD, 3 for PT
+ * params: maxdepth - depth to stop recursing at
+ * returns: nothing
+ */
+
+void freePT(uint64_t *base, int depth, int maxdepth) {
+    if(depth < 0 || depth > maxdepth) return;
+    for(int i = 0; i < 512; i++) {
+        uint64_t entry = base[i];
+        uint64_t phys = entry & ~((PAGE_SIZE-1) | PT_PAGE_NXE);
+        if((entry & PT_PAGE_PRESENT) && phys) {
+            if(depth < maxdepth)
+                freePT((uint64_t *) vmmMMIO(phys, true), depth+1, maxdepth);
+            
+            //KDEBUG("freeing 0x%X at depth %d\n", phys, depth);
+            pmmFree(phys);
+        }
+    }
+}
+
+/* platformCleanThread(): cleans up the memory space used by a thread after it
+ * is no longer running
+ * params: ptr - pointer to thread context
+ * params: highest - highest memory address used by thread
+ * returns: nothing
+ */
+
+void platformCleanThread(void *ptr, uintptr_t highest) {
+    if(!ptr || highest <= USER_BASE_ADDRESS+PAGE_SIZE) return;
+    ThreadContext *ctx = ptr;
+    if(!ctx->cr3) return;
+    
+    // free the page tables themselves and all associated physical mem
+    uint64_t saved = readCR3();
+    writeCR3(ctx->cr3);
+    vmmFree(USER_BASE_ADDRESS, (highest-USER_BASE_ADDRESS) / PAGE_SIZE);
+    writeCR3(saved);
+
+    pmmFree(ctx->cr3);
+}
