@@ -62,7 +62,9 @@ IOAPIC *ioapicFindIndex(int index) {
     IOAPIC *ioapic = ioapics;
     while(ioapic) {
         if(i == index) return ioapic;
-        else ioapic = ioapic->next;
+        
+        ioapic = ioapic->next;
+        i++;
     }
 
     return NULL;
@@ -146,7 +148,7 @@ int ioapicInit() {
     for(int i = 0; i < count; i++) {
         IOAPIC *ioapic = ioapicFindIndex(i);
         if(!ioapic) {
-            KERROR("I/O APIC index %d is not present, memory corruption?\n");
+            KERROR("I/O APIC index %d is not present, memory corruption?\n", i);
             for(;;);
         }
 
