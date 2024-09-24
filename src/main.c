@@ -82,10 +82,10 @@ int main(int argc, char **argv) {
     socketInit();       // sockets
     schedInit();        // scheduler
 
-    // number of kernel threads = number of CPU cores
+    // number of kernel threads = number of CPU cores + 1
     kthreadCreate(&kernelThread, NULL);
 
-    for(int i = 1; i < platformCountCPU(); i++)
+    for(int i = 0; i < platformCountCPU(); i++)
         kthreadCreate(&idleThread, NULL);
 
     // now enable the scheduler
