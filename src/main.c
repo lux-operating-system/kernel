@@ -23,6 +23,7 @@ void *idleThread(void *args) {
 
 void *kernelThread(void *args) {
     setLocalSched(false);
+    setScheduling(false);
     setKernelPID(getPid());
 
     // open the kernel socket for server communication
@@ -64,6 +65,7 @@ void *kernelThread(void *args) {
     KDEBUG("early boot complete, memory usage: %d MiB / %d MiB\n", ps.usedPages>>8, ps.usablePages>>8);
 
     setLocalSched(true);
+    setScheduling(true);
 
     for(;;) {
         serverIdle();
@@ -85,7 +87,7 @@ int main(int argc, char **argv) {
     // number of kernel threads = number of CPU cores + 1
     kthreadCreate(&kernelThread, NULL);
 
-    for(int i = 0; i < platformCountCPU(); i++)
+    for(int i = 1; i < platformCountCPU(); i++)
         kthreadCreate(&idleThread, NULL);
 
     // now enable the scheduler
