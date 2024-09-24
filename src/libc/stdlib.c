@@ -126,13 +126,20 @@ void *mallocUC(size_t size) {
     /* special case for malloc that uses uncacheable memory */
     if(!size) return NULL;
     size_t pageSize = (size + sizeof(struct mallocHeader) + PAGE_SIZE - 1) / PAGE_SIZE;
+    
+    acquireLockBlocking(&lock);
 
     uintptr_t ptr = vmmAllocate(KERNEL_HEAP_BASE, KERNEL_HEAP_LIMIT, pageSize, VMM_WRITE | VMM_NO_CACHE);
-    if(!ptr) return NULL;
+    if(!ptr) {
+        releaseLock(&lock);
+        return NULL;
+    }
 
     struct mallocHeader *header = (struct mallocHeader *)ptr;
     header->byteSize = size;
     header->pageSize = pageSize;
+
+    releaseLock(&lock);
 
     return (void *)((uintptr_t)ptr + sizeof(struct mallocHeader));
 }
