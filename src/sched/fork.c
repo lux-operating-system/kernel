@@ -19,11 +19,9 @@
 
 pid_t fork(Thread *t) {
     schedLock();
-    setScheduling(false);
 
     pid_t pid = processCreate();
     if(!pid) {
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -36,7 +34,6 @@ pid_t fork(Thread *t) {
     p->threads = calloc(p->threadCount, sizeof(Thread *));
     if(!p->threads) {
         free(p);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -45,7 +42,6 @@ pid_t fork(Thread *t) {
     if(!p->threads[0]) {
         free(p->threads);
         free(p);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -67,7 +63,6 @@ pid_t fork(Thread *t) {
         free(p->threads[0]);
         free(p->threads);
         free(p);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -78,7 +73,6 @@ pid_t fork(Thread *t) {
         free(p->threads[0]);
         free(p->threads);
         free(p);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -107,7 +101,6 @@ pid_t fork(Thread *t) {
 
     // and we're done - return zero to the child
     platformSetContextStatus(p->threads[0]->context, 0);
-    setScheduling(true);
     schedRelease();
     return pid;     // and PID to the parent
 }

@@ -25,7 +25,6 @@ int execmve(Thread *, void *, const char **, const char **);
 
 pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     schedLock();
-    setScheduling(false);
 
     pid_t pid = processCreate();
     if(!pid) {
@@ -41,7 +40,6 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     process->threads = calloc(process->threadCount, sizeof(Thread *));
     if(!process->threads) {
         free(process);
-        setScheduling(true);
         schedRelease();
         return 0;
     }
@@ -50,7 +48,6 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     if(!process->threads[0]) {
         free(process->threads);
         free(process);
-        setScheduling(true);
         schedRelease();
         return 0;
     }
@@ -65,7 +62,6 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads[0]);
         free(process->threads);
         free(process);
-        setScheduling(true);
         schedRelease();
         return 0;
     }
@@ -91,7 +87,6 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads[0]);
         free(process->threads);
         free(process);
-        setScheduling(true);
         schedRelease();
         return 0;
     }
@@ -105,7 +100,6 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     //schedAdjustTimeslice();
 
     threadUseContext(getTid());
-    setScheduling(true);
     schedRelease();
     return pid;
 }
@@ -132,25 +126,21 @@ int execve(Thread *t, const char *name, const char **argv, const char **envp) {
 
 int execrdv(Thread *t, const char *name, const char **argv) {
     schedLock();
-    setScheduling(false);
 
     // load from ramdisk
     int64_t size = ramdiskFileSize(name);
     if(size <= sizeof(ELFFileHeader)) {
-        setScheduling(true);
         schedRelease();
         return -1;
     }
 
     void *image = malloc(size);
     if(!image) {
-        setScheduling(true);
         schedRelease();
         return -1;
     }
 
     if(ramdiskRead(image, name, size) != size) {
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -172,7 +162,6 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     void *newctx = calloc(1, PLATFORM_CONTEXT_SIZE);
     if(!newctx) {
         free(image);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -180,7 +169,6 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     if(!platformCreateContext(newctx, PLATFORM_CONTEXT_USER, 0, 0)) {
         free(newctx);
         free(image);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -197,7 +185,6 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     if(!entry || !highest) {
         t->context = oldctx;
         free(newctx);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -205,7 +192,6 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     if(platformSetContext(t, entry, highest, argv, envp)) {
         t->context = oldctx;
         free(newctx);
-        setScheduling(true);
         schedRelease();
         return -1;
     }
@@ -230,7 +216,6 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
 
     t->status = THREAD_QUEUED;
     schedAdjustTimeslice();
-    setScheduling(true);
     schedRelease();
     return 0; // return to syscall dispatcher; the thread will not see this return
 }
