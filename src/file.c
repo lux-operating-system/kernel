@@ -55,6 +55,7 @@ int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
 int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
+    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;  // ensure valid file descriptor
     if(p->io[fd].type != IO_FILE) return -EBADF;
 
@@ -139,6 +140,8 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
 }
 
 int closeFile(Thread *t, int fd) {
+    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -154,6 +157,8 @@ int closeFile(Thread *t, int fd) {
 }
 
 off_t lseek(Thread *t, int fd, off_t offset, int where) {
+    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
