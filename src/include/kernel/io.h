@@ -15,14 +15,10 @@
 
 #define MAX_IO_DESCRIPTORS      1024    // max files/sockets open per process
 
-// these are special and reserved descriptors
-#define IO_STDIN                0
-#define IO_STDOUT               1
-#define IO_STDERR               2
-
-#define IO_WAITING              3   // only used during setup
-#define IO_FILE                 4
-#define IO_SOCKET               5
+#define IO_WAITING              1   // only used during setup
+#define IO_FILE                 2
+#define IO_SOCKET               3
+#define IO_DIRECTORY            4
 
 /* I/O descriptor flags */
 #define O_NONBLOCK              0x0001
