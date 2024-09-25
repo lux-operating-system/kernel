@@ -172,7 +172,7 @@ typedef struct {
     SyscallHeader header;
     char path[MAX_FILE_PATH];
     size_t position;
-    dirent entry;
+    struct dirent entry;
 } ReaddirCommand;
 
 void serverInit();
