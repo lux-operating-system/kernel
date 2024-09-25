@@ -17,6 +17,7 @@
 #include <kernel/memory.h>
 #include <kernel/file.h>
 #include <kernel/irq.h>
+#include <kernel/dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -258,6 +259,23 @@ void syscallDispatchMount(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchOpendir(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+
+        int status = opendir(req->thread, id, (const char *)req->params[0]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 /* Group 3: Interprocess Communication */
 
 void syscallDispatchSocket(SyscallRequest *req) {
@@ -436,7 +454,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchMount,       // 30 - mount()
     NULL,                       // 31 - umount()
     NULL,                       // 32 - fnctl()
-    NULL,                       // 33 - opendir()
+    syscallDispatchOpendir,     // 33 - opendir()
     NULL,                       // 34 - closedir()
     NULL,                       // 35 - readdir_r()
     NULL,                       // 36 - seekdir()
