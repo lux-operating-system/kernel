@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <kernel/sched.h>
 #include <kernel/file.h>
+#include <kernel/dirent.h>
 #include <sys/stat.h>
 
 #define SERVER_MAX_CONNECTIONS  128
@@ -40,6 +41,8 @@
 #define COMMAND_READ            0x8005
 #define COMMAND_WRITE           0x8006
 #define COMMAND_IOCTL           0x8007
+#define COMMAND_OPENDIR         0x8008
+#define COMMAND_READDIR         0x8009
 
 #define MAX_SYSCALL_COMMAND     0x8007
 
@@ -155,6 +158,22 @@ typedef struct {
     unsigned long opcode;
     unsigned long parameter;
 } IOCTLCommand;
+
+/* opendir() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+} OpendirCommand;
+
+/* readdir() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    size_t position;
+    dirent entry;
+} ReaddirCommand;
 
 void serverInit();
 void serverIdle();
