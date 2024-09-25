@@ -94,6 +94,8 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     FileDescriptor *fd = (FileDescriptor *) iod->data;
     if(!fd) return -EBADF;
 
+    if(!(iod->flags & O_RDONLY)) return -EPERM;
+
     command->header.header.command = COMMAND_READ;
     command->header.header.length = sizeof(RWCommand);
     command->header.id = id;
@@ -120,6 +122,8 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
 
     FileDescriptor *fd = (FileDescriptor *) iod->data;
     if(!fd) return -EBADF;
+
+    if(!(iod->flags & O_WRONLY)) return -EPERM;
 
     command->header.header.command = COMMAND_WRITE;
     command->header.header.length = sizeof(RWCommand) + count;
