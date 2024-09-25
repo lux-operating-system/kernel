@@ -78,6 +78,8 @@ void closeIO(void *pv, void *iodv) {
  */
 
 ssize_t read(Thread *t, uint64_t id, int fd, void *buffer, size_t count) {
+    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -101,6 +103,8 @@ ssize_t read(Thread *t, uint64_t id, int fd, void *buffer, size_t count) {
  */
 
 ssize_t write(Thread *t, uint64_t id, int fd, const void *buffer, size_t count) {
+    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -121,6 +125,8 @@ ssize_t write(Thread *t, uint64_t id, int fd, const void *buffer, size_t count) 
  */
 
 int close(Thread *t, int fd) {
+    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -183,6 +189,8 @@ int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
 
 int ioctl(struct Thread *t, uint64_t id, int fd, unsigned long op, ...) {
     // ensure valid file descriptor
+    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
