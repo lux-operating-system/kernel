@@ -28,7 +28,6 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
 
     pid_t pid = processCreate();
     if(!pid) {
-        setScheduling(true);
         schedRelease();
         return 0;
     }
@@ -71,7 +70,6 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
         free(process->threads[0]);
         free(process->threads);
         free(process);
-        setScheduling(true);
         schedRelease();
         return 0;
     }
