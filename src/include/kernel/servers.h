@@ -44,7 +44,7 @@
 #define COMMAND_OPENDIR         0x8008
 #define COMMAND_READDIR         0x8009
 
-#define MAX_SYSCALL_COMMAND     0x8007
+#define MAX_SYSCALL_COMMAND     0x8009
 
 /* these commands are for device drivers */
 #define COMMAND_IRQ             0xC000
