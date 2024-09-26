@@ -34,3 +34,30 @@ int opendir(Thread *t, uint64_t id, const char *path) {
     free(cmd);
     return status;
 }
+
+int readdir_r(Thread *t, uint64_t id, DIR *dir, struct dirent *entry, struct dirent **result) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    // input validation
+    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return -EBADF;
+    if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return -EBADF;
+
+    DirectoryDescriptor *descriptor = (DirectoryDescriptor *) p->io[dd].data;
+    if(!descriptor) return -EBADF;
+
+    ReaddirCommand *cmd = calloc(1, sizeof(ReaddirCommand));
+    if(!cmd) return -ENOMEM;
+
+    cmd->header.header.command = COMMAND_READDIR;
+    cmd->header.header.length = sizeof(ReaddirCommand);
+    cmd->header.id = id;
+    cmd->position = descriptor->position;
+    strcpy(cmd->path, descriptor->path);
+    strcpy(cmd->device, descriptor->device);
+
+    int status = requestServer(t, cmd);
+    free(cmd);
+    return status;
+}
