@@ -162,6 +162,7 @@ typedef struct {
 /* opendir() */
 typedef struct {
     SyscallHeader header;
+    char abspath[MAX_FILE_PATH];
     char path[MAX_FILE_PATH];
     char device[MAX_FILE_PATH];
     uid_t uid;
