@@ -53,7 +53,7 @@ uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
         for(int i = 0; i < pageCount; i++)
             platformMapPage(virt + (i*PAGE_SIZE), addr + (i*PAGE_SIZE), pageFlags);
 
-        KDEBUG("mapped %d pages at physical addr 0x%X for tid %d\n", pageCount, addr, t->tid);
+        //KDEBUG("mapped %d pages at physical addr 0x%X for tid %d\n", pageCount, addr, t->tid);
         return virt | offset;
     } else {
         // deleting a memory mapping
@@ -62,7 +62,7 @@ uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
         for(int i = 0; i < pageCount; i++)
             platformMapPage(addr + (i * PAGE_SIZE), 0, 0);
 
-        KDEBUG("unmapped %d pages at virtual address 0x%X for tid %d\n", pageCount, addr, t->tid);
+        //KDEBUG("unmapped %d pages at virtual address 0x%X for tid %d\n", pageCount, addr, t->tid);
         return 0;
     }
 }
