@@ -45,6 +45,8 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     ssize_t status;
     IODescriptor *iod;
     FileDescriptor *file;
+    DirectoryDescriptor *dir;
+    int dd;
 
     switch(hdr->header.command) {
     case COMMAND_STAT:
@@ -151,8 +153,8 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         OpendirCommand *opendircmd = (OpendirCommand *) hdr;
 
         // set up a file descriptor for the process
-        IODescriptor *iod = NULL;
-        int dd = openIO(p, (void **) &iod);
+        iod = NULL;
+        dd = openIO(p, (void **) &iod);
         if(dd < 0 || !iod) req->ret = dd;
 
         iod->type = IO_DIRECTORY;
@@ -163,13 +165,34 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             break;
         }
 
-        DirectoryDescriptor *dir = (DirectoryDescriptor *) iod->data;
+        dir = (DirectoryDescriptor *) iod->data;
         dir->process = p;
         strcpy(dir->path, opendircmd->abspath);
         strcpy(dir->device, opendircmd->device);
 
         // and return the directory descriptor to the thread
         req->ret = dd | DIRECTORY_DESCRIPTOR_FLAG;
+        break;
+    
+    case COMMAND_READDIR:
+        if(hdr->header.status) break;
+        ReaddirCommand *readdircmd = (ReaddirCommand *) hdr;
+
+        // update the directory descriptor's internal position
+        dd = (int) req->params[0] & ~(DIRECTORY_DESCRIPTOR_FLAG);
+        dir = (DirectoryDescriptor *) p->io[dd].data;
+        dir->position = readdircmd->position;
+
+        // and copy the descriptor and write its pointer into the buffer
+        threadUseContext(req->thread->tid);
+        struct dirent **direntptr = (struct dirent **) req->params[2];
+        if(!readdircmd->end) {
+            memcpy((void *)req->params[1], &readdircmd->entry, sizeof(struct dirent) + strlen(readdircmd->entry.d_name) + 1);
+            *direntptr = (struct dirent *) req->params[1];
+        } else {
+            *direntptr = NULL;
+        }
+
         break;
     }
 
