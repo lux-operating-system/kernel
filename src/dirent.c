@@ -61,3 +61,57 @@ int readdir_r(Thread *t, uint64_t id, DIR *dir, struct dirent *entry, struct dir
     free(cmd);
     return status;
 }
+
+void seekdir(Thread *t, DIR *dir, long position) {
+    Process *p = getProcess(t->pid);
+    if(!p) return;
+
+    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return;
+    if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return;
+
+    DirectoryDescriptor *descriptor = (DirectoryDescriptor *) p->io[dd].data;
+    if(!descriptor) return;
+
+    descriptor->position = position;
+    return;
+}
+
+long telldir(Thread *t, DIR *dir) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return -EBADF;
+    if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return -EBADF;
+
+    DirectoryDescriptor *descriptor = (DirectoryDescriptor *) p->io[dd].data;
+    if(!descriptor) return -EBADF;
+
+    return descriptor->position;
+}
+
+int closedir(Thread *t, DIR *dir) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return -EBADF;
+    if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return -EBADF;
+
+    DirectoryDescriptor *descriptor = (DirectoryDescriptor *) p->io[dd].data;
+    if(!descriptor) return -EBADF;
+
+    // destroy the descriptor
+    if(!p->io[dd].clone)
+        free(p->io[dd].data);
+
+    p->io[dd].valid = false;
+    p->io[dd].type = 0;
+    p->io[dd].flags = 0;
+    p->io[dd].data = NULL;
+    p->io[dd].clone = false;
+    p->iodCount--;
+
+    return 0;
+}
