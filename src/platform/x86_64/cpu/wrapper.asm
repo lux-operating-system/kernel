@@ -178,7 +178,7 @@ readMSR:
     xor rcx, rcx
     not ecx         ; rcx = all zeroes high, all ones low
     and rax, rcx
-    shr rdx, 32
+    shl rdx, 32
     or rax, rdx
     ret
 
