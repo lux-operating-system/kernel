@@ -69,3 +69,6 @@ int vmmPageStatus(uintptr_t, uintptr_t *);
 uintptr_t vmmSetFlags(uintptr_t, size_t, int);
 
 void *sbrk(Thread *, intptr_t);
+
+uintptr_t mmio(Thread *t, uintptr_t, off_t, int);
+uintptr_t pcontig(Thread *t, uintptr_t, off_t, int);
