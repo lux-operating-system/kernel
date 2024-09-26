@@ -36,7 +36,7 @@ uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
     // only root can do this
     if(p->user) return 0;
 
-    off_t offset = addr & ~(PAGE_SIZE-1);
+    off_t offset = addr & (PAGE_SIZE-1);
     size_t pageCount = (count + PAGE_SIZE - 1) / PAGE_SIZE;
     if(addr & ~(PAGE_SIZE-1)) pageCount++;
 
