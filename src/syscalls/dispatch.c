@@ -276,6 +276,11 @@ void syscallDispatchOpendir(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchClosedir(SyscallRequest *req) {
+    req->ret = closedir(req->thread, (DIR *) req->params[0]);
+    req->unblock = true;
+}
+
 void syscallDispatchReaddir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], sizeof(struct dirent)) &&
         syscallVerifyPointer(req, req->params[2], sizeof(struct dirent *))) {
@@ -292,6 +297,16 @@ void syscallDispatchReaddir(SyscallRequest *req) {
             req->unblock = false;
         }
     }
+}
+
+void syscallDispatchSeekdir(SyscallRequest *req) {
+    seekdir(req->thread, (DIR *) req->params[0], req->params[1]);
+    req->unblock = true;
+}
+
+void syscallDispatchTelldir(SyscallRequest *req) {
+    req->ret = telldir(req->thread, (DIR *) req->params[0]);
+    req->unblock = true;
 }
 
 /* Group 3: Interprocess Communication */
@@ -473,10 +488,10 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 31 - umount()
     NULL,                       // 32 - fnctl()
     syscallDispatchOpendir,     // 33 - opendir()
-    NULL,                       // 34 - closedir()
+    syscallDispatchClosedir,    // 34 - closedir()
     syscallDispatchReaddir,     // 35 - readdir_r()
-    NULL,                       // 36 - seekdir()
-    NULL,                       // 37 - telldir()
+    syscallDispatchSeekdir,     // 36 - seekdir()
+    syscallDispatchTelldir,     // 37 - telldir()
 
     /* group 3: interprocess communication */
     syscallDispatchSocket,      // 38 - socket()
