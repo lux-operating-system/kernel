@@ -163,6 +163,7 @@ typedef struct {
 typedef struct {
     SyscallHeader header;
     char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
     uid_t uid;
     gid_t gid;
 } OpendirCommand;
@@ -171,6 +172,7 @@ typedef struct {
 typedef struct {
     SyscallHeader header;
     char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
     size_t position;
     struct dirent entry;
 } ReaddirCommand;
