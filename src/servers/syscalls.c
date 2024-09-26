@@ -43,7 +43,10 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
 
     // some syscalls will require special handling
     ssize_t status;
+    IODescriptor *iod;
     FileDescriptor *file;
+    DirectoryDescriptor *dir;
+    int dd;
 
     switch(hdr->header.command) {
     case COMMAND_STAT:
@@ -58,7 +61,7 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         OpenCommand *opencmd = (OpenCommand *) hdr;
 
         // set up a file descriptor for the process
-        IODescriptor *iod = NULL;
+        iod = NULL;
         int fd = openIO(p, (void **) &iod);
         if(fd < 0 || !iod) req->ret = fd;
 
@@ -141,6 +144,53 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             threadUseContext(req->thread->tid);
             unsigned long *out = (unsigned long *) req->params[2];
             *out = ioctlcmd->parameter;
+        }
+
+        break;
+    
+    case COMMAND_OPENDIR:
+        if(hdr->header.status) break;
+        OpendirCommand *opendircmd = (OpendirCommand *) hdr;
+
+        // set up a file descriptor for the process
+        iod = NULL;
+        dd = openIO(p, (void **) &iod);
+        if(dd < 0 || !iod) req->ret = dd;
+
+        iod->type = IO_DIRECTORY;
+        iod->data = calloc(1, sizeof(DirectoryDescriptor));
+        if(!iod->data) {
+            closeIO(p, iod);
+            req->ret = -ENOMEM;
+            break;
+        }
+
+        dir = (DirectoryDescriptor *) iod->data;
+        dir->process = p;
+        strcpy(dir->path, opendircmd->abspath);
+        strcpy(dir->device, opendircmd->device);
+
+        // and return the directory descriptor to the thread
+        req->ret = dd | DIRECTORY_DESCRIPTOR_FLAG;
+        break;
+    
+    case COMMAND_READDIR:
+        if(hdr->header.status) break;
+        ReaddirCommand *readdircmd = (ReaddirCommand *) hdr;
+
+        // update the directory descriptor's internal position
+        dd = (int) req->params[0] & ~(DIRECTORY_DESCRIPTOR_FLAG);
+        dir = (DirectoryDescriptor *) p->io[dd].data;
+        dir->position = readdircmd->position;
+
+        // and copy the descriptor and write its pointer into the buffer
+        threadUseContext(req->thread->tid);
+        struct dirent **direntptr = (struct dirent **) req->params[2];
+        if(!readdircmd->end) {
+            memcpy((void *)req->params[1], &readdircmd->entry, sizeof(struct dirent) + strlen(readdircmd->entry.d_name) + 1);
+            *direntptr = (struct dirent *) req->params[1];
+        } else {
+            *direntptr = NULL;
         }
 
         break;
