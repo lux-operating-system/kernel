@@ -45,6 +45,7 @@ uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
         int pageFlags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER;
         if(flags & MMIO_W) pageFlags |= PLATFORM_PAGE_WRITE;
         if(flags & MMIO_X) pageFlags |= PLATFORM_PAGE_EXEC;
+        if(flags & MMIO_CD) pageFlags |= PLATFORM_PAGE_NO_CACHE;
 
         uintptr_t virt = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount, VMM_USER);
         if(!virt) return 0;
