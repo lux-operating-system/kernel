@@ -32,3 +32,5 @@ typedef struct {
 int opendir(Thread *, uint64_t, const char *);
 int closedir(Thread *, DIR *);
 int readdir_r(Thread *, uint64_t, DIR *, struct dirent *, struct dirent **);
+void seekdir(Thread *, DIR *, long);
+long telldir(Thread *, DIR *);
