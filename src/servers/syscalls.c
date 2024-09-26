@@ -43,6 +43,7 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
 
     // some syscalls will require special handling
     ssize_t status;
+    IODescriptor *iod;
     FileDescriptor *file;
 
     switch(hdr->header.command) {
@@ -58,7 +59,7 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         OpenCommand *opencmd = (OpenCommand *) hdr;
 
         // set up a file descriptor for the process
-        IODescriptor *iod = NULL;
+        iod = NULL;
         int fd = openIO(p, (void **) &iod);
         if(fd < 0 || !iod) req->ret = fd;
 
@@ -143,6 +144,32 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             *out = ioctlcmd->parameter;
         }
 
+        break;
+    
+    case COMMAND_OPENDIR:
+        if(hdr->header.status) break;
+        OpendirCommand *opendircmd = (OpendirCommand *) hdr;
+
+        // set up a file descriptor for the process
+        IODescriptor *iod = NULL;
+        int dd = openIO(p, (void **) &iod);
+        if(dd < 0 || !iod) req->ret = dd;
+
+        iod->type = IO_DIRECTORY;
+        iod->data = calloc(1, sizeof(DirectoryDescriptor));
+        if(!iod->data) {
+            closeIO(p, iod);
+            req->ret = -ENOMEM;
+            break;
+        }
+
+        DirectoryDescriptor *dir = (DirectoryDescriptor *) iod->data;
+        dir->process = p;
+        strcpy(dir->path, opendircmd->path);
+        strcpy(dir->device, opendircmd->device);
+
+        // and return the directory descriptor to the thread
+        req->ret = dd | DIRECTORY_DESCRIPTOR_FLAG;
         break;
     }
 
