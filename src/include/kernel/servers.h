@@ -175,6 +175,7 @@ typedef struct {
     char device[MAX_FILE_PATH];
     size_t position;
     struct dirent entry;
+    int end;            // set to 1 if entry does not exist
 } ReaddirCommand;
 
 void serverInit();
