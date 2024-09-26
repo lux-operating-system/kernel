@@ -13,6 +13,7 @@
 #define MMIO_CD         0x08    // cache disable
 #define MMIO_ENABLE     0x80    // create mapping; clear to unmap
 
+#include <kernel/logger.h>
 #include <kernel/sched.h>
 #include <kernel/memory.h>
 #include <platform/platform.h>
@@ -29,6 +30,12 @@
  */
 
 uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
+    Process *p = getProcess(t->pid);
+    if(!p) return 0;
+
+    // only root can do this
+    if(p->user) return 0;
+
     off_t offset = addr & ~(PAGE_SIZE-1);
     size_t pageCount = (count + PAGE_SIZE - 1) / PAGE_SIZE;
     if(addr & ~(PAGE_SIZE-1)) pageCount++;
@@ -45,6 +52,7 @@ uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
         for(int i = 0; i < pageCount; i++)
             platformMapPage(virt + (i*PAGE_SIZE), addr + (i*PAGE_SIZE), pageFlags);
 
+        KDEBUG("mapped %d pages at physical addr 0x%X for tid %d\n", pageCount, addr, t->tid);
         return virt | offset;
     } else {
         // deleting a memory mapping
@@ -53,6 +61,7 @@ uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
         for(int i = 0; i < pageCount; i++)
             platformMapPage(addr + (i * PAGE_SIZE), 0, 0);
 
+        KDEBUG("unmapped %d pages at virtual address 0x%X for tid %d\n", pageCount, addr, t->tid);
         return 0;
     }
 }
