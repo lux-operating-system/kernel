@@ -11,6 +11,9 @@
 #include <kernel/sched.h>
 #include <kernel/file.h>
 
+// directory descriptors will be OR'ed with this flag
+#define DIRECTORY_DESCRIPTOR_FLAG       0x8000
+
 typedef int DIR;
 
 struct dirent {
@@ -22,6 +25,7 @@ struct dirent {
 typedef struct {
     Process *process;
     char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
     size_t position;
 } DirectoryDescriptor;
 
