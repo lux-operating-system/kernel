@@ -276,6 +276,24 @@ void syscallDispatchOpendir(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchReaddir(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], sizeof(struct dirent)) &&
+        syscallVerifyPointer(req, req->params[2], sizeof(struct dirent *))) {
+        uint64_t id = platformRand();
+        req->requestID = id;
+
+        int status = readdir_r(req->thread, id, (DIR *) req->params[0], (struct dirent *) req->params[1], (struct dirent **) req->params[2]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 /* Group 3: Interprocess Communication */
 
 void syscallDispatchSocket(SyscallRequest *req) {
@@ -456,7 +474,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 32 - fnctl()
     syscallDispatchOpendir,     // 33 - opendir()
     NULL,                       // 34 - closedir()
-    NULL,                       // 35 - readdir_r()
+    syscallDispatchReaddir,     // 35 - readdir_r()
     NULL,                       // 36 - seekdir()
     NULL,                       // 37 - telldir()
 
