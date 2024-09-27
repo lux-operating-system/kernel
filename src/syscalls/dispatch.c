@@ -450,6 +450,16 @@ void syscallDispatchIoctl(SyscallRequest *req) {
     req->unblock = false;
 }
 
+void syscallDispatchMMIO(SyscallRequest *req) {
+    req->ret = mmio(req->thread, req->params[0], req->params[1], req->params[2]);
+    req->unblock = true;
+}
+
+void syscallDispatchPContig(SyscallRequest *req) {
+    req->ret = pcontig(req->thread, req->params[0], req->params[1], req->params[2]);
+    req->unblock = true;
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -512,4 +522,6 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchIoperm,      // 49 - ioperm()
     syscallDispatchIRQ,         // 50 - irq()
     syscallDispatchIoctl,       // 51 - ioctl()
+    syscallDispatchMMIO,        // 52 - mmio()
+    syscallDispatchPContig,     // 53 - pcontig()
 };

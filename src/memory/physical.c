@@ -299,3 +299,30 @@ int pmmFreeContiguous(uintptr_t phys, size_t count) {
     
     return status;
 }
+
+/* pcontig(): allocates or deallocates contiguous physical memory for drivers
+ * params: t - calling thread
+ * params: addr - address to free, zero for allocations
+ * params: count - number of bytes to allocate, will be rounded up to PAGE_SIZE
+ * params: flags - flags for the memory to be allocated
+ * returns: allocations: pointer to physical memory, zero on fail
+ * returns: deallocations: zero on success, pointer to physical memory on fail
+ */
+
+uintptr_t pcontig(Thread *t, uintptr_t addr, off_t count, int flags) {
+    Process *p = getProcess(t->pid);
+    if(!p) return 0;
+
+    // only root can do this
+    if(p->user) return 0;
+
+    size_t pageCount = (count + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    if(!addr) {
+        // allocating
+        return pmmAllocateContiguous(pageCount, flags);
+    } else {
+        // deallocating
+        return pmmFreeContiguous(addr, pageCount);
+    }
+}
