@@ -318,12 +318,11 @@ uintptr_t pcontig(Thread *t, uintptr_t addr, off_t count, int flags) {
 
     size_t pageCount = (count + PAGE_SIZE - 1) / PAGE_SIZE;
 
-    if(flags) {
+    if(!addr) {
         // allocating
         return pmmAllocateContiguous(pageCount, flags);
     } else {
         // deallocating
-        if(!addr) return 0;
         return pmmFreeContiguous(addr, pageCount);
     }
 }
