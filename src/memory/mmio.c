@@ -66,3 +66,27 @@ uintptr_t mmio(Thread *t, uintptr_t addr, off_t count, int flags) {
         return 0;
     }
 }
+
+/* vtop(): returns the physical address associated with a virtual address
+ * params: t - calling thread
+ * params: virt - virtual address
+ * returns: physical address on success, zero on error
+ */
+
+uintptr_t vtop(Thread *t, uintptr_t virt) {
+    Process *p = getProcess(t->pid);
+    if(!p) return 0;
+
+    // only root can do this
+    if(p->user) return 0;
+
+    off_t offset = virt & (PAGE_SIZE-1);
+    uintptr_t phys = 0;
+    int flags = vmmPageStatus(virt, &phys);
+    if(flags & PLATFORM_PAGE_ERROR) return 0;
+
+    // disallow using this function to gain access to kernel physical memory
+    if(!(flags & PLATFORM_PAGE_USER)) return 0;
+
+    return phys | offset;
+}
