@@ -460,6 +460,11 @@ void syscallDispatchPContig(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchVToP(SyscallRequest *req) {
+    req->ret = vtop(req->thread, req->params[0]);
+    req->unblock = true;
+}
+
 void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 1: scheduler functions */
     syscallDispatchExit,        // 0 - exit()
@@ -524,4 +529,5 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchIoctl,       // 51 - ioctl()
     syscallDispatchMMIO,        // 52 - mmio()
     syscallDispatchPContig,     // 53 - pcontig()
+    syscallDispatchVToP,        // 54 - vtop()
 };

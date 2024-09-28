@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <kernel/sched.h>
 
-#define MAX_SYSCALL             53
+#define MAX_SYSCALL             54
 
 /* IPC syscall indexes, these will be used for immediate handling without
  * waiting for the queue */
