@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/lux-operating-system/kernel?color=red)](https://github.com/lux-operating-system/kernel/blob/main/LICENSE) [![GitHub commit activity](https://img.shields.io/github/commit-activity/w/lux-operating-system/kernel)](https://github.com/lux-operating-system/kernel/commits/main/) [![Build Status](https://github.com/lux-operating-system/kernel/actions/workflows/build-mac.yml/badge.svg)](https://github.com/lux-operating-system/kernel/actions) [![GitHub Issues](https://img.shields.io/github/issues/lux-operating-system/kernel)](https://github.com/lux-operating-system/kernel/issues) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/01007e2804e34b4da5d164ea927443a5)](https://app.codacy.com/gh/lux-operating-system/kernel/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux.png)
+![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux-09-28-24.png)
 
 ## Overview
 
