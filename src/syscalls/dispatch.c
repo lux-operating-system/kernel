@@ -43,6 +43,17 @@ bool syscallVerifyPointer(SyscallRequest *req, uintptr_t base, uintptr_t len) {
     return true;
 }
 
+/* syscallID(): generates a random non-zero syscall ID
+ * params: none
+ * returns: non-zero random number
+ */
+
+static uint16_t syscallID() {
+    uint16_t r = 0;
+    while(!r) r = platformRand() & 0xFFFF;
+    return r;
+}
+
 /* Group 1: Scheduler */
 
 void syscallDispatchExit(SyscallRequest *req) {
@@ -106,10 +117,9 @@ void syscallDispatchMSleep(SyscallRequest *req) {
 
 void syscallDispatchOpen(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        req->requestID = syscallID();
 
-        int status = open(req->thread, id, (const char *)req->params[0], req->params[1], req->params[2]);
+        int status = open(req->thread, req->requestID, (const char *)req->params[0], req->params[1], req->params[2]);
         if(status) {
             req->external = false;
             req->ret = status;      // error code
@@ -128,9 +138,9 @@ void syscallDispatchClose(SyscallRequest *req) {
 
 void syscallDispatchRead(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        uint64_t id;
+        uint16_t id;
         if(!req->retry) {
-            id = platformRand();
+            id = syscallID();
             req->requestID = id;
         } else {
             id = req->requestID;
@@ -164,9 +174,9 @@ void syscallDispatchRead(SyscallRequest *req) {
 
 void syscallDispatchWrite(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        uint64_t id;
+        uint16_t id;
         if(!req->retry) {
-            id = platformRand();
+            id = syscallID();
             req->requestID = id;
         } else {
             id = req->requestID;
@@ -200,10 +210,9 @@ void syscallDispatchWrite(SyscallRequest *req) {
 
 void syscallDispatchStat(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) && syscallVerifyPointer(req, req->params[1], sizeof(struct stat))) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        req->requestID = syscallID();
 
-        int status = stat(req->thread, id, (const char *)req->params[0], (struct stat *)req->params[1]);
+        int status = stat(req->thread, req->requestID, (const char *)req->params[0], (struct stat *)req->params[1]);
         if(status) {
             req->external = false;
             req->ret = status;      // error code
@@ -218,10 +227,9 @@ void syscallDispatchStat(SyscallRequest *req) {
 
 void syscallDispatchFStat(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], sizeof(struct stat))) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        req->requestID = syscallID();
 
-        int status = fstat(req->thread, id, req->params[0], (struct stat *)req->params[1]);
+        int status = fstat(req->thread, req->requestID, req->params[0], (struct stat *)req->params[1]);
         if(status) {
             req->external = false;
             req->ret = status;      // error code
@@ -243,10 +251,9 @@ void syscallDispatchMount(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
     syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH) &&
     syscallVerifyPointer(req, req->params[2], 32)) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        req->requestID = syscallID();
 
-        int status = mount(req->thread, id, (const char *)req->params[0], (const char *)req->params[1], (const char *)req->params[2], req->params[3]);
+        int status = mount(req->thread, req->requestID, (const char *)req->params[0], (const char *)req->params[1], (const char *)req->params[2], req->params[3]);
         if(status) {
             req->external = false;
             req->ret = status;      // error code
@@ -261,10 +268,9 @@ void syscallDispatchMount(SyscallRequest *req) {
 
 void syscallDispatchOpendir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        req->requestID = syscallID();
 
-        int status = opendir(req->thread, id, (const char *)req->params[0]);
+        int status = opendir(req->thread, req->requestID, (const char *)req->params[0]);
         if(status) {
             req->external = false;
             req->ret = status;
@@ -284,10 +290,9 @@ void syscallDispatchClosedir(SyscallRequest *req) {
 void syscallDispatchReaddir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], sizeof(struct dirent)) &&
         syscallVerifyPointer(req, req->params[2], sizeof(struct dirent *))) {
-        uint64_t id = platformRand();
-        req->requestID = id;
+        req->requestID = syscallID();
 
-        int status = readdir_r(req->thread, id, (DIR *) req->params[0], (struct dirent *) req->params[1], (struct dirent **) req->params[2]);
+        int status = readdir_r(req->thread, req->requestID, (DIR *) req->params[0], (struct dirent *) req->params[1], (struct dirent **) req->params[2]);
         if(status) {
             req->external = false;
             req->ret = status;
@@ -435,8 +440,7 @@ void syscallDispatchIRQ(SyscallRequest *req) {
 
 void syscallDispatchIoctl(SyscallRequest *req) {
     unsigned long op = req->params[1];
-    uint64_t id = platformRand();
-    req->requestID = id;
+    req->requestID = syscallID();
 
     if(op & IOCTL_OUT_PARAM) {
         if(syscallVerifyPointer(req, req->params[2], sizeof(unsigned long))) {
