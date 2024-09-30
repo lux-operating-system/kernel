@@ -194,6 +194,12 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         }
 
         break;
+    
+    case COMMAND_EXEC:
+        if(hdr->header.status) break;
+
+        execveHandle((ExecCommand *) hdr);
+        return;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
