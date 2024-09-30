@@ -44,6 +44,7 @@ typedef struct {
 
     ThreadGPR regs;         // register state
 
+    int iopl;               // set to 1 if I/O port privileges have been modified
     uint8_t ioports[8192];  // I/O port privileges
 } __attribute__((packed)) ThreadContext;
 

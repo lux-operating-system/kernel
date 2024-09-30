@@ -22,6 +22,7 @@ int platformIoperm(Thread *t, uintptr_t from, uintptr_t count, int enable) {
     if((from+count-1) > 0xFFFF) return -EINVAL;     // 65536 I/O ports on x86
 
     ThreadContext *ctx = (ThreadContext *) t->context;
+    ctx->iopl = 1;
 
     for(int i = 0; i < count; i++) {
         int byte = (from + i) / 8;

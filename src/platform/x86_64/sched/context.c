@@ -97,8 +97,14 @@ void platformSwitchContext(Thread *t) {
     ThreadContext *ctx = (ThreadContext *)t->context;
     ctx->regs.rflags |= 0x202; // interrupts can never be switched off outside of the kernel
 
-    // modify the TSS with the current thread's I/O permissions
-    memcpy(kinfo->tss->ioports, ctx->ioports, 8192);
+    // modify the TSS with the current thread's I/O permissions if necessary
+    Thread *old = kinfo->thread;
+    ThreadContext *oldctx = NULL;
+    if(old) oldctx = (ThreadContext *) old->context;
+
+    if(ctx->iopl || (oldctx && oldctx->iopl)) {
+        memcpy(kinfo->tss->ioports, ctx->ioports, 8192);
+    }
 
     kinfo->thread = t;
     kinfo->process = getProcess(t->pid);
