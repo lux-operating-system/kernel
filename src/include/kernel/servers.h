@@ -43,8 +43,17 @@
 #define COMMAND_IOCTL           0x8007
 #define COMMAND_OPENDIR         0x8008
 #define COMMAND_READDIR         0x8009
+#define COMMAND_CHMOD           0x800A
+#define COMMAND_CHOWN           0x800B
+#define COMMAND_LINK            0x800C
+#define COMMAND_MKDIR           0x800D
+#define COMMAND_RMDIR           0x800E
 
-#define MAX_SYSCALL_COMMAND     0x8009
+#define COMMAND_EXEC            0x800F
+#define COMMAND_CHDIR           0x8010
+#define COMMAND_CHROOT          0x8011
+
+#define MAX_SYSCALL_COMMAND     0x8011
 
 /* these commands are for device drivers */
 #define COMMAND_IRQ             0xC000
@@ -179,6 +188,14 @@ typedef struct {
     struct dirent entry;
     char data[MAX_FILE_PATH];
 } ReaddirCommand;
+
+/* exec() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+
+    uint8_t elf[];      // ELF file
+} ExecCommand;
 
 void serverInit();
 void serverIdle();
