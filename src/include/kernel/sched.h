@@ -115,5 +115,6 @@ int yield(Thread *);
 pid_t fork(Thread *);
 void exit(Thread *, int);
 int execve(Thread *, uint16_t, const char *, const char **, const char **);
+int execveHandle(void *);
 int execrdv(Thread *, const char *, const char **);
 unsigned long msleep(Thread *, unsigned long);
