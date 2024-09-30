@@ -57,7 +57,7 @@ void tssSetup() {
     gdt[GDT_TSS_LOW].baseLo = (uintptr_t)tss;
     gdt[GDT_TSS_LOW].baseMi = (uintptr_t)tss >> 16;
     gdt[GDT_TSS_LOW].baseHi = (uintptr_t)tss >> 24;
-    gdt[GDT_TSS_LOW].limit = sizeof(TSS);
+    gdt[GDT_TSS_LOW].limit = sizeof(TSS) - 1;
     gdt[GDT_TSS_LOW].access = GDT_ACCESS_TSS | GDT_ACCESS_PRESENT;
 
     uint64_t *high = (uint64_t *)&gdt[GDT_TSS_HIGH];
