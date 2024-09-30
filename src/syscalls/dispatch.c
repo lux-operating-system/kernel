@@ -70,6 +70,26 @@ void syscallDispatchYield(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchExecve(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], ARG_MAX*sizeof(uintptr_t)) &&
+    syscallVerifyPointer(req, req->params[2], ARG_MAX*sizeof(uintptr_t))) {
+        req->requestID = syscallID();
+        int status = execve(req->thread, req->requestID, (const char *) req->params[0],
+            (const char **) req->params[1], (const char **) req->params[2]);
+        if(status) {
+            // error code
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchExecrdv(SyscallRequest *req) {
     req->ret = execrdv(req->thread, (const char *) req->params[0], (const char **) req->params[1]);
     req->unblock = true;
@@ -475,7 +495,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchFork,        // 1 - fork()
     syscallDispatchYield,       // 2 - yield()
     NULL,                       // 3 - waitpid()
-    NULL,                       // 4 - execve()
+    syscallDispatchExecve,      // 4 - execve()
     syscallDispatchExecrdv,     // 5 - execrdv()
     syscallDispatchGetPID,      // 6 - getpid()
     syscallDispatchGetTID,      // 7 - gettid()
