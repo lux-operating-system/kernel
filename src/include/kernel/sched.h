@@ -18,6 +18,7 @@
 #define SCHED_TIME_SLICE        1       // ms
 
 #define MAX_PID                 99999
+#define ARG_MAX                 128     // maximum number of arguments
 
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
