@@ -11,12 +11,12 @@
 #include <stdbool.h>
 #include <kernel/sched.h>
 
-#define MAX_SYSCALL             54
+#define MAX_SYSCALL             55
 
 /* IPC syscall indexes, these will be used for immediate handling without
  * waiting for the queue */
-#define SYSCALL_IPC_START       43      // recv()
-#define SYSCALL_IPC_END         44      // send()
+#define SYSCALL_IPC_START       44      // recv()
+#define SYSCALL_IPC_END         45      // send()
 
 #define SYSCALL_RW_START        16      // read()
 #define SYSCALL_RW_END          17      // write()
