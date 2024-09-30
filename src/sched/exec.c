@@ -6,9 +6,10 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <platform/platform.h>
 #include <platform/context.h>
-#include <platform/x86_64.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
 #include <kernel/elf.h>
@@ -104,14 +105,26 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
 
 /* execve(): replaces the current program, executes a program from a file
  * params: t - parent thread structure
+ * params: id - unique syscall ID
  * params: name - file name of the program
  * params: argv - arguments to be passed to the program
  * params: envp - environmental variables to be passed
  * returns: should not return on success
  */
 
-int execve(Thread *t, const char *name, const char **argv, const char **envp) {
-    return 0;    /* todo */
+int execve(Thread *t, uint16_t id, const char *name, const char **argv, const char **envp) {
+    // request an external server to load the executable for us
+    ExecCommand *cmd = calloc(1, sizeof(ExecCommand));
+    if(!cmd) return -ENOMEM;
+
+    cmd->header.header.command = COMMAND_EXEC;
+    cmd->header.header.length = sizeof(ExecCommand);
+    cmd->header.id = id;
+    strcpy(cmd->path, name);
+
+    int status = requestServer(t, cmd);
+    free(cmd);
+    return status;
 }
 
 /* execrdv(): replaces the current program, executes a program from the ramdisk
