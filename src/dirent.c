@@ -28,7 +28,14 @@ int opendir(Thread *t, uint64_t id, const char *path) {
     cmd->header.id = id;
     cmd->uid = p->user;
     cmd->gid = p->group;
-    strcpy(cmd->abspath, path);
+
+    if(path[0] == '/') {
+        strcpy(cmd->abspath, path);
+    } else {
+        strcpy(cmd->abspath, p->cwd);
+        cmd->abspath[strlen(cmd->abspath)] = '/';
+        strcpy(cmd->abspath + strlen(cmd->abspath), path);
+    }
     
     int status = requestServer(t, cmd);
     free(cmd);
