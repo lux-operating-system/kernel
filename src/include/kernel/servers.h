@@ -192,6 +192,8 @@ typedef struct {
 /* exec() */
 typedef struct {
     SyscallHeader header;
+    uid_t uid;
+    gid_t gid;
     char path[MAX_FILE_PATH];
 
     uint8_t elf[];      // ELF file
