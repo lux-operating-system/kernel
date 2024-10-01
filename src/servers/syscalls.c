@@ -209,6 +209,13 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         }
 
         break;
+    
+    case COMMAND_CHDIR:
+        if(hdr->header.status) break;
+
+        ChdirCommand *chdircmd = (ChdirCommand *) hdr;
+        strcpy(p->cwd, chdircmd->path);
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
