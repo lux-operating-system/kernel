@@ -198,8 +198,17 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     case COMMAND_EXEC:
         if(hdr->header.status) break;
 
-        execveHandle((ExecCommand *) hdr);
-        return;
+        int execStatus = execveHandle((ExecCommand *) hdr);
+
+        if(!execStatus) {
+            // current process has been replaced
+            schedRelease();
+            return;
+        } else {
+            req->ret = execStatus;
+        }
+
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
