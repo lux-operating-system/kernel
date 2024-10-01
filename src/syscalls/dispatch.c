@@ -267,6 +267,28 @@ void syscallDispatchLSeek(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchChdir(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = chdir(req->thread, req->requestID, (const char *) req->params[0]);
+        if(status) {
+            req->external = false;
+            req->ret = status;      // error code
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchGetCWD(SyscallRequest *req) {
+    req->ret = (uint64_t) getcwd(req->thread, (char *) req->params[0], req->params[1]);
+    req->unblock = true;
+}
+
 void syscallDispatchMount(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
     syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH) &&
@@ -523,36 +545,37 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 27 - rmdir()
     NULL,                       // 28 - utime()
     NULL,                       // 29 - chroot()
-    NULL,                       // 30 - chdir()
-    syscallDispatchMount,       // 31 - mount()
-    NULL,                       // 32 - umount()
-    NULL,                       // 33 - fnctl()
-    syscallDispatchOpendir,     // 34 - opendir()
-    syscallDispatchClosedir,    // 35 - closedir()
-    syscallDispatchReaddir,     // 36 - readdir_r()
-    syscallDispatchSeekdir,     // 37 - seekdir()
-    syscallDispatchTelldir,     // 38 - telldir()
+    syscallDispatchChdir,       // 30 - chdir()
+    syscallDispatchGetCWD,      // 31 - getcwd()
+    syscallDispatchMount,       // 32 - mount()
+    NULL,                       // 33 - umount()
+    NULL,                       // 34 - fnctl()
+    syscallDispatchOpendir,     // 35 - opendir()
+    syscallDispatchClosedir,    // 36 - closedir()
+    syscallDispatchReaddir,     // 37 - readdir_r()
+    syscallDispatchSeekdir,     // 38 - seekdir()
+    syscallDispatchTelldir,     // 39 - telldir()
 
     /* group 3: interprocess communication */
-    syscallDispatchSocket,      // 39 - socket()
-    syscallDispatchConnect,     // 40 - connect()
-    syscallDispatchBind,        // 41 - bind()
-    syscallDispatchListen,      // 42 - listen()
-    syscallDispatchAccept,      // 43 - accept()
-    syscallDispatchRecv,        // 44 - recv()
-    syscallDispatchSend,        // 45 - send()
-    NULL,                       // 46 - kill()
+    syscallDispatchSocket,      // 40 - socket()
+    syscallDispatchConnect,     // 41 - connect()
+    syscallDispatchBind,        // 42 - bind()
+    syscallDispatchListen,      // 43 - listen()
+    syscallDispatchAccept,      // 44 - accept()
+    syscallDispatchRecv,        // 45 - recv()
+    syscallDispatchSend,        // 46 - send()
+    NULL,                       // 47 - kill()
 
     /* group 4: memory management */
-    syscallDispatchSBrk,        // 47 - sbrk()
-    NULL,                       // 48 - mmap()
-    NULL,                       // 49 - munmap()
+    syscallDispatchSBrk,        // 48 - sbrk()
+    NULL,                       // 49 - mmap()
+    NULL,                       // 50 - munmap()
 
     /* group 5: driver I/O functions */
-    syscallDispatchIoperm,      // 50 - ioperm()
-    syscallDispatchIRQ,         // 51 - irq()
-    syscallDispatchIoctl,       // 52 - ioctl()
-    syscallDispatchMMIO,        // 53 - mmio()
-    syscallDispatchPContig,     // 54 - pcontig()
-    syscallDispatchVToP,        // 55 - vtop()
+    syscallDispatchIoperm,      // 51 - ioperm()
+    syscallDispatchIRQ,         // 52 - irq()
+    syscallDispatchIoctl,       // 53 - ioctl()
+    syscallDispatchMMIO,        // 54 - mmio()
+    syscallDispatchPContig,     // 55 - pcontig()
+    syscallDispatchVToP,        // 56 - vtop()
 };
