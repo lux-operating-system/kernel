@@ -43,3 +43,19 @@ int chdir(Thread *t, uint16_t id, const char *path) {
 
     return requestServer(t, &cmd);
 }
+
+/* getcwd(): returns the current working directory of the running process
+ * params: t - running thread
+ * params: buf - buffer to store the path in
+ * params: len - length of the buffer
+ * returns: pointer to buffer on success, negative error code on fail
+ */
+
+char *getcwd(Thread *t, char *buf, size_t len) {
+    Process *p = getProcess(t->pid);
+    if(!p) return (char *) -ESRCH;
+    if(!len) return (char *) -EINVAL;
+    if(len < (strlen(p->cwd) + 1)) return (char *) -ERANGE;
+
+    return strcpy(buf, p->cwd);
+}
