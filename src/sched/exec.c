@@ -117,9 +117,14 @@ int execve(Thread *t, uint16_t id, const char *name, const char **argv, const ch
     ExecCommand *cmd = calloc(1, sizeof(ExecCommand));
     if(!cmd) return -ENOMEM;
 
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
     cmd->header.header.command = COMMAND_EXEC;
     cmd->header.header.length = sizeof(ExecCommand);
     cmd->header.id = id;
+    cmd->uid = p->user;
+    cmd->gid = p->group;
     strcpy(cmd->path, name);
 
     int status = requestServer(t, cmd);
