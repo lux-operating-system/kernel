@@ -127,6 +127,21 @@ int execve(Thread *t, uint16_t id, const char *name, const char **argv, const ch
     return status;
 }
 
+/* execveHandle(): handles the response for execve()
+ * params: msg - response message structure
+ * returns: should not return on success
+ */
+
+int execveHandle(void *msg) {
+    ExecCommand *cmd = (ExecCommand *) msg;
+
+    Thread *t = getThread(cmd->header.header.requester);
+    if(!t) return -ESRCH;
+
+    SyscallRequest *req = &t->syscall;
+    return execmve(t, cmd->elf, NULL, NULL);;
+}
+
 /* execrdv(): replaces the current program, executes a program from the ramdisk
  * this is only used before file system drivers are loaded
  * params: t - parent thread structure
@@ -156,7 +171,10 @@ int execrdv(Thread *t, const char *name, const char **argv) {
         return -1;
     }
 
-    return execmve(t, image, argv, NULL);
+    int status = execmve(t, image, argv, NULL);
+    free(image);
+    schedRelease();
+    return status;
 }
 
 /* execmve(): helper function that replaces the current running program from memory
@@ -172,15 +190,11 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     // this guarantees we can return on failure
     void *newctx = calloc(1, PLATFORM_CONTEXT_SIZE);
     if(!newctx) {
-        free(image);
-        schedRelease();
         return -1;
     }
 
     if(!platformCreateContext(newctx, PLATFORM_CONTEXT_USER, 0, 0)) {
         free(newctx);
-        free(image);
-        schedRelease();
         return -1;
     }
 
@@ -192,7 +206,6 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     // parse the binary
     uint64_t highest;
     uint64_t entry = loadELF(image, &highest);
-    free(image);
     if(!entry || !highest) {
         t->context = oldctx;
         free(newctx);
@@ -203,7 +216,6 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     if(platformSetContext(t, entry, highest, argv, envp)) {
         t->context = oldctx;
         free(newctx);
-        schedRelease();
         return -1;
     }
 
@@ -227,6 +239,5 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
 
     t->status = THREAD_QUEUED;
     schedAdjustTimeslice();
-    schedRelease();
     return 0; // return to syscall dispatcher; the thread will not see this return
 }
