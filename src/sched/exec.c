@@ -139,7 +139,65 @@ int execveHandle(void *msg) {
     if(!t) return -ESRCH;
 
     SyscallRequest *req = &t->syscall;
-    return execmve(t, cmd->elf, NULL, NULL);;
+
+    // temporarily switch to the thread's context so we can parse
+    // arguments and environmental variables
+    threadUseContext(t->tid);
+    int argc = 0, envc = 0;
+
+    const char **argvSrc = (const char **) req->params[1];
+    const char **envpSrc = (const char **) req->params[2];
+
+    while(*argvSrc) {
+        argc++;
+        argvSrc++;
+    }
+
+    while(*envpSrc) {
+        envc++;
+        envpSrc++;
+    }
+
+    argvSrc = (const char **) req->params[1];
+    envpSrc = (const char **) req->params[2];
+
+    char **argv = calloc(argc+1, sizeof(char *));
+    char **envp = calloc(envc+1, sizeof(char *));
+
+    if(!argv || !envp) return -ENOMEM;
+
+    for(int i = 0; argc && (i < argc); i++) {
+        argv[i] = malloc(strlen(argvSrc[i]) + 1);
+        if(!argv[i]) return -ENOMEM;
+
+        strcpy(argv[i], argvSrc[i]);
+    }
+
+    for(int i = 0; envc && (i < envc); i++) {
+        envp[i] = malloc(strlen(envpSrc[i]) + 1);
+        if(!envp[i]) return -ENOMEM;
+
+        strcpy(envp[i], envpSrc[i]);
+    }
+
+    // null terminate the args and env in accordance with posix
+    argv[argc] = NULL;
+    envp[envc] = NULL;
+
+    int status = execmve(t, cmd->elf, (const char **) argv, (const char **) envp);
+
+    // now free the memory we used up for parsing the args
+    for(int i = 0; argc && (i < argc); i++) {
+        if(argv[i]) free(argv[i]);
+    }
+
+    for(int i = 0; envc && (i < envc); i++) {
+        if(envp[i]) free(envp[i]);
+    }
+
+    free(argv);
+    free(envp);
+    return status;
 }
 
 /* execrdv(): replaces the current program, executes a program from the ramdisk
