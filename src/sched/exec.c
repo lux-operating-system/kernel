@@ -143,6 +143,9 @@ int execveHandle(void *msg) {
     Thread *t = getThread(cmd->header.header.requester);
     if(!t) return -ESRCH;
 
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
     SyscallRequest *req = &t->syscall;
 
     // temporarily switch to the thread's context so we can parse
@@ -171,11 +174,20 @@ int execveHandle(void *msg) {
 
     if(!argv || !envp) return -ENOMEM;
 
+    memset(p->command, 0, ARG_MAX);
+
     for(int i = 0; argc && (i < argc); i++) {
         argv[i] = malloc(strlen(argvSrc[i]) + 1);
         if(!argv[i]) return -ENOMEM;
 
         strcpy(argv[i], argvSrc[i]);
+        if(i == 0) {
+            strcpy(p->name, argvSrc[0]);
+            strcpy(p->command, argvSrc[0]);
+        } else {
+            strcpy(p->command + strlen(p->command), " ");
+            strcpy(p->command + strlen(p->command), argvSrc[i]);
+        }
     }
 
     for(int i = 0; envc && (i < envc); i++) {
@@ -215,6 +227,16 @@ int execveHandle(void *msg) {
 
 int execrdv(Thread *t, const char *name, const char **argv) {
     schedLock();
+
+    Process *p = getProcess(t->pid);
+    if(!p) {
+        schedRelease();
+        return -ESRCH;
+    }
+
+    // set new name
+    strcpy(p->name, name);
+    strcpy(p->command, name);
 
     // load from ramdisk
     int64_t size = ramdiskFileSize(name);
