@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <kernel/syscalls.h>
 #include <kernel/io.h>
@@ -18,7 +19,6 @@
 #define SCHED_TIME_SLICE        1       // ms
 
 #define MAX_PID                 99999
-#define ARG_MAX                 128     // maximum number of arguments
 
 #define THREAD_QUEUED           0
 #define THREAD_RUNNING          1
@@ -61,6 +61,8 @@ typedef struct Process {
 
     struct IODescriptor io[MAX_IO_DESCRIPTORS];
     int iodCount;
+
+    char cwd[MAX_PATH];
 
     int pages;              // memory pages used
 
