@@ -86,6 +86,9 @@ pid_t fork(Thread *t) {
 
     for(int i = 0; i < MAX_IO_DESCRIPTORS; i++)
         if(p->io[i].valid) p->io[i].clone = true;
+    
+    // clone working directory
+    strcpy(p->cwd, parent->cwd);
 
     // if we made this far then the creation was successful
     // list the child process as a child of the parent
