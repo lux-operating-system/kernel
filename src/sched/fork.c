@@ -90,6 +90,10 @@ pid_t fork(Thread *t) {
     // clone working directory
     strcpy(p->cwd, parent->cwd);
 
+    // clone command line and process name
+    strcpy(p->name, parent->name);
+    strcpy(p->command, parent->command);
+
     // if we made this far then the creation was successful
     // list the child process as a child of the parent
     if(parent) {
