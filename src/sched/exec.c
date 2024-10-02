@@ -118,7 +118,10 @@ int execve(Thread *t, uint16_t id, const char *name, const char **argv, const ch
     if(!cmd) return -ENOMEM;
 
     Process *p = getProcess(t->pid);
-    if(!p) return -ESRCH;
+    if(!p) {
+        free(cmd);
+        return -ESRCH;
+    }
 
     cmd->header.header.command = COMMAND_EXEC;
     cmd->header.header.length = sizeof(ExecCommand);
