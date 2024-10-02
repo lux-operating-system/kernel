@@ -39,13 +39,23 @@ int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *
 }
 
 int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
     StatCommand *command = calloc(1, sizeof(StatCommand));
     if(!command) return -ENOMEM;
 
     command->header.header.command = COMMAND_STAT;
     command->header.header.length = sizeof(StatCommand);
     command->header.id = id;
-    strcpy(command->path, path);
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
 
     int status = requestServer(t, command);
     free(command);
@@ -77,7 +87,14 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
     command->mode = mode;
     command->uid = p->user;
     command->gid = p->group;
-    strcpy(command->abspath, path);
+
+    if(path[0] == '/') {
+        strcpy(command->abspath, path);
+    } else {
+        strcpy(command->abspath, p->cwd);
+        command->abspath[strlen(command->abspath)] = '/';
+        strcpy(command->abspath + strlen(command->abspath), path);
+    }
 
     int status = requestServer(t, command);
     free(command);

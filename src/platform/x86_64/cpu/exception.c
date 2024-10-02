@@ -91,13 +91,21 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     if(pid > 0) {
         pid_t tid = getTid();
         Thread *t = getThread(getTid());
+        Process *p = getProcess(pid);
+
+        char *name;
+        if(p) name = p->name;
+        else name = NULL;
+
         if(number == 14) {
             // for unresolved page faults, print out the faulting logical address
-            KWARN("cpu %d (tid %d): %s @ 0x%X:0x%X, code %d address 0x%X\n", platformWhichCPU(), tid, exceptions[number], r->cs, r->rip, code, readCR2());
+            KWARN("cpu %d (tid %d %s): %s @ 0x%X:0x%X, code %d address 0x%X\n", platformWhichCPU(), tid,
+                name ? name : "unnamed process", exceptions[number], r->cs, r->rip, code, readCR2());
             if(t) KWARN("program break was at 0x%X\n", t->highest);
         } else {
             // for everything but page faults
-            KWARN("cpu %d (tid %d): %s @ 0x%X:0x%X, code %d\n", platformWhichCPU(), tid, exceptions[number], r->cs, r->rip, code);
+            KWARN("cpu %d (tid %d %s): %s @ 0x%X:0x%X, code %d\n", platformWhichCPU(), tid,
+                name ? name : "unnamed process", exceptions[number], r->cs, r->rip, code);
         }
 
         // and let the scheduler handle it

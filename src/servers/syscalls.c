@@ -194,6 +194,28 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         }
 
         break;
+    
+    case COMMAND_EXEC:
+        if(hdr->header.status) break;
+
+        int execStatus = execveHandle((ExecCommand *) hdr);
+
+        if(!execStatus) {
+            // current process has been replaced
+            schedRelease();
+            return;
+        } else {
+            req->ret = execStatus;
+        }
+
+        break;
+    
+    case COMMAND_CHDIR:
+        if(hdr->header.status) break;
+
+        ChdirCommand *chdircmd = (ChdirCommand *) hdr;
+        strcpy(p->cwd, chdircmd->path);
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);

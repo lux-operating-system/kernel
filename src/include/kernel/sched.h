@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <kernel/syscalls.h>
 #include <kernel/io.h>
@@ -55,11 +56,13 @@ typedef struct Process {
     bool orphan;            // true when the parent process exits or is killed
     bool zombie;            // true when all threads are zombies
 
-    char *env;              // environmental variables
-    char *command;          // command line with arguments
+    char command[ARG_MAX*32];   // command line with arguments
+    char name[MAX_PATH];        // file name
 
     struct IODescriptor io[MAX_IO_DESCRIPTORS];
     int iodCount;
+
+    char cwd[MAX_PATH];
 
     int pages;              // memory pages used
 
@@ -113,6 +116,7 @@ Thread *getKernelThread();
 int yield(Thread *);
 pid_t fork(Thread *);
 void exit(Thread *, int);
-int execve(Thread *, const char *, const char **, const char **);
+int execve(Thread *, uint16_t, const char *, const char **, const char **);
+int execveHandle(void *);
 int execrdv(Thread *, const char *, const char **);
 unsigned long msleep(Thread *, unsigned long);

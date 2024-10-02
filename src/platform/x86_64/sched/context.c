@@ -140,7 +140,7 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
     ctx->regs.rdi = (uint64_t)argv;
     ctx->regs.rsi = (uint64_t)envp;
 
-    // allocate a user stack
+    // allocate memory for the arguments and environmental variables
     uintptr_t base = highest;
     while(base % PAGE_SIZE) {
         base++;
@@ -148,6 +148,49 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
 
     base += PAGE_SIZE;      // guard page
 
+    // parse args
+    if(argv) {
+        int argc;
+        for(argc = 0; argv[argc]; argc++);
+
+        uintptr_t *args = (uintptr_t *) vmmAllocate(base, USER_LIMIT_ADDRESS, 1, VMM_WRITE | VMM_USER);
+        if(!args) return -1;
+
+        ctx->regs.rdi = (uint64_t) args;
+
+        // copy args
+        for(int i = 0; argc && i < argc; i++) {
+            args[i] = vmmAllocate(base, USER_LIMIT_ADDRESS, 1, VMM_WRITE | VMM_USER);
+            if(!args[i]) return -1;
+            strcpy((char *) args[i], argv[i]);
+        }
+
+        // and null terminate
+        args[argc] = 0;
+    }
+
+    // likewise for the env variables
+    if(envp) {
+        int envc;
+        for(envc = 0; envp[envc]; envc++);
+
+        uintptr_t *envs = (uintptr_t *) vmmAllocate(base, USER_LIMIT_ADDRESS, 1, VMM_WRITE | VMM_USER);
+        if(!envs) return -1;
+
+        ctx->regs.rsi = (uint64_t) envs;
+
+        // copy env variables
+        for(int i = 0; envc && i < envc; i++) {
+            envs[i] = vmmAllocate(base, USER_LIMIT_ADDRESS, 1, VMM_WRITE | VMM_USER);
+            if(!envs[i]) return -1;
+            strcpy((void *) envs[i], envp[i]);
+        }
+
+        // and null terminate
+        envs[envc] = 0;
+    }
+
+    // now allocate a stack
     size_t pages = (PLATFORM_THREAD_STACK+PAGE_SIZE-1)/PAGE_SIZE;
     pages++;
 
@@ -158,7 +201,7 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
     stack += PLATFORM_THREAD_STACK;
     ctx->regs.rsp = stack;
 
-    t->highest = stack + PAGE_SIZE;     // requisite to sbrk() someday
+    t->highest = stack + PAGE_SIZE;     // requisite to sbrk()
 
     t->pages = (t->highest - USER_BASE_ADDRESS + PAGE_SIZE - 1) / PAGE_SIZE;
     return 0;

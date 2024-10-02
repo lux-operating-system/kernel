@@ -70,6 +70,26 @@ void syscallDispatchYield(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchExecve(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], ARG_MAX*sizeof(uintptr_t)) &&
+    syscallVerifyPointer(req, req->params[2], ARG_MAX*sizeof(uintptr_t))) {
+        req->requestID = syscallID();
+        int status = execve(req->thread, req->requestID, (const char *) req->params[0],
+            (const char **) req->params[1], (const char **) req->params[2]);
+        if(status) {
+            // error code
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchExecrdv(SyscallRequest *req) {
     req->ret = execrdv(req->thread, (const char *) req->params[0], (const char **) req->params[1]);
     req->unblock = true;
@@ -244,6 +264,28 @@ void syscallDispatchFStat(SyscallRequest *req) {
 
 void syscallDispatchLSeek(SyscallRequest *req) {
     req->ret = lseek(req->thread, req->params[0], req->params[1], req->params[2]);
+    req->unblock = true;
+}
+
+void syscallDispatchChdir(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = chdir(req->thread, req->requestID, (const char *) req->params[0]);
+        if(status) {
+            req->external = false;
+            req->ret = status;      // error code
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchGetCWD(SyscallRequest *req) {
+    req->ret = (uint64_t) getcwd(req->thread, (char *) req->params[0], req->params[1]);
     req->unblock = true;
 }
 
@@ -475,7 +517,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchFork,        // 1 - fork()
     syscallDispatchYield,       // 2 - yield()
     NULL,                       // 3 - waitpid()
-    NULL,                       // 4 - execve()
+    syscallDispatchExecve,      // 4 - execve()
     syscallDispatchExecrdv,     // 5 - execrdv()
     syscallDispatchGetPID,      // 6 - getpid()
     syscallDispatchGetTID,      // 7 - gettid()
@@ -503,35 +545,37 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 27 - rmdir()
     NULL,                       // 28 - utime()
     NULL,                       // 29 - chroot()
-    syscallDispatchMount,       // 30 - mount()
-    NULL,                       // 31 - umount()
-    NULL,                       // 32 - fnctl()
-    syscallDispatchOpendir,     // 33 - opendir()
-    syscallDispatchClosedir,    // 34 - closedir()
-    syscallDispatchReaddir,     // 35 - readdir_r()
-    syscallDispatchSeekdir,     // 36 - seekdir()
-    syscallDispatchTelldir,     // 37 - telldir()
+    syscallDispatchChdir,       // 30 - chdir()
+    syscallDispatchGetCWD,      // 31 - getcwd()
+    syscallDispatchMount,       // 32 - mount()
+    NULL,                       // 33 - umount()
+    NULL,                       // 34 - fnctl()
+    syscallDispatchOpendir,     // 35 - opendir()
+    syscallDispatchClosedir,    // 36 - closedir()
+    syscallDispatchReaddir,     // 37 - readdir_r()
+    syscallDispatchSeekdir,     // 38 - seekdir()
+    syscallDispatchTelldir,     // 39 - telldir()
 
     /* group 3: interprocess communication */
-    syscallDispatchSocket,      // 38 - socket()
-    syscallDispatchConnect,     // 39 - connect()
-    syscallDispatchBind,        // 40 - bind()
-    syscallDispatchListen,      // 41 - listen()
-    syscallDispatchAccept,      // 42 - accept()
-    syscallDispatchRecv,        // 43 - recv()
-    syscallDispatchSend,        // 44 - send()
-    NULL,                       // 45 - kill()
+    syscallDispatchSocket,      // 40 - socket()
+    syscallDispatchConnect,     // 41 - connect()
+    syscallDispatchBind,        // 42 - bind()
+    syscallDispatchListen,      // 43 - listen()
+    syscallDispatchAccept,      // 44 - accept()
+    syscallDispatchRecv,        // 45 - recv()
+    syscallDispatchSend,        // 46 - send()
+    NULL,                       // 47 - kill()
 
     /* group 4: memory management */
-    syscallDispatchSBrk,        // 46 - sbrk()
-    NULL,                       // 47 - mmap()
-    NULL,                       // 48 - munmap()
+    syscallDispatchSBrk,        // 48 - sbrk()
+    NULL,                       // 49 - mmap()
+    NULL,                       // 50 - munmap()
 
     /* group 5: driver I/O functions */
-    syscallDispatchIoperm,      // 49 - ioperm()
-    syscallDispatchIRQ,         // 50 - irq()
-    syscallDispatchIoctl,       // 51 - ioctl()
-    syscallDispatchMMIO,        // 52 - mmio()
-    syscallDispatchPContig,     // 53 - pcontig()
-    syscallDispatchVToP,        // 54 - vtop()
+    syscallDispatchIoperm,      // 51 - ioperm()
+    syscallDispatchIRQ,         // 52 - irq()
+    syscallDispatchIoctl,       // 53 - ioctl()
+    syscallDispatchMMIO,        // 54 - mmio()
+    syscallDispatchPContig,     // 55 - pcontig()
+    syscallDispatchVToP,        // 56 - vtop()
 };
