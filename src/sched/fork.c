@@ -82,21 +82,19 @@ pid_t fork(Thread *t) {
     if(parent) {
         memcpy(p->io, parent->io, sizeof(IODescriptor) * MAX_IO_DESCRIPTORS);
         p->iodCount = parent->iodCount;
-    }
 
-    for(int i = 0; i < MAX_IO_DESCRIPTORS; i++)
-        if(p->io[i].valid) p->io[i].clone = true;
-    
-    // clone working directory
-    strcpy(p->cwd, parent->cwd);
+        for(int i = 0; i < MAX_IO_DESCRIPTORS; i++)
+            if(p->io[i].valid) p->io[i].clone = true;
 
-    // clone command line and process name
-    strcpy(p->name, parent->name);
-    strcpy(p->command, parent->command);
+        // clone working directory
+        strcpy(p->cwd, parent->cwd);
 
-    // if we made this far then the creation was successful
-    // list the child process as a child of the parent
-    if(parent) {
+        // clone command line and process name
+        strcpy(p->name, parent->name);
+        strcpy(p->command, parent->command);
+
+        // if we made this far then the creation was successful
+        // list the child process as a child of the parent
         parent->childrenCount++;
         parent->children = realloc(parent->children, parent->childrenCount);
         if(parent->children) parent->children[parent->childrenCount-1] = p;
