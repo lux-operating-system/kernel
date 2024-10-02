@@ -27,6 +27,28 @@ memcpy:
 
     ret
 
+; void *memmove(void *dst, const void *src, size_t n)
+global memmove
+align 16
+memmove:
+    mov rax, rdi        ; return value
+
+    mov r8, rdi
+    sub r8, rsi
+    jns .check_overlap
+
+    not r8
+    inc r8
+
+.check_overlap:
+    cmp r8, 8
+    jle memcpy
+
+    mov rcx, rdx
+    rep movsb
+
+    ret
+
 ; void *memset(void *dst, int val, size_t n)
 global memset
 align 16
