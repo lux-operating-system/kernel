@@ -24,7 +24,7 @@ static pid_t processStatus(Process *p, int *status) {
         Thread *t = p->threads[i];
         if(!t) continue;
 
-        if(!t->clean && (t->status == THREAD_ZOMBIE)) {
+        if((!t->clean) && (t->status == THREAD_ZOMBIE)) {
             t->clean = true;
             *status = t->exitStatus;
             return t->tid;
@@ -80,7 +80,7 @@ pid_t waitpid(Thread *t, pid_t pid, int *status, int options) {
         Process *child = p->children[i];
         if(!child) continue;
     
-        pid = processStatus(p, status);
+        pid = processStatus(child, status);
         if(pid) {
             // return pid here which will be valid for both error and success
             schedRelease();
