@@ -34,12 +34,18 @@
 #define EXIT_NORMAL             0x100
 #define EXIT_SIGNALED           0x200
 
+// waitpid() flags
+#define WCONTINUED              0x01
+#define WNOHANG                 0x02
+#define WUNTRACED               0x04
+
 typedef struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;          // timeslice OR sleep time if sleeping thread
 
     bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
+    bool clean;             // true when the exit status has been read by waitpid() 
 
     SyscallRequest syscall; // for when the thread is blocked
     int exitStatus;         // for zombie threads
