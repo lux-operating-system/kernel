@@ -75,12 +75,12 @@ void syscallDispatchWaitPID(SyscallRequest *req) {
         pid_t status = waitpid(req->thread, req->params[0], (int *) req->params[1], req->params[2]);
         
         // block if necessary
-        if((!status) && !(req->params[2] & WNOHANG)) {
+        if((!status) && (!(req->params[2] & WNOHANG))) {
             req->unblock = false;
-            req->retry = true;
-            req->next = NULL;
             req->busy = false;
             req->queued = true;
+            req->next = NULL;
+            req->retry = true;
             syscallEnqueue(req);
         } else {
             req->ret = status;
