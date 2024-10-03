@@ -37,7 +37,7 @@ int chdir(Thread *t, uint16_t id, const char *path) {
         strcpy(cmd.path, path);
     } else {
         strcpy(cmd.path, p->cwd);
-        cmd.path[strlen(cmd.path)] = '/';
+        if(strlen(p->cwd) > 1) cmd.path[strlen(cmd.path)] = '/';
         strcpy(cmd.path + strlen(cmd.path), path);
     }
 
