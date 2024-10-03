@@ -30,6 +30,10 @@
 #define PRIORITY_HIGH           2
 #define PRIORITY_HIGHEST        3
 
+// exit status
+#define EXIT_NORMAL             0x100
+#define EXIT_SIGNALED           0x200
+
 typedef struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
@@ -120,3 +124,4 @@ int execve(Thread *, uint16_t, const char *, const char **, const char **);
 int execveHandle(void *);
 int execrdv(Thread *, const char *, const char **);
 unsigned long msleep(Thread *, unsigned long);
+pid_t waitpid(Thread *, pid_t, int *, int);
