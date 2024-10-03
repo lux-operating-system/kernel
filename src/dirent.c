@@ -33,7 +33,7 @@ int opendir(Thread *t, uint64_t id, const char *path) {
         strcpy(cmd->abspath, path);
     } else {
         strcpy(cmd->abspath, p->cwd);
-        cmd->abspath[strlen(cmd->abspath)] = '/';
+        if(strlen(p->cwd) > 1) cmd->abspath[strlen(cmd->abspath)] = '/';
         strcpy(cmd->abspath + strlen(cmd->abspath), path);
     }
     
