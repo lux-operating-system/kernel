@@ -53,7 +53,7 @@ int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
         strcpy(command->path, path);
     } else {
         strcpy(command->path, p->cwd);
-        command->path[strlen(command->path)] = '/';
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
         strcpy(command->path + strlen(command->path), path);
     }
 
@@ -92,7 +92,7 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
         strcpy(command->abspath, path);
     } else {
         strcpy(command->abspath, p->cwd);
-        command->abspath[strlen(command->abspath)] = '/';
+        if(strlen(p->cwd) > 1) command->abspath[strlen(command->abspath)] = '/';
         strcpy(command->abspath + strlen(command->abspath), path);
     }
 
