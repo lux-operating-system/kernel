@@ -70,6 +70,25 @@ void syscallDispatchYield(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchWaitPID(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], sizeof(int))) {
+        pid_t status = waitpid(req->thread, req->params[0], (int *) req->params[1], req->params[2]);
+        
+        // block if necessary
+        if((!status) && (!(req->params[2] & WNOHANG))) {
+            req->unblock = false;
+            req->busy = false;
+            req->queued = true;
+            req->next = NULL;
+            req->retry = true;
+            syscallEnqueue(req);
+        } else {
+            req->ret = status;
+            req->unblock = true;
+        }
+    }
+}
+
 void syscallDispatchExecve(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
     syscallVerifyPointer(req, req->params[1], ARG_MAX*sizeof(uintptr_t)) &&
@@ -516,7 +535,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchExit,        // 0 - exit()
     syscallDispatchFork,        // 1 - fork()
     syscallDispatchYield,       // 2 - yield()
-    NULL,                       // 3 - waitpid()
+    syscallDispatchWaitPID,     // 3 - waitpid()
     syscallDispatchExecve,      // 4 - execve()
     syscallDispatchExecrdv,     // 5 - execrdv()
     syscallDispatchGetPID,      // 6 - getpid()

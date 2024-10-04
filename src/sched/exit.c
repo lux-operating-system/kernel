@@ -18,9 +18,13 @@
  */
 
 void terminateThread(Thread *t, int status, bool normal) {
+    status &= 0xFF;             // POSIX specifies signed 8-bit exit codes
+
     t->status = THREAD_ZOMBIE;  // zombie status until the exit status is read
     t->normalExit = normal;
     t->exitStatus = status;     // this should technically only be valid for normal exit
+
+    if(normal) t->exitStatus |= EXIT_NORMAL;
 
     // lumen can never terminate
     if(t->pid == getLumenPID() || t->tid == getLumenPID()) {
