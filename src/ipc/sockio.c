@@ -46,23 +46,39 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
     sa_family_t family = self->address.sa_family;
 
     if(family == AF_UNIX || family == AF_LOCAL) {
-        // simply append to the peer's inbound list
-        void **newlist = realloc(peer->inbound, (peer->inboundCount+1) * sizeof(void *));
-        if(!newlist) {
-            socketRelease();
-            return -ENOBUFS;
+        if(!peer->inbound || !peer->inboundLen || !peer->inboundMax) {
+            // ensure that the peer's inbound list exists at all
+            peer->inbound = calloc(SOCKET_IO_BACKLOG, sizeof(void *));
+            peer->inboundLen = calloc(SOCKET_IO_BACKLOG, sizeof(size_t));
+
+            if(!peer->inbound || !peer->inboundLen) {
+                socketRelease();
+                return -ENOMEM;
+            }
+
+            peer->inboundMax = SOCKET_IO_BACKLOG;
+            peer->inboundCount = 0;
         }
 
-        peer->inbound = newlist;
+        if(peer->inboundCount >= peer->inboundMax) {
+            // reallocate the backlog if necessary
+            void **newlist = realloc(peer->inbound, peer->inboundMax * 2 * sizeof(void *));
+            if(!newlist) {
+                socketRelease();
+                return -ENOMEM;
+            }
 
-        size_t *newlen = realloc(peer->inboundLen, (peer->inboundCount+1) * sizeof(size_t));
+            peer->inbound = newlist;
 
-        if(!newlen) {
-            socketRelease();
-            return -ENOBUFS;
+            size_t *newlen = realloc(peer->inboundLen, peer->inboundMax * 2 * sizeof(void *));
+            if(!newlen) {
+                socketRelease();
+                return -ENOMEM;
+            }
+
+            peer->inboundLen = newlen;
+            peer->inboundMax *= 2;
         }
-
-        peer->inboundLen = newlen;
 
         void *message = malloc(len);
         if(!message) {
@@ -72,8 +88,8 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 
         // and send
         memcpy(message, buffer, len);
-        newlist[peer->inboundCount] = message;
-        newlen[peer->inboundCount] = len;
+        peer->inbound[peer->inboundCount] = message;
+        peer->inboundLen[peer->inboundCount] = len;
         peer->inboundCount++;
 
         socketRelease();
@@ -136,15 +152,8 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
 
             self->inboundCount--;
             if(self->inboundCount) {
-                memmove(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
-                memmove(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
-                //self->inbound = realloc(self->inbound, self->inboundCount * sizeof(void *));
-                //self->inboundLen = realloc(self->inboundLen, self->inboundCount * sizeof(size_t));
-            } else {
-                free(self->inbound);
-                free(self->inboundLen);
-                self->inbound = NULL;
-                self->inboundLen = NULL;
+                memcpy(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
+                memcpy(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
             }
         }
 

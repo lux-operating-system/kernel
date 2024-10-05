@@ -17,6 +17,8 @@
 #define MAX_SOCKETS             (1 << 18)   // 262k
 #define SOCKET_DEFAULT_BACKLOG  1024        // default socket backlog size
 
+#define SOCKET_IO_BACKLOG       64          // default I/O backlog size
+
 /* socket family/domain - only Unix sockets will be implemented in the kernel */
 #define AF_UNIX                 1
 #define AF_LOCAL                AF_UNIX
@@ -58,6 +60,7 @@ typedef struct SocketDescriptor {
     bool listener;
     int globalIndex;
     int type, protocol, backlogMax, backlogCount;
+    int inboundMax, outboundMax;        // buffer sizes
     int inboundCount, outboundCount;
     void **inbound, **outbound;
     size_t *inboundLen, *outboundLen;
