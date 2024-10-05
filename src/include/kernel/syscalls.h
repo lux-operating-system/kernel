@@ -13,9 +13,9 @@
 
 #define MAX_SYSCALL             56
 
-/* IPC syscall indexes, these will be used for immediate handling without
- * waiting for the queue */
-#define SYSCALL_IPC_START       45      // recv()
+/* IPC syscall indexes, this range will be used for immediate handling without
+ * waiting for the kernel thread to dispatch the syscall */
+#define SYSCALL_IPC_START       42      // bind()
 #define SYSCALL_IPC_END         46      // send()
 
 #define SYSCALL_RW_START        16      // read()
