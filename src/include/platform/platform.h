@@ -26,6 +26,8 @@
 #define PLATFORM_PAGE_NO_CACHE              0x0020
 #define PLATFORM_PAGE_ERROR                 0x8000      // all bits invalid if this bit is set
 
+extern char *platformCPUModel;
+
 int platformCPUSetup();         // very early setup for one CPU
 int platformPagingSetup();      // paging setup for virtual memory management
 uintptr_t platformGetPage(int *, uintptr_t);     // get physical address and flags of a page
