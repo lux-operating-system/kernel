@@ -90,12 +90,13 @@ typedef struct {
 /* sysinfo command */
 typedef struct {
     MessageHeader header;
-    char kernel[64];        // version string
     uint64_t uptime;
     int maxPid, maxSockets, maxFiles;
     int processes, threads;
     int pageSize;
     int memorySize, memoryUsage;    // in pages
+    char kernel[64];                // version string
+    char cpu[64];                   // CPU model
 } SysInfoResponse;
 
 /* framebuffer access command */
