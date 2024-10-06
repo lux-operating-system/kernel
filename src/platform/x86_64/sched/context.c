@@ -289,14 +289,17 @@ void setLocalSched(bool sched) {
 
 void freePT(uint64_t *base, int depth, int maxdepth) {
     if(depth < 0 || depth > maxdepth) return;
+
+    PhysicalMemoryStatus st;
+    pmmStatus(&st);
+
     for(int i = 0; i < 512; i++) {
         uint64_t entry = base[i];
         uint64_t phys = entry & ~((PAGE_SIZE-1) | PT_PAGE_NXE);
-        if((entry & PT_PAGE_PRESENT) && phys) {
+        if((entry & PT_PAGE_PRESENT) && (phys) && (phys < st.highestUsableAddress)) {
             if(depth < maxdepth)
                 freePT((uint64_t *) vmmMMIO(phys, true), depth+1, maxdepth);
-            
-            //KDEBUG("freeing 0x%X at depth %d\n", phys, depth);
+
             pmmFree(phys);
         }
     }
@@ -315,10 +318,15 @@ void platformCleanThread(void *ptr, uintptr_t highest) {
     if(!ctx->cr3) return;
     
     // free the page tables themselves and all associated physical mem
-    uint64_t saved = readCR3();
-    writeCR3(ctx->cr3);
-    vmmFree(USER_BASE_ADDRESS, (highest-USER_BASE_ADDRESS) / PAGE_SIZE);
-    writeCR3(saved);
+    //uint64_t saved = readCR3();
+    //writeCR3(ctx->cr3);
+    //vmmFree(USER_BASE_ADDRESS, (highest-USER_BASE_ADDRESS) / PAGE_SIZE);
+    //writeCR3(saved);
+
+    uint64_t *pml4 = (uint64_t *) vmmMMIO(ctx->cr3, true);
+    for(int i = 0; i < 256; i++) {
+        freePT((uint64_t *) vmmMMIO(pml4[i] & ~(PAGE_SIZE-1), true), 1, 3);
+    }
 
     pmmFree(ctx->cr3);
 }

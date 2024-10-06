@@ -262,7 +262,7 @@ uint64_t clonePagingLayer(uint64_t ptr, int layer) {
                 newPhys = pmmAllocate();
                 if(!newPhys) return 0;
 
-                oldPhys = parent[i] & ~(PAGE_SIZE-1) & ~PT_PAGE_NXE;
+                oldPhys = parent[i] & ~((PAGE_SIZE-1) | PT_PAGE_NXE);
                 memcpy((void *)vmmMMIO(newPhys, true), (const void *)vmmMMIO(oldPhys, true), PAGE_SIZE);
 
                 clone[i] = newPhys | (parent[i] & ((uint64_t)PT_PAGE_LOW_FLAGS | PT_PAGE_NXE));   // copy the parent's permissions
@@ -275,6 +275,8 @@ uint64_t clonePagingLayer(uint64_t ptr, int layer) {
                 clone[i] = clonePagingLayer(oldPhys, layer+1);
                 clone[i] |= parent[i] & PT_PAGE_LOW_FLAGS;  // copy permissions again
             }
+        } else {
+            clone[i] = 0;
         }
     }
 
@@ -296,8 +298,10 @@ void *platformCloneUserSpace(uintptr_t parent) {
     for(int i = 0; i < 256; i++) {
         uint64_t ptr = oldPML4[i] & ~(PAGE_SIZE-1);
         uint64_t flags = oldPML4[i] & PT_PAGE_LOW_FLAGS;
-        if(oldPML4[i]) {
+        if((flags & PT_PAGE_PRESENT) && ptr) {
             newPML4[i] = clonePagingLayer(ptr, 0) | flags;
+        } else {
+            newPML4[i] = 0;
         }
     }
 
