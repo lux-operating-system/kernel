@@ -76,6 +76,7 @@ void serverSysinfo(Thread *t, int sd, const MessageHeader *req, void *res) {
     sysinfo->processes = processes;
     sysinfo->threads = threads;
     strcpy(sysinfo->kernel, KERNEL_VERSION);
+    strcpy(sysinfo->cpu, platformCPUModel);
     send(NULL, sd, sysinfo, sizeof(SysInfoResponse), 0);
 }
 
