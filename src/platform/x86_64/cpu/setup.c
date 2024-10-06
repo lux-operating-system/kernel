@@ -16,6 +16,9 @@ GDTR gdtr;
 IDTEntry idt[256];
 IDTR idtr;
 
+static char _model[49];
+char *platformCPUModel = _model;
+
 int platformCPUSetup() {
     // construct a global descriptor table
     memset(&gdt, 0, sizeof(GDTEntry) * GDT_ENTRIES);
@@ -54,8 +57,6 @@ int platformCPUSetup() {
     gdt[GDT_USER_DATA].access = GDT_ACCESS_PRESENT | GDT_ACCESS_CODE_DATA | GDT_ACCESS_RW;
     gdt[GDT_USER_DATA].access |= (GDT_ACCESS_DPL_USER << GDT_ACCESS_DPL_SHIFT);
 
-    // TODO: add TSS descriptor here when implementing a scheduler
-
     // load the GDT
     gdtr.base = (uint64_t)&gdt;
     gdtr.limit = (sizeof(GDTEntry) * GDT_ENTRIES) - 1;
@@ -71,6 +72,37 @@ int platformCPUSetup() {
     writeCR0(readCR0() & ~CR0_NOT_WRITE_THROUGH);
     writeCR0(readCR0() & ~CR0_CACHE_DISABLE);
     writeCR0(readCR0() & ~CR0_WRITE_PROTECT);
+
+    // read the CPU model
+    memset(_model, 0, 49);
+    uint32_t *ptr = (uint32_t *) _model;
+    CPUIDRegisters regs;
+    readCPUID(0x80000000, &regs);
+
+    if(regs.eax < 0x80000004) {
+        readCPUID(0, &regs);
+        ptr[0] = regs.ebx;
+        ptr[1] = regs.edx;
+        ptr[2] = regs.ecx;
+    } else {
+        readCPUID(0x80000002, &regs);
+        ptr[0] = regs.eax;
+        ptr[1] = regs.ebx;
+        ptr[2] = regs.ecx;
+        ptr[3] = regs.edx;
+
+        readCPUID(0x80000003, &regs);
+        ptr[4] = regs.eax;
+        ptr[5] = regs.ebx;
+        ptr[6] = regs.ecx;
+        ptr[7] = regs.edx;
+
+        readCPUID(0x80000004, &regs);
+        ptr[8] = regs.eax;
+        ptr[9] = regs.ebx;
+        ptr[10] = regs.ecx;
+        ptr[11] = regs.edx;
+    }
 
     enableIRQs();
     return 0;
