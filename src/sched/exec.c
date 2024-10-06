@@ -276,6 +276,8 @@ int execrdv(Thread *t, const char *name, const char **argv) {
 int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     // create the new context before deleting the current one
     // this guarantees we can return on failure
+    uint64_t oldHighest = t->highest;
+
     void *newctx = calloc(1, PLATFORM_CONTEXT_SIZE);
     if(!newctx) {
         return -1;
@@ -323,6 +325,7 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
 
     // TODO: here we've successfully loaded the new program, but we also need
     // to free up memory used by the original program
+    platformCleanThread(oldctx, oldHighest);
     free(oldctx);
 
     t->status = THREAD_QUEUED;
