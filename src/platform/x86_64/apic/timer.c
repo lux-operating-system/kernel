@@ -45,7 +45,6 @@ int apicTimerInit() {
     /* TODO: use the HPET instead of the PIT to measure timer frequency */
     // set up the PIT to wait for a fraction of a second
     uint16_t pitFrequency = 1193180 / 100;      // PIT frequency divided by 100 Hz
-    KDEBUG("using PIT to calibrate local APIC timer: starting counter 0x%04X\n", pitFrequency);
 
     // set up the APIC timer in one-shot mode with no interrupts
     lapicWrite(LAPIC_TIMER_INITIAL, 0);     // disable timer so we can set it up
@@ -63,12 +62,12 @@ int apicTimerInit() {
     uint16_t oldCurrentCounter = pitFrequency;
 
     // this way we correctly handle a zero counter, as well as an underflow
-    while(currentCounter <= oldCurrentCounter && currentCounter) {
+    while((currentCounter <= oldCurrentCounter) && currentCounter) {
         oldCurrentCounter = currentCounter;
 
         outb(0x43, 0x00);       // channel 0, latch command
-        currentCounter = inb(0x40);
-        currentCounter |= inb(0x40) << 8;
+        currentCounter = (uint16_t) inb(0x40);
+        currentCounter |= (uint16_t) inb(0x40) << 8;
     }
 
     uint32_t apicFinal = lapicRead(LAPIC_TIMER_CURRENT);
@@ -86,7 +85,7 @@ int apicTimerInit() {
         for(;;) platformHalt();
     }
 
-    KDEBUG("setting up system timer at %d kHz\n", PLATFORM_TIMER_FREQUENCY / 1000);
+    //KDEBUG("setting up system timer at %d kHz\n", PLATFORM_TIMER_FREQUENCY / 1000);
 
     // set up the local APIC timer in periodic mode and allocate interrupt 0xFE for it
     lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_PERIODIC | LAPIC_LVT_MASK | LAPIC_TIMER_IRQ);

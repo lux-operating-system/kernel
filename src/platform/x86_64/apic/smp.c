@@ -164,10 +164,6 @@ int apMain() {
 
     smpCPUInfoSetup();
 
-    // set up the local APIC
-    // on the bootstrap CPU this is done by apicTimerInit(), but we don't need
-    // to rerun it to not waste time recalibrating the APIC when we already did
-
     // enable the local APIC (this should probably never be necessary because
     // if the APIC wasn't enabled then how did we even boot to this point?)
     uint64_t apic = readMSR(MSR_LAPIC);
@@ -178,14 +174,9 @@ int apMain() {
     lapicWrite(LAPIC_DEST_FORMAT, lapicRead(LAPIC_DEST_FORMAT) | 0xF0000000);   // flat mode
     lapicWrite(LAPIC_SPURIOUS_VECTOR, 0x1FF);
 
-    // set up per-CPU kernel info structure
-
-    // APIC timer
-    lapicWrite(LAPIC_TIMER_INITIAL, 0);     // disable timer so we can set up
-    lapicWrite(LAPIC_LVT_TIMER, LAPIC_TIMER_PERIODIC | LAPIC_LVT_MASK | LAPIC_TIMER_IRQ);
-    lapicWrite(LAPIC_TIMER_DIVIDE, LAPIC_TIMER_DIVIDER_1);
-    lapicWrite(LAPIC_LVT_TIMER, lapicRead(LAPIC_LVT_TIMER) & ~LAPIC_LVT_MASK);
-    lapicWrite(LAPIC_TIMER_INITIAL, apicTimerFrequency() / PLATFORM_TIMER_FREQUENCY);
+    // apparently each core can have a different APIC frequency, and so we need
+    // to recalibrate the local APIC
+    apicTimerInit();
 
     // we don't need to install an IRQ handler because all CPUs share the same
     // GDT/IDT; the same IRQ handler is valid for both the boot CPU and APs
@@ -208,9 +199,6 @@ int smpBoot() {
     if(cpuCount < 2) {
         return 1;
     }
-
-    // disable caching temporarily
-    writeCR0(readCR0() | CR0_CACHE_DISABLE);
 
     KDEBUG("attempt to start %d application processors...\n", cpuCount - runningCpuCount);
 
@@ -240,7 +228,8 @@ int smpBoot() {
     // identity map first 8 MB for the AP
     // this will give it access to (most of) the kernel's physical memory
     for(int i = 0; i < 2048; i++) {
-        platformMapPage(i * PAGE_SIZE, i * PAGE_SIZE, PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_EXEC | PLATFORM_PAGE_WRITE);
+        platformMapPage(i * PAGE_SIZE, i * PAGE_SIZE,
+            PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_EXEC | PLATFORM_PAGE_WRITE | PLATFORM_PAGE_NO_CACHE);
     }
 
     apEntryVars[AP_ENTRY_GDTR] = (uintptr_t)lowGDTR - KERNEL_BASE_ADDRESS;
