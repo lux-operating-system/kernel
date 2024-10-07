@@ -10,7 +10,7 @@
 
 **lux** (intentionally stylized in lowercase) is a portable work-in-progress microkernel written from scratch that currently runs on x86_64, with future plans for an ARM64 port.
 
-![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux-09-28-24.png)
+![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux-10-06-24.png)
 
 # Overview
 
@@ -38,6 +38,13 @@ All of the described components, including the microkernel itself (with the exce
 # Building
 
 Visit [lux-operating-system/lux](https://github.com/lux-operating-system/lux) for the full build instructions, starting from the toolchain and ending at a disk image that can be booted on a virtual machine or real hardware. If you don't want to manually build lux, [nightly builds](https://github.com/lux-operating-system/lux/actions/workflows/nightly-mac.yml) also generate a bootable disk image that can be used on a virtual machine.
+
+# Contributing
+
+The lux microkernel and the luxOS Project are both personal educational/research projects and are not planned to be community-developed. However, if you like what you're seeing and/or you learned something, monetary contributions would be greatly appreciated and provide a direct incentive to allocate more time to the project. You can support my work on [Patreon](https://patreon.com/luxOS) if you're interested.
+
+# Contact
+Join the project's [Discord server](https://discord.gg/GEeekQEgaB) if you just wanna say hi or talk about OS development in general.
 
 # License
 
