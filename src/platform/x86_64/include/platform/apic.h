@@ -187,6 +187,20 @@ typedef struct IRQOverride {
     struct IRQOverride *next;
 } IRQOverride;
 
+typedef struct BusNMI {
+    uint8_t source;
+    uint16_t flags;
+    uint32_t gsi;
+    struct BusNMI *next;
+} BusNMI;
+
+typedef struct LocalNMI {
+    uint8_t procID;
+    uint16_t flags;
+    uint8_t lint;
+    struct LocalNMI *next;
+} LocalNMI;
+
 int apicInit();
 void lapicWrite(uint32_t, uint32_t);
 uint32_t lapicRead(uint32_t);
