@@ -10,8 +10,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <kernel/sched.h>
 #include <sys/types.h>
+#include <kernel/sched.h>
+#include <platform/lock.h>
 
 /* system-wide limits */
 #define MAX_SOCKETS             (1 << 18)   // 262k
@@ -57,6 +58,7 @@ struct sockaddr_un {
 typedef struct SocketDescriptor {
     Process *process;
     struct sockaddr address;
+    lock_t lock;
     bool listener;
     int globalIndex;
     int type, protocol, backlogMax, backlogCount;

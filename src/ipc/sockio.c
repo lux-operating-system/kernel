@@ -33,15 +33,12 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
-    
-    socketLock();
 
     SocketDescriptor *self = (SocketDescriptor*) p->io[sd].data;
     SocketDescriptor *peer = self->peer;
-    if(!peer) {
-        socketRelease();
-        return -EDESTADDRREQ;     // not in connection mode
-    }
+    if(!peer) return -EDESTADDRREQ;     // not in connection mode
+
+    acquireLockBlocking(&peer->lock);
 
     sa_family_t family = self->address.sa_family;
 
@@ -52,7 +49,7 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
             peer->inboundLen = calloc(SOCKET_IO_BACKLOG, sizeof(size_t));
 
             if(!peer->inbound || !peer->inboundLen) {
-                socketRelease();
+                releaseLock(&peer->lock);
                 return -ENOMEM;
             }
 
@@ -64,7 +61,7 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
             // reallocate the backlog if necessary
             void **newlist = realloc(peer->inbound, peer->inboundMax * 2 * sizeof(void *));
             if(!newlist) {
-                socketRelease();
+                releaseLock(&peer->lock);
                 return -ENOMEM;
             }
 
@@ -72,7 +69,7 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 
             size_t *newlen = realloc(peer->inboundLen, peer->inboundMax * 2 * sizeof(void *));
             if(!newlen) {
-                socketRelease();
+                releaseLock(&peer->lock);
                 return -ENOMEM;
             }
 
@@ -82,7 +79,7 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 
         void *message = malloc(len);
         if(!message) {
-            socketRelease();
+            releaseLock(&peer->lock);
             return -ENOBUFS;
         }
 
@@ -92,11 +89,11 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
         peer->inboundLen[peer->inboundCount] = len;
         peer->inboundCount++;
 
-        socketRelease();
+        releaseLock(&peer->lock);
         return len;
     } else {
         /* TODO: handle other protocols in user space */
-        socketRelease();
+        releaseLock(&peer->lock);
         return -ENOTCONN;
     }
 }
@@ -119,17 +116,14 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
     if(!p->io[sd].valid || !p->io[sd].data || (p->io[sd].type != IO_SOCKET))
         return -ENOTSOCK;
 
-    socketLock();
-
     SocketDescriptor *self = (SocketDescriptor*) p->io[sd].data;
-    if(!self->peer) {
-        socketRelease();
-        return -EDESTADDRREQ;   // not in connection mode
-    }
+    if(!self->peer) return -EDESTADDRREQ;   // not in connection mode
+
+    acquireLockBlocking(&self->lock);
 
     sa_family_t family = self->address.sa_family;
     if(!self->inboundCount || !self->inbound || !self->inboundLen) {
-        socketRelease();
+        releaseLock(&self->lock);
         return -EWOULDBLOCK;    // no messages available
     }
 
@@ -139,7 +133,7 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
         size_t truelen = self->inboundLen[0];
 
         if(!message) {
-            socketRelease();
+            releaseLock(&self->lock);
             return -EWOULDBLOCK;
         }
 
@@ -157,11 +151,11 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
             }
         }
 
-        socketRelease();
+        releaseLock(&self->lock);
         return truelen;
     } else {
         /* TODO: handle other protocols in user space */
-        socketRelease();
+        releaseLock(&self->lock);
         return -ENOTCONN;
     }
 }
