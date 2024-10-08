@@ -92,12 +92,6 @@ times 0x100 - ($-$$) nop
     hlt
     jmp 0x1200
 
-    times 0x300 - ($-$$) nop
-
-TR:     ; 0x1300
-    .limit:     dw 0
-    .base:      dq 0
-
 times 0xFE0 - ($-$$) nop
 
 global apEntryVars
