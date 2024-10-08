@@ -189,14 +189,14 @@ typedef struct IRQOverride {
 
 typedef struct BusNMI {
     uint8_t source;
-    uint16_t flags;
+    int level, low;
     uint32_t gsi;
     struct BusNMI *next;
 } BusNMI;
 
 typedef struct LocalNMI {
     uint8_t procID;
-    uint16_t flags;
+    int level, low;
     uint8_t lint;
     struct LocalNMI *next;
 } LocalNMI;
@@ -216,6 +216,9 @@ IOAPIC *ioapicFindIRQ(int);
 void ioapicWrite(IOAPIC *, uint32_t, uint32_t);
 uint32_t ioapicRead(IOAPIC *, uint32_t);
 int ioapicMask(int, int);
+
+int lnmiRegister(LocalNMI *);
+int lnmiCount();
 
 int overrideIRQRegister(IRQOverride *);
 int overrideIRQCount();

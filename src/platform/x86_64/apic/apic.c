@@ -133,6 +133,26 @@ int apicInit() {
 
             overrideIRQRegister(irqor);
             break;
+        case MADT_TYPE_LOCAL_NMI:
+            ACPIMADTLocalNMI *lnmiEntry = (ACPIMADTLocalNMI *) ptr;
+            KDEBUG("local APIC NMI on ACPI ID 0x%02X LINT#%d with flags 0x%04X (%s, %s)\n",
+                lnmiEntry->procID, lnmiEntry->lint & 1, lnmiEntry->flags,
+                lnmiEntry->flags & MADT_INTERRUPT_LEVEL ? "level" : "edge",
+                lnmiEntry->flags & MADT_INTERRUPT_LOW ? "low" : "high");
+            
+            LocalNMI *lnmi = calloc(1, sizeof(LocalNMI));
+            if(!lnmi) {
+                KERROR("could not allocate memory for local APIC NMI\n");
+                while(1);
+            }
+
+            lnmi->procID = lnmiEntry->procID;
+            lnmi->lint = lnmiEntry->lint;
+            if(override->flags & MADT_INTERRUPT_LEVEL) lnmi->level = 1;
+            if(override->flags & MADT_INTERRUPT_LOW) lnmi->low = 0;
+
+            lnmiRegister(lnmi);
+            break;
         default:
             KWARN("unimplemented MADT entry type 0x%02X with length %d, skipping...\n", ptr[0], ptr[1]);
         }
