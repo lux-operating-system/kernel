@@ -48,6 +48,9 @@ void smpCPUInfoSetup();
 int smpBoot();
 KernelCPUInfo *getKernelCPUInfo();
 
+PlatformCPU *findCPUACPI(uint8_t);
+PlatformCPU *findCPUAPIC(uint8_t);
+
 /* entry point for non-boot CPUs */
 
 extern uint8_t apEntry[];

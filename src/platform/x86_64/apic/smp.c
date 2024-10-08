@@ -66,6 +66,38 @@ void *platformGetCPU(int n) {
     return cpu;
 }
 
+/* findCPUACPI(): returns a CPU structure associated with an ACPI ID
+ * params: id - ACPI ID
+ * returns: pointer to CPU structure, NULL if not present
+ */
+
+PlatformCPU *findCPUACPI(uint8_t id) {
+    PlatformCPU *list = cpus;
+    
+    while(list) {
+        if(list->procID == id) return list;
+        list = list->next;
+    }
+
+    return NULL;
+}
+
+/* findCPUAPIC(): returns a CPU structure associated with an APIC ID
+ * params: id - ACPI ID
+ * returns: pointer to CPU structure, NULL if not present
+ */
+
+PlatformCPU *findCPUAPIC(uint8_t id) {
+    PlatformCPU *list = cpus;
+    
+    while(list) {
+        if(list->apicID == id) return list;
+        list = list->next;
+    }
+
+    return NULL;
+}
+
 /* smpCPUInfoSetup(): constructs per-CPU kernel info structure and stores it in
  * the kernel's GS base, also sets up a per-CPU GDT and TSS and stack */
 
