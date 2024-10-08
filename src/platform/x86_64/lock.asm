@@ -72,6 +72,15 @@ acquireLockBlocking:
 global releaseLock
 align 16
 releaseLock:
+    pushfq
+    cli
+
     xor rax, rax
+    test dword [rdi], 1
+    jz .done
+
     mov [rdi], eax
+
+.done:
+    popfq
     ret
