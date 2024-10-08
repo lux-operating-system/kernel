@@ -55,6 +55,11 @@
 #define LAPIC_LVT_LEVEL                 (1 << 15)
 #define LAPIC_LVT_LOW                   (1 << 13)
 
+#define LAPIC_LVT_SMI                   0x200
+#define LAPIC_LVT_NMI                   0x400
+#define LAPIC_LVT_EXTINT                0x700
+#define LAPIC_LVT_INIT                  0x500
+
 #define LAPIC_TIMER_ONE_SHOT            (0 << 17)
 #define LAPIC_TIMER_PERIODIC            (1 << 17)
 #define LAPIC_TIMER_TSC_DEADLINE        (2 << 17)
