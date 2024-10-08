@@ -172,9 +172,8 @@ void smpCPUInfoSetup() {
 
     if(cpu->bootCPU) bootCPUInfo = info;
 
-    //KDEBUG("per-CPU kernel info struct for CPU %d is at 0x%08X\n", info->cpuIndex, (uint64_t)info);
-
     tssSetup();
+    lnmiConfigure();
 }
 
 /* apMain(): entry points for application processors */

@@ -219,6 +219,7 @@ int ioapicMask(int, int);
 
 int lnmiRegister(LocalNMI *);
 int lnmiCount();
+int lnmiConfigure();
 
 int overrideIRQRegister(IRQOverride *);
 int overrideIRQCount();
