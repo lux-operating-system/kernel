@@ -16,35 +16,35 @@
 #define SIG_IGN         (void (*)(int))3
 
 /* ISO C Signals */
-#define SIGABRT         0
-#define SIGFPE          1
-#define SIGILL          2
-#define SIGINT          3
-#define SIGSEGV         4
-#define SIGTERM         5
+#define SIGABRT         1
+#define SIGFPE          2
+#define SIGILL          3
+#define SIGINT          4
+#define SIGSEGV         5
+#define SIGTERM         6
 
 /* POSIX Extension Signals */
-#define SIGALRM         6
-#define SIGBUS          7
-#define SIGCHLD         8
-#define SIGCONT         9
-#define SIGHUP          10
-#define SIGKILL         11
-#define SIGPIPE         12
-#define SIGQUIT         13
-#define SIGSEGV         14
-#define SIGSTOP         15
-#define SIGTSTP         16
-#define SIGTTIN         17
-#define SIGTTOU         18
-#define SIGUSR1         19
-#define SIGUSR2         20
-#define SIGPOLL         21
-#define SIGSYS          22
-#define SIGTRAP         23
-#define SIGURG          24
-#define SIGVTALRM       25
-#define SIGXCPU         26
-#define SIGXFSZ         27
+#define SIGALRM         7
+#define SIGBUS          8
+#define SIGCHLD         9
+#define SIGCONT         10
+#define SIGHUP          11
+#define SIGKILL         12
+#define SIGPIPE         13
+#define SIGQUIT         14
+#define SIGSEGV         15
+#define SIGSTOP         16
+#define SIGTSTP         17
+#define SIGTTIN         18
+#define SIGTTOU         19
+#define SIGUSR1         20
+#define SIGUSR2         21
+#define SIGPOLL         22
+#define SIGSYS          23
+#define SIGTRAP         24
+#define SIGURG          25
+#define SIGVTALRM       26
+#define SIGXCPU         27
+#define SIGXFSZ         28
 
 typedef volatile uint32_t sig_atomic_t;
