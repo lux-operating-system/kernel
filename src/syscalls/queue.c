@@ -28,7 +28,8 @@ void syscallHandle(void *ctx) {
         // allow immediate handling of IPC syscalls without going through the
         // syscall queue for performance
         if((req->function >= SYSCALL_IPC_START && req->function <= SYSCALL_IPC_END) ||
-            (req->function >= SYSCALL_RW_START && req->function <= SYSCALL_RW_END)) {
+            (req->function >= SYSCALL_RW_START && req->function <= SYSCALL_RW_END) ||
+            (req->function == SYSCALL_ACCEPT)) {
             setLocalSched(false);
             syscallDispatchTable[req->function](req);
 
