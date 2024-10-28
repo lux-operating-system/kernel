@@ -283,7 +283,7 @@ uint64_t schedTimer() {
         return 1;
     }
 
-    if(!acquireLock(lock)) return 1;
+    //if(!acquireLock(lock)) return 1;
 
     // decrement the time slice of the current thread
     uint64_t time;
@@ -298,7 +298,7 @@ uint64_t schedTimer() {
     // and that of sleeping threads too
     schedSleepTimer();
 
-    releaseLock(lock);
+    //releaseLock(lock);
     return time;
 }
 
