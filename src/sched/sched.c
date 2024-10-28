@@ -16,7 +16,7 @@
 
 static bool scheduling = false;
 int processes, threads;
-static lock_t *lock;
+static lock_t lock = LOCK_INITIAL;
 static uint8_t *pidBitmap;
 static Process *first;       // first process in the linked list
 static Process *last;
@@ -27,19 +27,11 @@ static Thread *kthread;      // main kernel thread
 /* schedInit(): initializes the scheduler */
 
 void schedInit() {
-    // IMPORTANT: allocate a lock in an uncacheable memory region
-    // this is to force all processes and CPUs to always have access to an up-
-    // to-date copy of the lock, which prevents crashing by having multiple
-    // CPUs attempt to run the same thread at the same time
-    
-    lock = mallocUC(sizeof(lock_t));
     pidBitmap = calloc(1, (MAX_PID + 7) / 8);
-    if(!lock || !pidBitmap) {
+    if(!pidBitmap) {
         KERROR("could not allocate memory for scheduler\n");
         while(1);
     }
-
-    *lock = LOCK_INITIAL;
 
     processes = 0;
     threads = 0;
@@ -51,11 +43,11 @@ void schedInit() {
 }
 
 void schedLock() {
-    if(lock) acquireLockBlocking(lock);
+    acquireLockBlocking(&lock);
 }
 
 void schedRelease() {
-    if(lock) releaseLock(lock);
+    releaseLock(&lock);
 }
 
 /* pidIsUsed(): returns the use status of a PID
@@ -113,7 +105,7 @@ void releasePid(pid_t pid) {
  */
 
 pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
-    acquireLockBlocking(lock);
+    acquireLockBlocking(&lock);
     pid_t tid = allocatePid();
     if(!tid) {
         KWARN("unable to allocate a PID, maximum processes running?\n");
@@ -129,7 +121,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
         first = calloc(1, sizeof(Process));
         if(!first) {
             KERROR("failed to allocate memory for kernel thread\n");
-            releaseLock(lock);
+            releaseLock(&lock);
             return 0;
         }
 
@@ -144,7 +136,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
         p = p->next;
         if(!p) {
             KERROR("failed to allocate memory for kernel thread\n");
-            releaseLock(lock);
+            releaseLock(&lock);
             return 0;
         }
     }
@@ -162,7 +154,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
         KERROR("failed to allocate memory for kernel thread\n");
         free(p);
         if(!processes) first = NULL;
-        releaseLock(lock);
+        releaseLock(&lock);
         return 0;
     }
 
@@ -172,7 +164,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
         free(p->threads);
         free(p);
         if(!processes) first = NULL;
-        releaseLock(lock);
+        releaseLock(&lock);
         return 0;
     }
 
@@ -188,7 +180,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
         free(p->threads);
         free(p);
         if(!processes) first = NULL;
-        releaseLock(lock);
+        releaseLock(&lock);
         return 0;
     }
 
@@ -199,7 +191,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
         free(p->threads);
         free(p);
         if(!processes) first = NULL;
-        releaseLock(lock);
+        releaseLock(&lock);
         return 0;
     }
 
@@ -210,7 +202,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
     threads++;
 
     schedAdjustTimeslice();
-    releaseLock(lock);
+    releaseLock(&lock);
     return tid;
 }
 
@@ -283,7 +275,7 @@ uint64_t schedTimer() {
         return 1;
     }
 
-    //if(!acquireLock(lock)) return 1;
+    //if(!acquireLock(&lock)) return 1;
 
     // decrement the time slice of the current thread
     uint64_t time;
@@ -298,7 +290,7 @@ uint64_t schedTimer() {
     // and that of sleeping threads too
     schedSleepTimer();
 
-    //releaseLock(lock);
+    //releaseLock(&lock);
     return time;
 }
 
@@ -331,12 +323,12 @@ bool schedBusy() {
 void schedule() {
     if(!scheduling || !processes || !threads) return;
 
-    //acquireLockBlocking(lock);
-    if(!acquireLock(lock)) return;
+    //acquireLockBlocking(&lock);
+    if(!acquireLock(&lock)) return;
     setLocalSched(false);
 
     if(!schedBusy()) {
-        releaseLock(lock);
+        releaseLock(&lock);
         return;
     }
 
@@ -364,7 +356,7 @@ void schedule() {
                 t->status = THREAD_RUNNING;
                 t->time = schedTimeslice(t, t->priority);
                 t->cpu = cpu;
-                releaseLock(lock);
+                releaseLock(&lock);
                 platformSwitchContext(t);
             }
 
@@ -379,7 +371,7 @@ void schedule() {
         }
     }
 
-    releaseLock(lock);
+    releaseLock(&lock);
     return;
 }
 
@@ -521,12 +513,12 @@ void unblockThread(Thread *t) {
  */
 
 int yield(Thread *t) {
-    acquireLockBlocking(lock);
+    acquireLockBlocking(&lock);
 
     t->status = THREAD_QUEUED;
     t->time = schedTimeslice(t, t->priority);
 
-    releaseLock(lock);
+    releaseLock(&lock);
     return 0;
 }
 
