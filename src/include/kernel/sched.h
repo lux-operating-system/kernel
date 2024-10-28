@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include <sys/types.h>
+#include <platform/lock.h>
 #include <kernel/syscalls.h>
 #include <kernel/io.h>
 
@@ -43,6 +44,7 @@ typedef struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;          // timeslice OR sleep time if sleeping thread
+    lock_t lock;
 
     bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
     bool clean;             // true when the exit status has been read by waitpid() 
