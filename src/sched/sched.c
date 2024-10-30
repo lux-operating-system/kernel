@@ -340,7 +340,7 @@ void schedule() {
 
     if(!p || !t) p = first;         // initial scheduling event
 
-    while(rounds < 2 && p) {
+    while(rounds < 2) {
         if(!p->threadCount || !p->threads) {
             p = p->next;
             continue;
