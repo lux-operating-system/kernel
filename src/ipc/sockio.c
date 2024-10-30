@@ -67,7 +67,7 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
 
             peer->inbound = newlist;
 
-            size_t *newlen = realloc(peer->inboundLen, peer->inboundMax * 2 * sizeof(void *));
+            size_t *newlen = realloc(peer->inboundLen, peer->inboundMax * 2 * sizeof(size_t));
             if(!newlen) {
                 releaseLock(&peer->lock);
                 return -ENOMEM;
