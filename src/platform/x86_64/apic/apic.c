@@ -129,7 +129,7 @@ int apicInit() {
             irqor->gsi = override->gsi;
             irqor->source = override->sourceIRQ;
             if(override->flags & MADT_INTERRUPT_LEVEL) irqor->level = 1;
-            if(override->flags & MADT_INTERRUPT_LOW) irqor->low = 0;
+            if(override->flags & MADT_INTERRUPT_LOW) irqor->low = 1;
 
             overrideIRQRegister(irqor);
             break;
@@ -148,8 +148,8 @@ int apicInit() {
 
             lnmi->procID = lnmiEntry->procID;
             lnmi->lint = lnmiEntry->lint;
-            if(override->flags & MADT_INTERRUPT_LEVEL) lnmi->level = 1;
-            if(override->flags & MADT_INTERRUPT_LOW) lnmi->low = 0;
+            if(lnmiEntry->flags & MADT_INTERRUPT_LEVEL) lnmi->level = 1;
+            if(lnmiEntry->flags & MADT_INTERRUPT_LOW) lnmi->low = 1;
 
             lnmiRegister(lnmi);
             break;
