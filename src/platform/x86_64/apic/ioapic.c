@@ -7,7 +7,7 @@
 
 /* I/O APIC Driver */
 
-#define MAX_IRQS            47      // TODO: bump this up
+#define MAX_IRQS            63
 
 #include <errno.h>
 #include <stddef.h>
@@ -170,7 +170,7 @@ int ioapicInit() {
     KDEBUG("%d I/O APIC%s can route a total of %d IRQs\n", count, count != 1 ? "s" : "", max+1);
 
     if(max > MAX_IRQS) {
-        KWARN("kernel is currently limited to %d IRQs, only figuring the first %d\n", MAX_IRQS+1, MAX_IRQS+1);
+        KWARN("kernel is currently limited to %d IRQs, only configuring the first %d\n", MAX_IRQS+1, MAX_IRQS+1);
         max = MAX_IRQS;
     }
 
