@@ -51,8 +51,6 @@ syscallEntry:
 
     extern syscallHandle
     mov rdi, rsp                    ; pass the context we just created
-    sub rsp, 256                    ; red zone
-    mov rbp, rsp
     call syscallHandle
 
     ; this should never return as it will force a context switch
