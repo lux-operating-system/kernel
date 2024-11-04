@@ -31,7 +31,6 @@ static pid_t processStatus(Process *p, int *status) {
 
             // free the thread structure
             threadCleanup(t);
-
             return pid;
         }
     }
