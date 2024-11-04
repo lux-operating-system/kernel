@@ -72,6 +72,22 @@ irq     dispatchIRQ44, 44
 irq     dispatchIRQ45, 45
 irq     dispatchIRQ46, 46
 irq     dispatchIRQ47, 47
+irq     dispatchIRQ48, 48
+irq     dispatchIRQ49, 49
+irq     dispatchIRQ50, 50
+irq     dispatchIRQ51, 51
+irq     dispatchIRQ52, 52
+irq     dispatchIRQ53, 53
+irq     dispatchIRQ54, 54
+irq     dispatchIRQ55, 55
+irq     dispatchIRQ56, 56
+irq     dispatchIRQ57, 57
+irq     dispatchIRQ58, 58
+irq     dispatchIRQ59, 59
+irq     dispatchIRQ60, 60
+irq     dispatchIRQ61, 61
+irq     dispatchIRQ62, 62
+irq     dispatchIRQ63, 63
 
 section .rodata
 
@@ -86,3 +102,6 @@ dispatchIRQTable:
     dq dispatchIRQ30, dispatchIRQ31, dispatchIRQ32, dispatchIRQ33, dispatchIRQ34, dispatchIRQ35
     dq dispatchIRQ36, dispatchIRQ37, dispatchIRQ38, dispatchIRQ39, dispatchIRQ40, dispatchIRQ41
     dq dispatchIRQ42, dispatchIRQ43, dispatchIRQ44, dispatchIRQ45, dispatchIRQ46, dispatchIRQ47
+    dq dispatchIRQ48, dispatchIRQ49, dispatchIRQ50, dispatchIRQ51, dispatchIRQ52, dispatchIRQ53
+    dq dispatchIRQ54, dispatchIRQ55, dispatchIRQ56, dispatchIRQ57, dispatchIRQ58, dispatchIRQ59
+    dq dispatchIRQ60, dispatchIRQ61, dispatchIRQ62, dispatchIRQ63

@@ -18,14 +18,9 @@ timerHandlerStub:
     pushaq
 
     cld
-    extern timerIRQ     ; apic.c
+    extern timerIRQ
     mov rdi, rsp        ; pointer to the regs we just pushed
-    sub rsp, 256        ; red zone
-    mov rbp, rsp
     call timerIRQ       ; IRQ is acknowledged in here
-
-    add rbp, 256
-    mov rsp, rbp
 
     popaq
     iretq
