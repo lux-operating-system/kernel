@@ -27,7 +27,12 @@ static pid_t processStatus(Process *p, int *status) {
         if((!t->clean) && (t->status == THREAD_ZOMBIE)) {
             t->clean = true;
             *status = t->exitStatus;
-            return t->tid;
+            pid_t pid = t->tid;
+
+            // free the thread structure
+            threadCleanup(t);
+
+            return pid;
         }
     }
 

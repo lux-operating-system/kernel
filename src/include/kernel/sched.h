@@ -120,6 +120,7 @@ int schedException(pid_t, pid_t);
 void terminateThread(Thread *, int, bool);
 void schedSleepTimer();
 Thread *getKernelThread();
+void threadCleanup(Thread *);
 
 // these functions are exposed as system calls, but some will need to take
 // the thread as an argument from the system call handler - the actual user
