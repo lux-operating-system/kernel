@@ -7,6 +7,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <kernel/signal.h>
 #include <kernel/sched.h>
 
@@ -84,11 +85,23 @@ int sigismember(sigset_t *set, int signum) {
  */
 
 void *signalDefaults() {
-    uintptr_t *ptr = calloc(MAX_SIGNAL+1, sizeof(uintptr_t));
+    uintptr_t *ptr = malloc((MAX_SIGNAL+1) * sizeof(uintptr_t));
     if(!ptr) return NULL;
 
     for(int i = 0; i < MAX_SIGNAL; i++)
         *ptr = (uintptr_t) SIG_DFL; // default
     
     return (void *) ptr;
+}
+
+/* signalClone(): clones the signal handlers of a thread
+ * params: h - template signal handlers
+ * returns: pointer to the signal handler array, NULL on fail
+ */
+
+void *signalClone(const void *h) {
+    void *new = malloc((MAX_SIGNAL+1) * sizeof(uintptr_t));
+    if(!new) return NULL;
+
+    return memcpy(new, h, (MAX_SIGNAL+1) * sizeof(uintptr_t));
 }
