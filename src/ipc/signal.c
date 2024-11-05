@@ -42,7 +42,8 @@ int sigfillset(sigset_t *set) {
  */
 
 int sigaddset(sigset_t *set, int signum) {
-    if(signum > MAX_SIGNAL) return -EINVAL;
+    if(signum < 0 || signum > MAX_SIGNAL)
+        return -EINVAL;
 
     *set |= (1 << signum);
     return 0;
@@ -55,7 +56,8 @@ int sigaddset(sigset_t *set, int signum) {
  */
 
 int sigdelset(sigset_t *set, int signum) {
-    if(signum > MAX_SIGNAL) return -EINVAL;
+    if(signum < 0 || signum > MAX_SIGNAL)
+        return -EINVAL;
 
     *set &= ~(1 << signum);
     return 0;
@@ -68,7 +70,8 @@ int sigdelset(sigset_t *set, int signum) {
  */
 
 int sigismember(sigset_t *set, int signum) {
-    if(signum > MAX_SIGNAL) return -EINVAL;
+    if(signum < 0 || signum > MAX_SIGNAL)
+        return -EINVAL;
 
     if(*set & (1 << signum)) return 1;
     else return 0;
