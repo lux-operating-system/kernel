@@ -49,6 +49,24 @@
 
 #define MAX_SIGNAL      27
 
+/* Signal Flags */
+#define SA_NOCLDSTOP    0x0001
+#define SA_ONSTACK      0x0002
+#define SA_RESETHAND    0x0004
+#define SA_RESTART      0x0008
+#define SA_SIGINFO      0x0010
+#define SA_NOCLDWAIT    0x0020
+#define SA_NODEFER      0x0040
+
+#define SIG_BLOCK       0x0001
+#define SIG_UNBLOCK     0x0002
+
+#define SS_ONSTACK      0x0001
+#define SS_DISABLE      0x0002
+
+#define MINSIGSTKSZ     4096
+#define SIGSTKSZ        16384
+
 typedef volatile uint32_t sig_atomic_t;
 typedef uint64_t sigset_t;
 
