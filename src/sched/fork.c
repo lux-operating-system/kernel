@@ -11,6 +11,7 @@
 #include <platform/context.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
+#include <kernel/signal.h>
 
 /* fork(): forks the running thread
  * params: t - pointer to thread structure
@@ -76,6 +77,9 @@ pid_t fork(Thread *t) {
         schedRelease();
         return -1;
     }
+
+    // clone signal handlers
+    p->threads[0]->signals = signalClone(t->signals);
 
     // clone I/O descriptors
     Process *parent = getProcess(t->pid);
