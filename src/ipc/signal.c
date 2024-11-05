@@ -95,11 +95,13 @@ void *signalDefaults() {
 }
 
 /* signalClone(): clones the signal handlers of a thread
- * params: h - template signal handlers
+ * params: h - template signal handlers, NULL to use defaults
  * returns: pointer to the signal handler array, NULL on fail
  */
 
 void *signalClone(const void *h) {
+    if(!h) return signalDefaults();
+
     void *new = malloc((MAX_SIGNAL+1) * sizeof(uintptr_t));
     if(!new) return NULL;
 
