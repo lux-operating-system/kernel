@@ -33,20 +33,21 @@
 #define SIGKILL         12
 #define SIGPIPE         13
 #define SIGQUIT         14
-#define SIGSEGV         15
-#define SIGSTOP         16
-#define SIGTSTP         17
-#define SIGTTIN         18
-#define SIGTTOU         19
-#define SIGUSR1         20
-#define SIGUSR2         21
-#define SIGPOLL         22
-#define SIGSYS          23
-#define SIGTRAP         24
-#define SIGURG          25
-#define SIGVTALRM       26
-#define SIGXCPU         27
-#define SIGXFSZ         28
+#define SIGSTOP         15
+#define SIGTSTP         16
+#define SIGTTIN         17
+#define SIGTTOU         18
+#define SIGUSR1         19
+#define SIGUSR2         20
+#define SIGPOLL         21
+#define SIGSYS          22
+#define SIGTRAP         23
+#define SIGURG          24
+#define SIGVTALRM       25
+#define SIGXCPU         26
+#define SIGXFSZ         27
+
+#define MAX_SIGNAL      27
 
 typedef volatile uint32_t sig_atomic_t;
 typedef uint64_t sigset_t;
@@ -61,8 +62,8 @@ typedef struct {
 
 struct sigaction {
     union handler {
-        void (*)(int) sa_handler;
-        void (*)(int, siginfo_t *, void *) sa_sigaction;
+        void (*sa_handler)(int);
+        void (*sa_sigaction)(int, siginfo_t *, void *);
     };
 
     sigset_t sa_mask;
