@@ -45,7 +45,9 @@ typedef struct Thread {
     uint64_t time;          // timeslice OR sleep time if sleeping thread
 
     bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
-    bool clean;             // true when the exit status has been read by waitpid() 
+    bool clean;             // true when the exit status has been read by waitpid()
+
+    void *signals;
 
     SyscallRequest syscall; // for when the thread is blocked
     int exitStatus;         // for zombie threads
