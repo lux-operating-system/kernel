@@ -8,6 +8,7 @@
 #pragma once
 
 #include <sys/types.h>
+#include <kernel/sched.h>
 
 /* Signal Handler Macros */
 #define SIG_DFL         (void (*)(int))0
@@ -48,3 +49,31 @@
 #define SIGXFSZ         28
 
 typedef volatile uint32_t sig_atomic_t;
+typedef uint64_t sigset_t;
+
+typedef struct {
+    int si_signo, si_code, si_errno, si_status;
+    pid_t si_pid;
+    uid_t si_uid;
+    void *si_addr;
+    long si_band;
+} siginfo_t;
+
+struct sigaction {
+    union handler {
+        void (*)(int) sa_handler;
+        void (*)(int, siginfo_t *, void *) sa_sigaction;
+    };
+
+    sigset_t sa_mask;
+    int sa_flags;
+};
+
+int sigemptyset(sigset_t *);
+int sigfillset(sigset_t *);
+int sigaddset(sigset_t *, int);
+int sigdelset(sigset_t *, int);
+int sigismember(sigset_t *, int);
+
+int kill(Thread *, pid_t, int);
+int sigaction(Thread *, int, const struct sigaction *, struct sigaction *);
