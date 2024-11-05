@@ -6,6 +6,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <kernel/signal.h>
 #include <kernel/sched.h>
 
@@ -77,3 +78,17 @@ int sigismember(sigset_t *set, int signum) {
     else return 0;
 }
 
+/* signalDefaults(): sets up the default signal handlers for a thread
+ * params: none
+ * returns: pointer to the signal handler array, NULL on fail
+ */
+
+void *signalDefaults() {
+    uintptr_t *ptr = calloc(MAX_SIGNAL+1, sizeof(uintptr_t));
+    if(!ptr) return NULL;
+
+    for(int i = 0; i < MAX_SIGNAL; i++)
+        *ptr = (uintptr_t) SIG_DFL; // default
+    
+    return (void *) ptr;
+}

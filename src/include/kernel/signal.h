@@ -76,5 +76,7 @@ int sigaddset(sigset_t *, int);
 int sigdelset(sigset_t *, int);
 int sigismember(sigset_t *, int);
 
+void *signalDefaults();
+
 int kill(Thread *, pid_t, int);
 int sigaction(Thread *, int, const struct sigaction *, struct sigaction *);
