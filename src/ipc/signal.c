@@ -127,5 +127,5 @@ int kill(Thread *t, pid_t pid, int sig) {
     if(!dest) return -ESRCH;
     if(!sig) return 0;  // verified that pid exists
 
-    return platformSendSignal(t, pid, sig);
+    return platformSendSignal(t, dest, sig);
 }
