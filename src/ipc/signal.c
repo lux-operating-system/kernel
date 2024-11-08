@@ -10,6 +10,7 @@
 #include <string.h>
 #include <kernel/signal.h>
 #include <kernel/sched.h>
+#include <platform/platform.h>
 
 /* Implementation of ISO C and POSIX Signals */
 
@@ -106,4 +107,25 @@ void *signalClone(const void *h) {
     if(!new) return NULL;
 
     return memcpy(new, h, (MAX_SIGNAL+1) * sizeof(uintptr_t));
+}
+
+/* kill(): sends a signal to a process or thread
+ * params: t - calling thread
+ * params: pid - pid of the process/thread to send a signal to
+ * pid > 0 refers to the process/thread whose PID/TID is exactly pid
+ * pid == 0 refers to processes whose process group ID is that of the sender
+ * pid == -1 refers to all processes that may receive the signal
+ * pid < -1 refers to the process group whose ID is the abs(pid)
+ * params: sig - signal to be sent, zero to test PID validitiy
+ * returns: zero on success, negative error code on fail
+ */
+
+int kill(Thread *t, pid_t pid, int sig) {
+    if(sig < 0 || sig > MAX_SIGNAL) return -EINVAL;
+
+    Thread *dest = getThread(pid);
+    if(!dest) return -ESRCH;
+    if(!sig) return 0;  // verified that pid exists
+
+    return platformSendSignal(t, pid, sig);
 }
