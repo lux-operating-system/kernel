@@ -101,6 +101,7 @@ int sigdelset(sigset_t *, int);
 int sigismember(sigset_t *, int);
 
 void *signalDefaults();
+int signalDefaultHandler(int);
 void *signalClone(const void *);
 
 int kill(Thread *, pid_t, int);
