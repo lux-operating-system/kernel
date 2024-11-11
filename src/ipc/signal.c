@@ -10,6 +10,7 @@
 #include <string.h>
 #include <kernel/signal.h>
 #include <kernel/sched.h>
+#include <platform/lock.h>
 #include <platform/platform.h>
 
 /* Implementation of ISO C and POSIX Signals */
@@ -166,10 +167,75 @@ void *signalClone(const void *h) {
 int kill(Thread *t, pid_t pid, int sig) {
     if(sig < 0 || sig > MAX_SIGNAL) return -EINVAL;
 
-    Thread *dest = getThread(pid);
-    if(!dest) return -ESRCH;
-    if(!sig) return 0;  // verified that pid exists
+    pid_t group;
+    Process *parent;
+    Thread *dest;
 
-    /* todo */
+    if(pid == -1) return -EPERM;    /* placeholder */
+
+    if(pid < -1) group = -1 * pid;
+    else if(!pid) group = t->pid;
+    else group = 0;
+
+    if(group) {
+        parent = getProcess(group);
+        if(!parent) return -ESRCH;
+    } else {
+        dest = getThread(pid);
+        if(!dest) return -ESRCH;
+    }
+
+    if(!sig) return 0;  // null signal verifies that pid is valid
+
+    if(group) {
+        // send the signal to all threads of the parent as well as all threads
+        // of all the children
+        if(!parent->threads || !parent->threadCount) return 0;
+
+        for(int i = 0; i < parent->threadCount; i++) {
+            dest = parent->threads[i];
+            if(dest) {
+                int status = kill(t, dest->tid, sig);
+                if(status) return status;
+            }
+        }
+
+        if(!parent->children || !parent->childrenCount) return 0;
+
+        Process *child;
+        for(int i = 0; i < parent->childrenCount; i++) {
+            child = parent->children[i];
+            if(!child || !child->threads || !child->threadCount)
+                continue;
+
+            for(int j = 0; j < child->threadCount; j++) {
+                dest = child->threads[j];
+                if(dest) {
+                    int status = kill(t, dest->tid, sig);
+                    if(status) return status;
+                }
+            }
+        }
+    } else {
+        // send the signal to the exact thread specified by pid
+        SignalQueue *s = calloc(1, sizeof(SignalQueue));
+        if(!s) return -ENOMEM;
+        
+        s->signum = sig;
+        s->next = NULL;
+
+        acquireLockBlocking(&dest->lock);
+
+        SignalQueue *q = dest->signalQueue;
+        if(!q) {
+            dest->signalQueue = s;
+        } else {
+            while(q->next) q = q->next;
+            q->next = s;
+        }
+
+        releaseLock(&dest->lock);
+    }
+
     return 0;
 }
