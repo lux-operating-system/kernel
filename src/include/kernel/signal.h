@@ -16,6 +16,12 @@
 #define SIG_HOLD        (void (*)(int))2
 #define SIG_IGN         (void (*)(int))3
 
+#define SIG_T           1   /* terminate */
+#define SIG_A           2   /* abort */
+#define SIG_C           3   /* continue */
+#define SIG_S           4   /* stop */
+#define SIG_I           5   /* ignore */
+
 /* ISO C Signals */
 #define SIGABRT         1
 #define SIGFPE          2

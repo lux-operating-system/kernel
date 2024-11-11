@@ -95,6 +95,49 @@ void *signalDefaults() {
     return (void *) ptr;
 }
 
+/* signalDefaultHandler(): returns the default handler for a signal
+ * params: signum - signal number
+ * returns: default handler macro, zero on fail
+ */
+
+int signalDefaultHandler(int signum) {
+    switch(signum) {
+    case SIGABRT:
+    case SIGBUS:
+    case SIGFPE:
+    case SIGILL:
+    case SIGQUIT:
+    case SIGSEGV:
+    case SIGSYS:
+    case SIGTRAP:
+    case SIGXCPU:
+    case SIGXFSZ:
+        return SIG_A;
+
+    case SIGALRM:
+    case SIGHUP:
+    case SIGINT:
+    case SIGKILL:
+    case SIGPIPE:
+    case SIGTERM:
+    case SIGUSR1:
+    case SIGUSR2:
+    case SIGPOLL:
+    case SIGVTALRM:
+        return SIG_T;
+
+    case SIGCHLD:
+    case SIGURG:
+        return SIG_I;
+    
+    case SIGCONT:
+        return SIG_C;
+    
+    default:
+        return 0;
+    }
+}
+
 /* signalClone(): clones the signal handlers of a thread
  * params: h - template signal handlers, NULL to use defaults
  * returns: pointer to the signal handler array, NULL on fail
