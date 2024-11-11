@@ -27,9 +27,6 @@ acquireLock:
     pushfq
     cli
 
-    test dword [rdi], 1
-    jnz .fail
-
     lock bts dword [rdi], 0
     jc .fail
 
@@ -49,9 +46,6 @@ align 16
 acquireLockBlocking:
     pushfq
     cli
-
-    test dword [rdi], 1
-    jnz .wait
 
 .try:
     lock bts dword [rdi], 0
