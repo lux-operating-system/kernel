@@ -513,12 +513,8 @@ void unblockThread(Thread *t) {
  */
 
 int yield(Thread *t) {
-    acquireLockBlocking(&lock);
-
     t->status = THREAD_QUEUED;
     t->time = schedTimeslice(t, t->priority);
-
-    releaseLock(&lock);
     return 0;
 }
 
