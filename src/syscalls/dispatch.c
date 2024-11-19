@@ -584,17 +584,19 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchRecv,        // 45 - recv()
     syscallDispatchSend,        // 46 - send()
     NULL,                       // 47 - kill()
+    NULL,                       // 48 - sigaction()
+    NULL,                       // 49 - sigreturn()
 
     /* group 4: memory management */
-    syscallDispatchSBrk,        // 48 - sbrk()
-    NULL,                       // 49 - mmap()
-    NULL,                       // 50 - munmap()
+    syscallDispatchSBrk,        // 50 - sbrk()
+    NULL,                       // 51 - mmap()
+    NULL,                       // 52 - munmap()
 
     /* group 5: driver I/O functions */
-    syscallDispatchIoperm,      // 51 - ioperm()
-    syscallDispatchIRQ,         // 52 - irq()
-    syscallDispatchIoctl,       // 53 - ioctl()
-    syscallDispatchMMIO,        // 54 - mmio()
-    syscallDispatchPContig,     // 55 - pcontig()
-    syscallDispatchVToP,        // 56 - vtop()
+    syscallDispatchIoperm,      // 53 - ioperm()
+    syscallDispatchIRQ,         // 54 - irq()
+    syscallDispatchIoctl,       // 55 - ioctl()
+    syscallDispatchMMIO,        // 56 - mmio()
+    syscallDispatchPContig,     // 57 - pcontig()
+    syscallDispatchVToP,        // 58 - vtop()
 };
