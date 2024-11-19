@@ -247,7 +247,7 @@ int kill(Thread *t, pid_t pid, int sig) {
  */
 
 void signalHandle(Thread *t) {
-    if(t->handlingSignal || t->signalQueue) return;
+    if(t->handlingSignal || !t->signalQueue) return;
 
     // linked list structure
     SignalQueue *s = t->signalQueue;
