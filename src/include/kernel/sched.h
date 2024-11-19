@@ -54,6 +54,7 @@ typedef struct Thread {
 
     bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
     bool clean;             // true when the exit status has been read by waitpid()
+    bool handlingSignal;    // true inside a signal handler
 
     void *signals;
     SignalQueue *signalQueue;
