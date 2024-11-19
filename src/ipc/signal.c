@@ -10,6 +10,7 @@
 #include <string.h>
 #include <kernel/signal.h>
 #include <kernel/sched.h>
+#include <kernel/logger.h>
 #include <platform/lock.h>
 #include <platform/platform.h>
 
@@ -238,4 +239,47 @@ int kill(Thread *t, pid_t pid, int sig) {
     }
 
     return 0;
+}
+
+/* signalHandle(): checks the signal queue and invokes a signal handler
+ * params: t - thread to check
+ * returns: nothing
+ */
+
+void signalHandle(Thread *t) {
+    if(t->handlingSignal || t->signalQueue) return;
+
+    // linked list structure
+    SignalQueue *s = t->signalQueue;
+    t->signalQueue = s->next;
+
+    uintptr_t *handlers = (uintptr_t *) t->signals;
+    uintptr_t handler = handlers[s->signum];
+    int def = 0;
+    
+    switch(handler) {
+    case (uintptr_t) SIG_IGN:
+    case (uintptr_t) SIG_HOLD:
+        return;
+    case (uintptr_t) SIG_DFL:
+        def = signalDefaultHandler(s->signum);
+        break;
+    }
+
+    switch(def) {
+    case SIG_I:
+    case SIG_C:
+        return;
+    case SIG_T:
+    case SIG_A:
+    case SIG_S:
+        schedLock();
+        terminateThread(t, -1, true);
+        schedRelease();
+        break;
+    default:
+        // TODO: execute the custom signal handler here
+        KERROR("TODO: execute custom signal handler\n");
+        for(;;);
+    }
 }
