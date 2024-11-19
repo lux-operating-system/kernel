@@ -18,6 +18,7 @@
 #include <kernel/file.h>
 #include <kernel/irq.h>
 #include <kernel/dirent.h>
+#include <kernel/signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -478,6 +479,11 @@ void syscallDispatchSend(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchKill(SyscallRequest *req) {
+    req->ret = kill(req->thread, req->params[0], req->params[1]);
+    req->unblock = true;
+}
+
 /* Group 4: Memory Management */
 
 void syscallDispatchSBrk(SyscallRequest *req) {
@@ -583,7 +589,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchAccept,      // 44 - accept()
     syscallDispatchRecv,        // 45 - recv()
     syscallDispatchSend,        // 46 - send()
-    NULL,                       // 47 - kill()
+    syscallDispatchKill,        // 47 - kill()
     NULL,                       // 48 - sigaction()
     NULL,                       // 49 - sigreturn()
 
