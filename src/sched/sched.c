@@ -12,6 +12,7 @@
 #include <platform/lock.h>
 #include <platform/context.h>
 #include <kernel/sched.h>
+#include <kernel/signal.h>
 #include <kernel/logger.h>
 
 static bool scheduling = false;
@@ -353,6 +354,7 @@ void schedule() {
                 if(current && (current->status == THREAD_RUNNING))
                     current->status = THREAD_QUEUED;
 
+                signalHandle(t);
                 t->status = THREAD_RUNNING;
                 t->time = schedTimeslice(t, t->priority);
                 t->cpu = cpu;
