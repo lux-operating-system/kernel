@@ -19,7 +19,6 @@ char *itoa(int, char *, int);
 int atoi(const char *);
 char *ltoa(long, char *, int);
 long atol(const char *);
-void *mallocUC(size_t);
 void *malloc(size_t);
 void *calloc(size_t, size_t);
 void *realloc(void *, size_t);
