@@ -249,20 +249,27 @@ int kill(Thread *t, pid_t pid, int sig) {
 void signalHandle(Thread *t) {
     if(t->handlingSignal || !t->signalQueue) return;
 
+    acquireLockBlocking(&t->lock);
+
     // linked list structure
     SignalQueue *s = t->signalQueue;
     t->signalQueue = s->next;
 
+    releaseLock(&t->lock);
+
+    int signum = s->signum;
     uintptr_t *handlers = (uintptr_t *) t->signals;
-    uintptr_t handler = handlers[s->signum];
+    uintptr_t handler = handlers[signum];
     int def = 0;
+
+    free(s);
     
     switch(handler) {
     case (uintptr_t) SIG_IGN:
     case (uintptr_t) SIG_HOLD:
         return;
     case (uintptr_t) SIG_DFL:
-        def = signalDefaultHandler(s->signum);
+        def = signalDefaultHandler(signum);
         break;
     }
 
