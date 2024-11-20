@@ -92,7 +92,7 @@ void *signalDefaults() {
     if(!ptr) return NULL;
 
     for(int i = 0; i < MAX_SIGNAL; i++)
-        *ptr = (uintptr_t) SIG_DFL; // default
+        ptr[i] = (uintptr_t) SIG_DFL; // default
     
     return (void *) ptr;
 }
@@ -273,13 +273,11 @@ void signalHandle(Thread *t) {
     case SIG_T:
     case SIG_A:
     case SIG_S:
-        schedLock();
         terminateThread(t, -1, true);
-        schedRelease();
         break;
     default:
         // TODO: execute the custom signal handler here
-        KERROR("TODO: execute custom signal handler\n");
+        KERROR("TODO: execute custom signal handler: handler = %X, def = %d\n", handler, def);
         for(;;);
     }
 }
