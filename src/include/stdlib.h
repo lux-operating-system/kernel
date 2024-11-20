@@ -23,6 +23,7 @@ void *malloc(size_t);
 void *calloc(size_t, size_t);
 void *realloc(void *, size_t);
 void *umalloc(size_t);
+void *uxmalloc(size_t);
 void *ucalloc(size_t, size_t);
 void *urealloc(void *, size_t);
 void free(void *);

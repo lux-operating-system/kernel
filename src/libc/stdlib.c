@@ -149,6 +149,33 @@ void *umalloc(size_t size) {
     return (void *)((uintptr_t)ptr + sizeof(struct mallocHeader));
 }
 
+void *uxmalloc(size_t size) {
+    /* again exactly the same umalloc() but with execute permissions, this will
+     * be used for installing platform-specific signal trampoline code */
+    if(!size) return NULL;
+    size_t pageSize = (size + sizeof(struct mallocHeader) + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    acquireLockBlocking(&lock);
+
+    uintptr_t ptr = vmmAllocate(USER_HEAP_BASE, USER_HEAP_LIMIT, pageSize, VMM_WRITE | VMM_USER | VMM_EXEC);
+    if(!ptr) {
+        releaseLock(&lock);
+        return NULL;
+    }
+
+    struct mallocHeader *header = (struct mallocHeader *)ptr;
+    header->byteSize = size;
+    header->pageSize = pageSize;
+
+    // allocate a guard page as well
+    uintptr_t guard = ptr + (pageSize*PAGE_SIZE);
+    platformMapPage(guard, 0, 0);
+
+    releaseLock(&lock);
+
+    return (void *)((uintptr_t)ptr + sizeof(struct mallocHeader));
+}
+
 void *calloc(size_t num, size_t size) {
     void *ptr = malloc(num * size);
     if(!ptr) return NULL;
