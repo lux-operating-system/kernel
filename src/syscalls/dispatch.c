@@ -484,6 +484,14 @@ void syscallDispatchKill(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchSigAction(SyscallRequest *req) {
+    if((!req->params[1] || (req->params[1] && syscallVerifyPointer(req, req->params[1], sizeof(struct sigaction)))) &&
+    (!req->params[2] || (req->params[2] && syscallVerifyPointer(req, req->params[2], sizeof(struct sigaction))))) {
+        req->ret = sigaction(req->thread, req->params[0], (const struct sigaction *) req->params[1], (struct sigaction *) req->params[2]);
+        req->unblock = true;
+    }
+}
+
 /* Group 4: Memory Management */
 
 void syscallDispatchSBrk(SyscallRequest *req) {
@@ -590,7 +598,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchRecv,        // 45 - recv()
     syscallDispatchSend,        // 46 - send()
     syscallDispatchKill,        // 47 - kill()
-    NULL,                       // 48 - sigaction()
+    syscallDispatchSigAction,   // 48 - sigaction()
     NULL,                       // 49 - sigreturn()
 
     /* group 4: memory management */
