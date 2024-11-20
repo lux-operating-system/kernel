@@ -12,6 +12,7 @@
 #include <kernel/sched.h>
 #include <kernel/logger.h>
 #include <platform/lock.h>
+#include <platform/mmap.h>
 #include <platform/platform.h>
 
 /* Implementation of ISO C and POSIX Signals */
@@ -287,4 +288,40 @@ void signalHandle(Thread *t) {
         KERROR("TODO: execute custom signal handler: handler = %X, def = %d\n", handler, def);
         for(;;);
     }
+}
+
+/* sigaction(): manipulate a signal handler
+ * params: t - calling thread
+ * params: sig - signal number
+ * params: act - new signal handler, NULL to query the current signal handler
+ * params: oact - old signal handler, NULL if not requested
+ * returns: zero on success, negative errno on fail
+ */
+
+int sigaction(Thread *t, int sig, const struct sigaction *act, struct sigaction *oact) {
+    if(sig <= 0 || sig > MAX_SIGNAL) return -EINVAL;
+
+    struct sigaction *handlers = (struct sigaction *) t->signals;
+
+    if(!act) {
+        // query signal handler
+        if(!oact) return 0;
+        memcpy(oact, &handlers[sig-1], sizeof(struct sigaction));
+        return 0;
+    }
+
+    uintptr_t handler = (uintptr_t) act->sa_handler;
+    if(handler != (uintptr_t) SIG_DFL && handler != (uintptr_t) SIG_IGN &&
+        handler < USER_BASE_ADDRESS)
+        return -EINVAL;
+
+    acquireLockBlocking(&t->lock);
+
+    // save the old signal handler if necessary
+    if(oact)
+        memcpy(oact, &handlers[sig-1], sizeof(struct sigaction));
+
+    memcpy(&handlers[sig-1], act, sizeof(struct sigaction));
+    releaseLock(&t->lock);
+    return 0;
 }
