@@ -47,7 +47,7 @@ int sigfillset(sigset_t *set) {
  */
 
 int sigaddset(sigset_t *set, int signum) {
-    if(signum < 0 || signum > MAX_SIGNAL)
+    if(signum <= 0 || signum > MAX_SIGNAL)
         return -EINVAL;
 
     *set |= (1 << signum);
@@ -61,7 +61,7 @@ int sigaddset(sigset_t *set, int signum) {
  */
 
 int sigdelset(sigset_t *set, int signum) {
-    if(signum < 0 || signum > MAX_SIGNAL)
+    if(signum <= 0 || signum > MAX_SIGNAL)
         return -EINVAL;
 
     *set &= ~(1 << signum);
@@ -75,7 +75,7 @@ int sigdelset(sigset_t *set, int signum) {
  */
 
 int sigismember(sigset_t *set, int signum) {
-    if(signum < 0 || signum > MAX_SIGNAL)
+    if(signum <= 0 || signum > MAX_SIGNAL)
         return -EINVAL;
 
     if(*set & (1 << signum)) return 1;
@@ -257,7 +257,7 @@ void signalHandle(Thread *t) {
 
     releaseLock(&t->lock);
 
-    int signum = s->signum;
+    int signum = s->signum - 1;     // change to zero-based
     struct sigaction *handlers = (struct sigaction *) t->signals;
     uintptr_t handler = (uintptr_t) handlers[signum].sa_handler;
     int def = 0;
@@ -269,7 +269,7 @@ void signalHandle(Thread *t) {
     case (uintptr_t) SIG_HOLD:
         return;
     case (uintptr_t) SIG_DFL:
-        def = signalDefaultHandler(signum);
+        def = signalDefaultHandler(signum + 1);
         break;
     }
 
