@@ -9,6 +9,7 @@
 #include <platform/context.h>
 #include <kernel/syscalls.h>
 #include <kernel/sched.h>
+#include <kernel/signal.h>
 #include <kernel/logger.h>
 
 static SyscallRequest *requests = NULL;    // sort of a linked list in a sense
@@ -118,10 +119,17 @@ int syscallProcess() {
         terminateThread(syscall->thread, -1, false);
         schedRelease();
     } else {
-        threadUseContext(syscall->thread->tid);
-        syscallDispatchTable[syscall->function](syscall);
-        platformSetContextStatus(syscall->thread->context, syscall->ret);
-        //threadUseContext(getTid());
+        signalHandle(syscall->thread);
+        if(syscall->thread->status == THREAD_ZOMBIE) {
+            setLocalSched(true);
+            return 1;
+        } else if(syscall->thread->status == THREAD_QUEUED) {
+            syscallEnqueue(syscall);
+        } else if(syscall->thread->status == THREAD_BLOCKED) {
+            threadUseContext(syscall->thread->tid);
+            syscallDispatchTable[syscall->function](syscall);
+            platformSetContextStatus(syscall->thread->context, syscall->ret);
+        }
     }
 
     if((syscall->thread->status == THREAD_BLOCKED) && syscall->unblock) {
