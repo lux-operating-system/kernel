@@ -355,11 +355,15 @@ void schedule() {
                     current->status = THREAD_QUEUED;
 
                 signalHandle(t);
-                t->status = THREAD_RUNNING;
-                t->time = schedTimeslice(t, t->priority);
-                t->cpu = cpu;
-                releaseLock(&lock);
-                platformSwitchContext(t);
+
+                if(t->status == THREAD_QUEUED) {
+                    // check status again because the signal handler may terminate a thread
+                    t->status = THREAD_RUNNING;
+                    t->time = schedTimeslice(t, t->priority);
+                    t->cpu = cpu;
+                    releaseLock(&lock);
+                    platformSwitchContext(t);
+                }
             }
 
             t = t->next;
