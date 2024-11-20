@@ -88,7 +88,7 @@ struct sigaction {
     union {
         void (*sa_handler)(int);
         void (*sa_sigaction)(int, siginfo_t *, void *);
-    } handler;
+    };
 
     sigset_t sa_mask;
     int sa_flags;

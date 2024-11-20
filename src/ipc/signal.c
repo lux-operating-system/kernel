@@ -88,11 +88,11 @@ int sigismember(sigset_t *set, int signum) {
  */
 
 void *signalDefaults() {
-    uintptr_t *ptr = malloc((MAX_SIGNAL+1) * sizeof(uintptr_t));
+    struct sigaction *ptr = malloc((MAX_SIGNAL+1) * sizeof(struct sigaction));
     if(!ptr) return NULL;
 
     for(int i = 0; i < MAX_SIGNAL; i++)
-        ptr[i] = (uintptr_t) SIG_DFL; // default
+        ptr[i].sa_handler = SIG_DFL; // default
     
     return (void *) ptr;
 }
@@ -148,10 +148,10 @@ int signalDefaultHandler(int signum) {
 void *signalClone(const void *h) {
     if(!h) return signalDefaults();
 
-    void *new = malloc((MAX_SIGNAL+1) * sizeof(uintptr_t));
+    void *new = malloc((MAX_SIGNAL+1) * sizeof(struct sigaction));
     if(!new) return NULL;
 
-    return memcpy(new, h, (MAX_SIGNAL+1) * sizeof(uintptr_t));
+    return memcpy(new, h, (MAX_SIGNAL+1) * sizeof(struct sigaction));
 }
 
 /* kill(): sends a signal to a process or thread
@@ -258,8 +258,8 @@ void signalHandle(Thread *t) {
     releaseLock(&t->lock);
 
     int signum = s->signum;
-    uintptr_t *handlers = (uintptr_t *) t->signals;
-    uintptr_t handler = handlers[signum];
+    struct sigaction *handlers = (struct sigaction *) t->signals;
+    uintptr_t handler = (uintptr_t) handlers[signum].sa_handler;
     int def = 0;
 
     free(s);
