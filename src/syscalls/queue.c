@@ -106,6 +106,7 @@ int syscallProcess() {
     if(!requests) return 0;
     SyscallRequest *syscall = syscallDequeue();
     if(!syscall) return 0;
+    if(syscall->thread->status != THREAD_BLOCKED) return 0;
 
     setLocalSched(false);
 
