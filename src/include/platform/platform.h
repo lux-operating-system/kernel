@@ -63,3 +63,4 @@ IRQCommand *platformGetIRQCommand();    // per-CPU IRQ command structure
 void platformIdle();            // to be called when the CPU is idle
 void platformCleanThread(void *, uintptr_t);   // garbage collector after thread is killed or replaced by exec()
 int platformSendSignal(Thread *, Thread *, int, uintptr_t);
+void platformSigreturn(Thread *);
