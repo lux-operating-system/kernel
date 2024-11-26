@@ -28,3 +28,39 @@ int platformSignalSetup(Thread *t) {
     t->signalTrampoline = (uintptr_t) trampoline;
     return 0;
 }
+
+/* platformSendSignal(): dispatches a signal to a thread
+ * params: sender - thread sending the signal
+ * params: dest - thread receiving the signal
+ * params: signum - signal number
+ * params: handler - function to dispatch
+ * returns: zero on success
+ */
+
+int platformSendSignal(Thread *sender, Thread *dest, int signum, uintptr_t handler) {
+    memcpy(dest->signalContext, dest->context, PLATFORM_CONTEXT_SIZE);
+
+    /* TODO: enter the function as func(int sig, siginfo_t *info, void *ctx)
+     * instead of just func(int sig)
+     * https://pubs.opengroup.org/onlinepubs/007904875/functions/sigaction.html
+     */
+
+    ThreadContext *ctx = (ThreadContext *) dest->context;
+    platformUseContext(ctx);
+
+    ctx->regs.rip = handler;
+    ctx->regs.rdi = signum;
+    ctx->regs.rflags = 0x202;
+    ctx->regs.rsp -= 128;       // downwards of the red zone
+
+    // ensure stack is 16-byte aligned on entry
+    while(ctx->regs.rsp & 0x0F)
+        ctx->regs.rsp--;
+    ctx->regs.rbp = ctx->regs.rsp;
+
+    // inject signal trampoline
+    uint64_t *stack = (uint64_t *) ctx->regs.rsp;
+    *stack = dest->signalTrampoline;
+
+    return 0;
+}
