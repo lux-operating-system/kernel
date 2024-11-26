@@ -50,6 +50,7 @@ typedef struct {
 
 void *platformCreateContext(void *, int, uintptr_t, uintptr_t);
 int platformSetContext(Thread *, uintptr_t, uintptr_t, const char **, const char **);
+int platformSignalSetup(Thread *);
 
 #define PLATFORM_CONTEXT_SIZE       sizeof(ThreadContext)
 
