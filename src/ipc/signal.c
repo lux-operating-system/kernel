@@ -224,6 +224,7 @@ int kill(Thread *t, pid_t pid, int sig) {
         if(!s) return -ENOMEM;
         
         s->signum = sig;
+        s->sender = t;
         s->next = NULL;
 
         acquireLockBlocking(&dest->lock);
@@ -262,6 +263,7 @@ void signalHandle(Thread *t) {
     struct sigaction *handlers = (struct sigaction *) t->signals;
     uintptr_t handler = (uintptr_t) handlers[signum].sa_handler;
     int def = 0;
+    Thread *sender = s->sender;
 
     free(s);
     
@@ -284,8 +286,6 @@ void signalHandle(Thread *t) {
         terminateThread(t, -1, true);
         break;
     default:
-        // TODO: execute the custom signal handler here
-        KERROR("TODO: execute custom signal handler: handler = %X, def = %d\n", handler, def);
         for(;;);
     }
 }
