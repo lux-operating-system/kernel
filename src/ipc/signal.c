@@ -263,7 +263,6 @@ void signalHandle(Thread *t) {
     struct sigaction *handlers = (struct sigaction *) t->signals;
     uintptr_t handler = (uintptr_t) handlers[signum].sa_handler;
     int def = 0;
-    Thread *sender = s->sender;
 
     free(s);
     
@@ -286,6 +285,8 @@ void signalHandle(Thread *t) {
         terminateThread(t, -1, true);
         break;
     default:
+        t->handlingSignal = true;
+        platformSendSignal(s->sender, t, s->signum);
         for(;;);
     }
 }
