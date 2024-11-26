@@ -135,6 +135,8 @@ int platformSetContext(Thread *t, uintptr_t entry, uintptr_t highest, const char
     /* this sets up an entry point for the thread that's something like
      * void _start(const char **argv, const char **envp) */
 
+    if(platformSignalSetup(t)) return -1;
+
     ThreadContext *ctx = (ThreadContext *)t->context;
     ctx->regs.rip = entry;
     ctx->regs.rdi = (uint64_t)argv;
