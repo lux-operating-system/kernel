@@ -107,3 +107,4 @@ void signalHandle(Thread *);
 
 int kill(Thread *, pid_t, int);
 int sigaction(Thread *, int, const struct sigaction *, struct sigaction *);
+void sigreturn(Thread *);

@@ -326,3 +326,14 @@ int sigaction(Thread *t, int sig, const struct sigaction *act, struct sigaction 
     releaseLock(&t->lock);
     return 0;
 }
+
+/* sigreturn(): returns from a signal handler and restores previous state
+ * params: t - calling thread
+ * returns: nothing
+ */
+
+void sigreturn(Thread *t) {
+    if(!t->handlingSignal) return;
+    platformSigreturn(t);
+    t->handlingSignal = false;
+}
