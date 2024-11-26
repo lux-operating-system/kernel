@@ -43,7 +43,7 @@
 typedef struct SignalQueue {
     struct SignalQueue *next;
     int signum;
-    uintptr_t handler;
+    struct Thread *sender;
 } SignalQueue;
 
 typedef struct Thread {
