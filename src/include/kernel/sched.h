@@ -58,6 +58,7 @@ typedef struct Thread {
 
     void *signals;
     SignalQueue *signalQueue;
+    uintptr_t signalTrampoline;
 
     SyscallRequest syscall; // for when the thread is blocked
     int exitStatus;         // for zombie threads
@@ -66,6 +67,7 @@ typedef struct Thread {
 
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
+    void *signalContext;
 
     uintptr_t highest;
 } Thread;
