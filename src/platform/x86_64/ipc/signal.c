@@ -24,8 +24,23 @@ int platformSignalSetup(Thread *t) {
     void *trampoline = uxmalloc(sigstubSize);
     if(!trampoline) return -1;
 
+    void *siginfo = umalloc(sizeof(siginfo_t));
+    if(!siginfo) {
+        free(trampoline);
+        return -1;
+    }
+
+    void *sigctx = umalloc(PLATFORM_CONTEXT_SIZE);
+    if(!sigctx) {
+        free(trampoline);
+        free(siginfo);
+        return -1;
+    }
+
     memcpy(trampoline, sigstub, sigstubSize);
     t->signalTrampoline = (uintptr_t) trampoline;
+    t->siginfo = (uintptr_t) siginfo;
+    t->signalUserContext = (uintptr_t) sigctx;
     return 0;
 }
 
