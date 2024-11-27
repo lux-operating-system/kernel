@@ -485,8 +485,8 @@ void syscallDispatchKill(SyscallRequest *req) {
 }
 
 void syscallDispatchSigAction(SyscallRequest *req) {
-    if((!req->params[1] || (req->params[1] && syscallVerifyPointer(req, req->params[1], sizeof(struct sigaction)))) &&
-    (!req->params[2] || (req->params[2] && syscallVerifyPointer(req, req->params[2], sizeof(struct sigaction))))) {
+    if((!req->params[1] || syscallVerifyPointer(req, req->params[1], sizeof(struct sigaction))) &&
+    (!req->params[2] || syscallVerifyPointer(req, req->params[2], sizeof(struct sigaction)))) {
         req->ret = sigaction(req->thread, req->params[0], (const struct sigaction *) req->params[1], (struct sigaction *) req->params[2]);
         req->unblock = true;
     }
