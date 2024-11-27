@@ -55,16 +55,33 @@ int platformSignalSetup(Thread *t) {
 int platformSendSignal(Thread *sender, Thread *dest, int signum, uintptr_t handler) {
     memcpy(dest->signalContext, dest->context, PLATFORM_CONTEXT_SIZE);
 
-    /* TODO: enter the function as func(int sig, siginfo_t *info, void *ctx)
-     * instead of just func(int sig)
-     * https://pubs.opengroup.org/onlinepubs/007904875/functions/sigaction.html
-     */
-
     ThreadContext *ctx = (ThreadContext *) dest->context;
     platformUseContext(ctx);
 
+    Process *p = NULL;
+    if(sender) p = getProcess(sender->pid);
+
+    siginfo_t *siginfo = (siginfo_t *) dest->siginfo;
+    siginfo->si_signo = signum;
+    siginfo->si_pid = sender->tid;
+
+    if(p) siginfo->si_uid = p->user;
+    else siginfo->si_uid = 0;
+
+    siginfo->si_code = 0;       // TODO
+
+    ThreadContext *uctx = (ThreadContext *) dest->signalUserContext;
+    memcpy(uctx, dest->context, PLATFORM_CONTEXT_SIZE);
+
+    // signal entry point
+    // func(int sig, siginfo_t *info, void *ctx)
+    // https://pubs.opengroup.org/onlinepubs/007904875/functions/sigaction.html
+
     ctx->regs.rip = handler;
-    ctx->regs.rdi = signum;
+    ctx->regs.rdi = signum;     // int sig
+    ctx->regs.rsi = (uint64_t) siginfo;     // siginfo_t *info
+    ctx->regs.rdx = (uint64_t) uctx;        // void *ctx
+
     ctx->regs.rflags = 0x202;
     ctx->regs.rsp -= 128;       // downwards of the red zone
 
