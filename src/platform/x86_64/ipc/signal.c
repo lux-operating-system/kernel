@@ -63,7 +63,8 @@ int platformSendSignal(Thread *sender, Thread *dest, int signum, uintptr_t handl
 
     siginfo_t *siginfo = (siginfo_t *) dest->siginfo;
     siginfo->si_signo = signum;
-    siginfo->si_pid = sender->tid;
+    if(sender) siginfo->si_pid = sender->tid;
+    else siginfo->si_pid = 0;   // we will use pid 0 for the kernel
 
     if(p) siginfo->si_uid = p->user;
     else siginfo->si_uid = 0;
