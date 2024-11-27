@@ -492,6 +492,11 @@ void syscallDispatchSigAction(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchSigreturn(SyscallRequest *req) {
+    sigreturn(req->thread);
+    req->unblock = true;
+}
+
 /* Group 4: Memory Management */
 
 void syscallDispatchSBrk(SyscallRequest *req) {
@@ -599,7 +604,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchSend,        // 46 - send()
     syscallDispatchKill,        // 47 - kill()
     syscallDispatchSigAction,   // 48 - sigaction()
-    NULL,                       // 49 - sigreturn()
+    syscallDispatchSigreturn,   // 49 - sigreturn()
 
     /* group 4: memory management */
     syscallDispatchSBrk,        // 50 - sbrk()
