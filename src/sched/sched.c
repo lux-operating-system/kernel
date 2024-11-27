@@ -12,6 +12,7 @@
 #include <platform/lock.h>
 #include <platform/context.h>
 #include <kernel/sched.h>
+#include <kernel/signal.h>
 #include <kernel/logger.h>
 
 static bool scheduling = false;
@@ -353,11 +354,16 @@ void schedule() {
                 if(current && (current->status == THREAD_RUNNING))
                     current->status = THREAD_QUEUED;
 
-                t->status = THREAD_RUNNING;
-                t->time = schedTimeslice(t, t->priority);
-                t->cpu = cpu;
-                releaseLock(&lock);
-                platformSwitchContext(t);
+                signalHandle(t);
+
+                if(t->status == THREAD_QUEUED) {
+                    // check status again because the signal handler may terminate a thread
+                    t->status = THREAD_RUNNING;
+                    t->time = schedTimeslice(t, t->priority);
+                    t->cpu = cpu;
+                    releaseLock(&lock);
+                    platformSwitchContext(t);
+                }
             }
 
             t = t->next;
@@ -513,12 +519,8 @@ void unblockThread(Thread *t) {
  */
 
 int yield(Thread *t) {
-    acquireLockBlocking(&lock);
-
     t->status = THREAD_QUEUED;
     t->time = schedTimeslice(t, t->priority);
-
-    releaseLock(&lock);
     return 0;
 }
 

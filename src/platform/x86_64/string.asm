@@ -68,7 +68,7 @@ memset:
     mov ax, si          ; 32 bits
     mov esi, eax
     shr rax, 32
-    mov eax, esi        ; full 64 bits
+    or rax, rsi         ; full 64 bits
 
     mov rcx, rdx
     shr rcx, 3          ; div 8

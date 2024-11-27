@@ -14,6 +14,7 @@
 #include <kernel/logger.h>
 #include <kernel/elf.h>
 #include <kernel/modules.h>
+#include <kernel/signal.h>
 
 int execmve(Thread *, void *, const char **, const char **);
 
@@ -322,6 +323,9 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
             p->iodCount--;
         }
     }
+
+    // set up default signal handlers
+    t->signals = signalDefaults();
 
     // TODO: here we've successfully loaded the new program, but we also need
     // to free up memory used by the original program

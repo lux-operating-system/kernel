@@ -9,6 +9,7 @@
 #include <platform/context.h>
 #include <kernel/syscalls.h>
 #include <kernel/sched.h>
+#include <kernel/signal.h>
 #include <kernel/logger.h>
 
 static SyscallRequest *requests = NULL;    // sort of a linked list in a sense
@@ -28,7 +29,8 @@ void syscallHandle(void *ctx) {
         // allow immediate handling of IPC syscalls without going through the
         // syscall queue for performance
         if((req->function >= SYSCALL_IPC_START && req->function <= SYSCALL_IPC_END) ||
-            (req->function >= SYSCALL_RW_START && req->function <= SYSCALL_RW_END)) {
+            (req->function >= SYSCALL_RW_START && req->function <= SYSCALL_RW_END) ||
+            (req->function == SYSCALL_ACCEPT)) {
             setLocalSched(false);
             syscallDispatchTable[req->function](req);
 
@@ -105,6 +107,7 @@ int syscallProcess() {
     if(!requests) return 0;
     SyscallRequest *syscall = syscallDequeue();
     if(!syscall) return 0;
+    if(syscall->thread->status != THREAD_BLOCKED) return 0;
 
     setLocalSched(false);
 
@@ -116,10 +119,17 @@ int syscallProcess() {
         terminateThread(syscall->thread, -1, false);
         schedRelease();
     } else {
-        threadUseContext(syscall->thread->tid);
-        syscallDispatchTable[syscall->function](syscall);
-        platformSetContextStatus(syscall->thread->context, syscall->ret);
-        //threadUseContext(getTid());
+        signalHandle(syscall->thread);
+        if(syscall->thread->status == THREAD_ZOMBIE) {
+            setLocalSched(true);
+            return 1;
+        } else if(syscall->thread->status == THREAD_QUEUED) {
+            syscallEnqueue(syscall);
+        } else if(syscall->thread->status == THREAD_BLOCKED) {
+            threadUseContext(syscall->thread->tid);
+            syscallDispatchTable[syscall->function](syscall);
+            platformSetContextStatus(syscall->thread->context, syscall->ret);
+        }
     }
 
     if((syscall->thread->status == THREAD_BLOCKED) && syscall->unblock) {

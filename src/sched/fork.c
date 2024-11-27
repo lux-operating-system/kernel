@@ -11,6 +11,7 @@
 #include <platform/context.h>
 #include <kernel/sched.h>
 #include <kernel/logger.h>
+#include <kernel/signal.h>
 
 /* fork(): forks the running thread
  * params: t - pointer to thread structure
@@ -52,6 +53,7 @@ pid_t fork(Thread *t) {
     p->threads[0]->pid = pid;
     p->threads[0]->tid = pid;
     p->threads[0]->context = calloc(1, PLATFORM_CONTEXT_SIZE);
+    p->threads[0]->signalContext = calloc(1, PLATFORM_CONTEXT_SIZE);
     p->threads[0]->highest = t->highest;
     p->threads[0]->pages = t->pages;
 
@@ -59,7 +61,7 @@ pid_t fork(Thread *t) {
     // entire process memory, but just the calling thread
     p->pages = t->pages;
 
-    if(!p->threads[0]->context) {
+    if(!p->threads[0]->context || !p->threads[0]->signalContext) {
         free(p->threads[0]);
         free(p->threads);
         free(p);
@@ -76,6 +78,9 @@ pid_t fork(Thread *t) {
         schedRelease();
         return -1;
     }
+
+    // clone signal handlers
+    p->threads[0]->signals = signalClone(t->signals);
 
     // clone I/O descriptors
     Process *parent = getProcess(t->pid);

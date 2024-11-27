@@ -40,6 +40,12 @@
 #define WNOHANG                 0x02
 #define WUNTRACED               0x04
 
+typedef struct SignalQueue {
+    struct SignalQueue *next;
+    int signum;
+    struct Thread *sender;
+} SignalQueue;
+
 typedef struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
@@ -47,7 +53,14 @@ typedef struct Thread {
     lock_t lock;
 
     bool normalExit;        // true when the thread ends by exit() and is not forcefully killed
-    bool clean;             // true when the exit status has been read by waitpid() 
+    bool clean;             // true when the exit status has been read by waitpid()
+    bool handlingSignal;    // true inside a signal handler
+
+    void *signals;
+    SignalQueue *signalQueue;
+    uintptr_t signalTrampoline;
+    uintptr_t siginfo;
+    uintptr_t signalUserContext;
 
     SyscallRequest syscall; // for when the thread is blocked
     int exitStatus;         // for zombie threads
@@ -56,6 +69,7 @@ typedef struct Thread {
 
     struct Thread *next;
     void *context;          // platform-specific (page tables, registers, etc)
+    void *signalContext;
 
     uintptr_t highest;
 } Thread;
