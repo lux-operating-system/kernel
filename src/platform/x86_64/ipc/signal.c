@@ -64,3 +64,12 @@ int platformSendSignal(Thread *sender, Thread *dest, int signum, uintptr_t handl
 
     return 0;
 }
+
+/* platformSigreturn(): restores context before a signal handler was invoked
+ * params: t - thread to restore
+ * returns: nothing
+ */
+
+void platformSigreturn(Thread *t) {
+    memcpy(t->context, t->signalContext, PLATFORM_CONTEXT_SIZE);
+}
