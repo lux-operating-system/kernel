@@ -59,6 +59,8 @@ typedef struct Thread {
     void *signals;
     SignalQueue *signalQueue;
     uintptr_t signalTrampoline;
+    uintptr_t siginfo;
+    uintptr_t signalUserContext;
 
     SyscallRequest syscall; // for when the thread is blocked
     int exitStatus;         // for zombie threads
