@@ -225,6 +225,12 @@ int closeSocket(Thread *t, int sd) {
         return -EBADF;
     }
 
+    sock->refCount--;
+    if(sock->refCount) {
+        releaseLock(&lock);
+        return 0;
+    }
+
     if(sock->peer) {
         // disconnect the socket from its peer
         // TODO: for future TCP sockets, terminate the connection here
@@ -234,6 +240,7 @@ int closeSocket(Thread *t, int sd) {
 
     // and delete the socket
     socketUnregister(sock->globalIndex);
+    free(sock);
     closeIO(p, &p->io[sd]);
     releaseLock(&lock);
     return 0;
