@@ -39,7 +39,6 @@ int openIO(void *pv, void **iodv) {
     if(desc >= MAX_IO_DESCRIPTORS) return -EMFILE;
 
     p->io[desc].valid = true;
-    p->io[desc].clone = false;
     p->io[desc].type = IO_WAITING;
     p->io[desc].data = NULL;
 
@@ -133,16 +132,6 @@ int close(Thread *t, int fd) {
     if(!p) return -ESRCH;
 
     if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;
-
-    if(p->io[fd].clone) {
-        p->io[fd].valid = false;
-        p->io[fd].clone = false;
-        p->io[fd].type = 0;
-        p->io[fd].flags = 0;
-        p->io[fd].data = NULL;
-
-        return 0;
-    }
 
     if(p->io[fd].type == IO_SOCKET) return closeSocket(t, fd);
     else if(p->io[fd].type == IO_FILE) return closeFile(t, fd);

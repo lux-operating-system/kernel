@@ -30,6 +30,7 @@ typedef struct {
     char path[MAX_FILE_PATH];       // path relative to device mountpount
     off_t position;
     uint64_t id;                    // unique ID, this is for device files
+    int refCount;
 } FileDescriptor;
 
 /* file system syscalls */

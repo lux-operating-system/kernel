@@ -110,14 +110,10 @@ int closedir(Thread *t, DIR *dir) {
     if(!descriptor) return -EBADF;
 
     // destroy the descriptor
-    if(!p->io[dd].clone)
-        free(p->io[dd].data);
-
     p->io[dd].valid = false;
     p->io[dd].type = 0;
     p->io[dd].flags = 0;
     p->io[dd].data = NULL;
-    p->io[dd].clone = false;
     p->iodCount--;
 
     return 0;

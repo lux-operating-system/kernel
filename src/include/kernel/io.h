@@ -44,7 +44,7 @@
 // TODO: decide whether to implement named pipes as files or an independent type
 
 typedef struct IODescriptor {
-    bool valid, clone;
+    bool valid;
     int type;
     uint16_t flags;
     void *data;                 // file or socket-specific data

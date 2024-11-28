@@ -88,9 +88,6 @@ pid_t fork(Thread *t) {
         memcpy(p->io, parent->io, sizeof(IODescriptor) * MAX_IO_DESCRIPTORS);
         p->iodCount = parent->iodCount;
 
-        for(int i = 0; i < MAX_IO_DESCRIPTORS; i++)
-            if(p->io[i].valid) p->io[i].clone = true;
-
         // clone working directory
         strcpy(p->cwd, parent->cwd);
 
