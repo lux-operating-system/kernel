@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/types.h>
 #include <kernel/boot.h>
 #include <kernel/sched.h>
 
@@ -40,6 +41,20 @@
 
 // TODO: adjust bit masks and shifting here when implementing true swapping
 
+// protection and flags for memory-mapped files
+#define PROT_READ               0x01
+#define PROT_WRITE              0x02
+#define PROT_EXEC               0x04
+#define PROT_NONE               0x00
+
+#define MAP_SHARED              0x01
+#define MAP_PRIVATE             0x02
+#define MAP_FIXED               0x04
+
+#define MS_ASYNC                0x01
+#define MS_SYNC                 0x02
+#define MS_INVALIDATE           0x04
+
 typedef struct {
     uint64_t highestPhysicalAddress;
     uint64_t lowestUsableAddress;
@@ -52,6 +67,25 @@ typedef struct {
 typedef struct {
     uint64_t usedPages, usedBytes;
 } KernelHeapStatus;
+
+typedef struct {
+    int fd, prot, flags;
+    pid_t pid, tid;     // original owner
+    bool device;
+    size_t length;
+    off_t offset;
+} MmapHeader;
+
+struct MmapSyscallParams {
+    // probably the only syscall whose params will be passed in memory because
+    // there's just too many
+    void *addr;
+    size_t len;
+    int prot;
+    int flags;
+    int fd;
+    off_t off;
+};
 
 void pmmInit(KernelBootInfo *);
 void pmmStatus(PhysicalMemoryStatus *);
@@ -73,3 +107,7 @@ void *sbrk(Thread *, intptr_t);
 uintptr_t mmio(Thread *, uintptr_t, off_t, int);
 uintptr_t pcontig(Thread *, uintptr_t, off_t, int);
 uintptr_t vtop(Thread *, uintptr_t);
+
+void *mmap(Thread *, void *, size_t, int, int, int, off_t);
+int munmap(Thread *, void *, size_t);
+int msync(Thread *, void *, size_t, int);
