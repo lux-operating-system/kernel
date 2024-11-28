@@ -151,6 +151,7 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
 
     // copy the self address
     SocketDescriptor *self = (SocketDescriptor *)iod->data;
+    self->refCount = 1;
     memcpy(&self->address, &listener->address, sizeof(struct sockaddr));
     self->type = listener->type;
     self->protocol = listener->protocol;
