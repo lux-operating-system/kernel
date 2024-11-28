@@ -173,6 +173,9 @@ int closeFile(Thread *t, int fd) {
 
     // TODO: flush the file buffers here to allow drivers to implement caching
 
+    file->refCount--;
+    if(!file->refCount) free(file);
+
     closeIO(p, &p->io[fd]);
     return 0;
 }
