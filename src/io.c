@@ -60,7 +60,6 @@ void closeIO(void *pv, void *iodv) {
 
     if(iod->valid) {
         iod->valid = false;
-        if(iod->data) free(iod->data);
         iod->data = NULL;
 
         p->iodCount--;
