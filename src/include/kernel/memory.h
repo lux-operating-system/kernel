@@ -108,6 +108,6 @@ uintptr_t mmio(Thread *, uintptr_t, off_t, int);
 uintptr_t pcontig(Thread *, uintptr_t, off_t, int);
 uintptr_t vtop(Thread *, uintptr_t);
 
-void *mmap(Thread *, void *, size_t, int, int, int, off_t);
+void *mmap(Thread *, uint64_t, void *, size_t, int, int, int, off_t);
 int munmap(Thread *, void *, size_t);
-int msync(Thread *, void *, size_t, int);
+int msync(Thread *, uint64_t, void *, size_t, int);
