@@ -53,7 +53,10 @@
 #define COMMAND_CHDIR           0x8010
 #define COMMAND_CHROOT          0x8011
 
-#define MAX_SYSCALL_COMMAND     0x8011
+#define COMMAND_MMAP            0x8012
+#define COMMAND_MSYNC           0x8013
+
+#define MAX_SYSCALL_COMMAND     0x8013
 
 /* these commands are for device drivers */
 #define COMMAND_IRQ             0xC000
@@ -207,6 +210,30 @@ typedef struct {
     uid_t uid;
     gid_t gid;
 } ChdirCommand;
+
+/* mmap() */
+typedef struct {
+    SyscallHeader header;
+
+    /* file descriptor */
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uint64_t id;
+    int openFlags;
+    uid_t uid;
+    gid_t gid;
+    off_t position;
+
+    /* mmap params */
+    size_t len;
+    int prot;
+    int flags;
+    off_t off;
+
+    int responseType;   // 0 = returning data, 1 = returning mmio
+    uint64_t mmio;      // mmio pointer
+    uint64_t data[];
+} MmapCommand;
 
 void serverInit();
 void serverIdle();
