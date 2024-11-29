@@ -504,6 +504,23 @@ void syscallDispatchSBrk(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchMmap(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], sizeof(struct MmapSyscallParams))) {
+        req->requestID = syscallID();
+        struct MmapSyscallParams *p = (struct MmapSyscallParams *) req->params[0];
+        intptr_t status = (intptr_t) mmap(req->thread, req->requestID, p->addr, p->len,
+            p->prot, p->flags, p->fd, p->off);
+        if(status < 0) {
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 /* Group 5: Driver I/O Functions */
 
 void syscallDispatchIoperm(SyscallRequest *req) {
@@ -608,7 +625,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
 
     /* group 4: memory management */
     syscallDispatchSBrk,        // 50 - sbrk()
-    NULL,                       // 51 - mmap()
+    syscallDispatchMmap,        // 51 - mmap()
     NULL,                       // 52 - munmap()
 
     /* group 5: driver I/O functions */
