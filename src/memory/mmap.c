@@ -36,7 +36,7 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
     if(!p) return (void *) -ESRCH;
 
     IODescriptor *io = &p->io[fd];
-    if(io->valid || !io->data) return (void *) -EBADF;
+    if(!io->valid || !io->data) return (void *) -EBADF;
     if(io->type != IO_FILE) return (void *) -ENODEV;
 
     FileDescriptor *f = (FileDescriptor *) io->data;
