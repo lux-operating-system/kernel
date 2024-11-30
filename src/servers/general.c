@@ -125,6 +125,7 @@ void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
     schedRelease(); 
 
     response->buffer = base;
+    response->bufferPhysical = phys;
     response->w = ttyStatus.w;
     response->h = ttyStatus.h;
     response->bpp = ttyStatus.bpp;
