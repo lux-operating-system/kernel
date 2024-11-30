@@ -16,6 +16,7 @@
 #include <kernel/syscalls.h>
 #include <kernel/logger.h>
 #include <kernel/io.h>
+#include <kernel/memory.h>
 
 void handleSyscallResponse(const SyscallHeader *hdr) {
     SyscallRequest *req = getSyscall(hdr->header.requester);
@@ -218,6 +219,12 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         ChdirCommand *chdircmd = (ChdirCommand *) hdr;
         strcpy(p->cwd, chdircmd->path);
         break;
+    
+    case COMMAND_MMAP:
+        if(hdr->header.status) break;
+
+        MmapCommand *mmapcmd = (MmapCommand *) hdr;
+        mmapHandle(mmapcmd, req);
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
