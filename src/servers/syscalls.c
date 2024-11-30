@@ -224,7 +224,9 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         if(hdr->header.status) break;
 
         MmapCommand *mmapcmd = (MmapCommand *) hdr;
+        threadUseContext(req->thread->tid);
         mmapHandle(mmapcmd, req);
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
