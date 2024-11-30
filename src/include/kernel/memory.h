@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <kernel/boot.h>
 #include <kernel/sched.h>
+#include <kernel/servers.h>
 
 /* this must be defined on a platform-specific basis */
 /* it defines the page size and other necessary attributes for paging */
@@ -111,3 +112,5 @@ uintptr_t vtop(Thread *, uintptr_t);
 void *mmap(Thread *, uint64_t, void *, size_t, int, int, int, off_t);
 int munmap(Thread *, void *, size_t);
 int msync(Thread *, uint64_t, void *, size_t, int);
+
+void mmapHandle(MmapCommand *, SyscallRequest *);
