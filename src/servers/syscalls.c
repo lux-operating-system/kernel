@@ -34,13 +34,12 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     }
 
     // default action is to unblock the thread
-    schedLock();
     Process *p = getProcess(req->thread->pid);
     req->ret = hdr->header.status;
     req->external = false;
     req->unblock = true;
     req->thread->time = schedTimeslice(req->thread, req->thread->priority);
-    req->thread->status = THREAD_QUEUED;
+    //req->thread->status = THREAD_QUEUED;
 
     // some syscalls will require special handling
     ssize_t status;
@@ -99,7 +98,6 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             req->queued = true;
             req->next = NULL;
             req->retry = true;
-            schedRelease();
             syscallEnqueue(req);
             break;
         } else if(status < 0) break;  // here an actual error happened
@@ -125,7 +123,6 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             req->queued = true;
             req->next = NULL;
             req->retry = true;
-            schedRelease();
             syscallEnqueue(req);
             break;
         } else if(status < 0) break;  // here an actual error happened
@@ -201,6 +198,8 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     case COMMAND_EXEC:
         if(hdr->header.status) break;
 
+        schedLock();
+
         int execStatus = execveHandle((ExecCommand *) hdr);
 
         if(!execStatus) {
@@ -230,5 +229,5 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
-    schedRelease();
+    req->thread->status = THREAD_QUEUED;
 }
