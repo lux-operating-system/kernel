@@ -96,6 +96,12 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
     header->pid = req->thread->pid;
     header->tid = req->thread->tid;
 
+    // mmap adds one extra reference to a file descriptor
+    // so it will not be closed even when close() is invoked
+    Process *proc = getProcess(req->thread->pid);
+    FileDescriptor *file = (FileDescriptor *) proc->io[p->fd].data;
+    file->refCount++;
+
     if(msg->responseType) {
         /* memory-mapped device file */
         header->device = true;
