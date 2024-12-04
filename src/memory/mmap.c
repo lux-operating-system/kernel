@@ -73,32 +73,32 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
 void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
     struct MmapSyscallParams *p = (struct MmapSyscallParams *) req->params[0];
 
+    size_t pageCount = (msg->len+PAGE_SIZE-1) / PAGE_SIZE;
+    int pageFlags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER;
+    if(msg->prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
+    if(msg->prot & PROT_EXEC) pageFlags |= PLATFORM_PAGE_EXEC;
+
+    // allocate one extra page for the mmap() header so we can unmap later
+    // the difference between this and malloc() is that this must always be
+    // page-aligned to comply with POSIX
+    uintptr_t base = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, VMM_USER | VMM_WRITE);
+    if(!base) {
+        req->ret = -ENOMEM;
+        return;
+    }
+
+    MmapHeader *header = (MmapHeader *) base;
+    header->fd = p->fd;
+    header->flags = p->flags;
+    header->length = msg->len;
+    header->offset = msg->off;
+    header->prot = msg->prot;
+    header->pid = req->thread->pid;
+    header->tid = req->thread->tid;
+
     if(msg->responseType) {
         /* memory-mapped device file */
-        size_t pageCount = (msg->len+PAGE_SIZE-1) / PAGE_SIZE;
-        int pageFlags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER;
-        if(msg->prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
-        if(msg->prot & PROT_EXEC) pageFlags |= PLATFORM_PAGE_EXEC;
-
-        // allocate one extra page for the mmap() header so we can unmap later
-        // the difference between this and malloc() is that this must always be
-        // page-aligned to comply with POSIX
-        uintptr_t base = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, VMM_USER | VMM_WRITE);
-        if(!base) {
-            req->ret = -ENOMEM;
-            return;
-        }
-
-        MmapHeader *header = (MmapHeader *) base;
         header->device = true;
-        header->fd = p->fd;
-        header->flags = p->flags;
-        header->length = msg->len;
-        header->offset = msg->off;
-        header->prot = msg->prot;
-        header->pid = req->thread->pid;
-        header->tid = req->thread->tid;
-    
         base += PAGE_SIZE;      // skip over to the next page
 
         for(size_t i = 0; i < pageCount; i++)
@@ -107,7 +107,10 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
         req->ret = base;
     } else {
         /* memory-mapped regular file */
-        KWARN("TODO: implement memory-mapped regular files\n");
-        req->ret = -ENOSYS;
+        header->device = false;
+        base += PAGE_SIZE;
+
+        memcpy((void *) base, msg->data, msg->len);
+        req->ret = base;
     }
 }
