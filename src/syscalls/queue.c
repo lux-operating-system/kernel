@@ -43,7 +43,7 @@ void syscallHandle(void *ctx) {
             }
         } else {
             syscallEnqueue(req);
-            blockThread(t);     // block until we handle the syscall
+            t->status = THREAD_BLOCKED;
         }
     }
 
@@ -72,6 +72,9 @@ SyscallRequest *syscallEnqueue(SyscallRequest *request) {
 
         q->next = request;
     }
+
+    if(request->thread->status == THREAD_BLOCKED)
+        request->retry = true;
 
     schedRelease();
     return request;
