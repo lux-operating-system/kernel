@@ -34,7 +34,7 @@ memmove:
     mov rax, rdi        ; return value
 
     mov r8, rdi
-    sub r8, rsi
+    sub r8, rsi         ; dst-src
     jns .check_overlap
 
     not r8
@@ -42,9 +42,22 @@ memmove:
 
 .check_overlap:
     cmp r8, 8
-    jle memcpy
+    jge memcpy
 
+    js .backward        ; if dst<src copy backwards
+
+.forward:
     mov rcx, rdx
+    rep movsb
+
+    ret
+
+.backward:
+    std
+    mov rcx, rdx
+    dec rdx
+    add rdi, rdx
+    add rsi, rdx
     rep movsb
 
     ret
