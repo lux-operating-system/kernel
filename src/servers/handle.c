@@ -29,7 +29,6 @@ static bool lumenConnected = false;
  */
 
 void serverInit() {
-    schedLock();
     struct sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     strcpy(addr.sun_path, SERVER_KERNEL_PATH);     // this is a special path and not a true file
@@ -64,7 +63,6 @@ void serverInit() {
     }
 
     KDEBUG("kernel is listening on socket %d: %s\n", kernelSocket, addr.sun_path);
-    schedRelease();
 }
 
 /* serverIdle(): handles incoming kernel connections when idle

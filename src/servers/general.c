@@ -105,24 +105,18 @@ void getFramebuffer(Thread *t, int sd, const MessageHeader *req, void *res) {
 
     // we will need to map the frame buffer into the thread's address space
     // so temporarily switch to it
-    schedLock();
     if(threadUseContext(t->tid)) return;
 
     uintptr_t phys = ((uintptr_t)ttyStatus.fbhw - KERNEL_MMIO_BASE);
 
     size_t pages = (ttyStatus.h * ttyStatus.pitch + PAGE_SIZE - 1) / PAGE_SIZE;
     uintptr_t base = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pages, VMM_USER | VMM_WRITE);
-    if(!base) {
-        schedRelease();
-        return;
-    }
+    if(!base) return;
 
     // and finally map it
     for(int i = 0; i < pages; i++) {
         platformMapPage(base + (i * PAGE_SIZE), phys + (i * PAGE_SIZE), PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER | PLATFORM_PAGE_WRITE);
     }
-
-    schedRelease(); 
 
     response->buffer = base;
     response->bufferPhysical = phys;
