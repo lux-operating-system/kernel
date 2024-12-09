@@ -239,6 +239,6 @@ typedef struct {
 void serverInit();
 void serverIdle();
 void handleGeneralRequest(int, const MessageHeader *, void *);
-void handleSyscallResponse(const SyscallHeader *);
+void handleSyscallResponse(int, const SyscallHeader *);
 int requestServer(Thread *, void *);
 int serverSocket(const char *);

@@ -18,7 +18,7 @@
 #include <kernel/io.h>
 #include <kernel/memory.h>
 
-void handleSyscallResponse(const SyscallHeader *hdr) {
+void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
     SyscallRequest *req = getSyscall(hdr->header.requester);
     if(!req) {
         KWARN("received response for syscall 0x%X pid %d but no such request exists\n", hdr->header.command, hdr->header.requester);
