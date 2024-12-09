@@ -31,6 +31,7 @@ typedef struct {
     off_t position;
     uint64_t id;                    // unique ID, this is for device files
     int refCount;
+    int sd;                         // socket descriptor of relevant driver
 } FileDescriptor;
 
 /* file system syscalls */
