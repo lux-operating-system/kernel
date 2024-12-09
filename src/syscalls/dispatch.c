@@ -67,7 +67,7 @@ void syscallDispatchFork(SyscallRequest *req) {
 }
 
 void syscallDispatchYield(SyscallRequest *req) {
-    req->ret = yield(req->thread);
+    req->ret = 0;
     req->unblock = true;
 }
 
