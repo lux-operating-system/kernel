@@ -59,7 +59,7 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
     command->flags = flags;
     command->off = off;
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return (void *) (intptr_t) status;
 }
