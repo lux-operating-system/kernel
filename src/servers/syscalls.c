@@ -20,15 +20,13 @@
 
 void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
     SyscallRequest *req = getSyscall(hdr->header.requester);
-    if(!req || req->requestID != hdr->id) return;
+    if(!req) return;
 
     // default action is to unblock the thread
     Process *p = getProcess(req->thread->pid);
     req->ret = hdr->header.status;
     req->external = false;
     req->unblock = true;
-    req->thread->time = schedTimeslice(req->thread, req->thread->priority);
-    //req->thread->status = THREAD_QUEUED;
 
     // some syscalls will require special handling
     ssize_t status;
@@ -89,7 +87,7 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
             req->next = NULL;
             req->retry = true;
             syscallEnqueue(req);
-            break;
+            return;
         } else if(status < 0) break;  // here an actual error happened
         
         RWCommand *readcmd = (RWCommand *) hdr;
@@ -114,7 +112,7 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
             req->next = NULL;
             req->retry = true;
             syscallEnqueue(req);
-            break;
+            return;
         } else if(status < 0) break;  // here an actual error happened
 
         RWCommand *writecmd = (RWCommand *) hdr;
