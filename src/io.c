@@ -221,7 +221,7 @@ int ioctl(struct Thread *t, uint64_t id, int fd, unsigned long op, ...) {
     va_end(args);
 
     // and request a driver to handle this
-    int status = requestServer(t, cmd);
+    int status = requestServer(t, 0, cmd);
     free(cmd);
     return status;
 }

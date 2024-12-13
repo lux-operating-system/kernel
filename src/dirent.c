@@ -37,7 +37,7 @@ int opendir(Thread *t, uint64_t id, const char *path) {
         strcpy(cmd->abspath + strlen(cmd->abspath), path);
     }
     
-    int status = requestServer(t, cmd);
+    int status = requestServer(t, 0, cmd);
     free(cmd);
     return status;
 }
@@ -64,7 +64,7 @@ int readdir_r(Thread *t, uint64_t id, DIR *dir, struct dirent *entry, struct dir
     strcpy(cmd->path, descriptor->path);
     strcpy(cmd->device, descriptor->device);
 
-    int status = requestServer(t, cmd);
+    int status = requestServer(t, 0, cmd);
     free(cmd);
     return status;
 }

@@ -19,6 +19,7 @@
 #include <kernel/servers.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <kernel/logger.h>
 
 int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
     // send a request to lumen
@@ -33,7 +34,7 @@ int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *
     strcpy(command->target, tgt);
     strcpy(command->type, type);
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
@@ -57,7 +58,7 @@ int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
         strcpy(command->path + strlen(command->path), path);
     }
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
@@ -96,7 +97,7 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
         strcpy(command->abspath + strlen(command->abspath), path);
     }
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
@@ -123,9 +124,10 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     command->length = count;
     command->id = fd->id;
     strcpy(command->device, fd->device);
-    strcpy(command->path, fd->abspath);
+    strcpy(command->path, fd->path);
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, fd->sd, command);
+
     free(command);
     return status;
 }
@@ -155,7 +157,7 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     strcpy(command->path, fd->abspath);
     memcpy(command->data, buffer, count);
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
