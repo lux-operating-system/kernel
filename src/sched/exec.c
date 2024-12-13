@@ -35,6 +35,7 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     }
 
     Process *process = getProcess(pid);
+    strcpy(process->command, "lumen");
 
     // this is a blank process, so we need to create a thread for it
     process->threadCount = 1;
@@ -131,7 +132,7 @@ int execve(Thread *t, uint16_t id, const char *name, const char **argv, const ch
     cmd->gid = p->group;
     strcpy(cmd->path, name);
 
-    int status = requestServer(t, cmd);
+    int status = requestServer(t, 0, cmd);
     free(cmd);
     return status;
 }

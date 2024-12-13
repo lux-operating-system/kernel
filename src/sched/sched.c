@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <platform/platform.h>
 #include <platform/lock.h>
 #include <platform/context.h>
@@ -149,6 +150,7 @@ pid_t kthreadCreate(void *(*entry)(void *), void *arg) {
     p->threadCount = 1;
     p->childrenCount = 0;
     p->children = NULL;
+    strcpy(p->command, "kernel");
 
     p->threads = calloc(1, sizeof(Thread *));
     if(!p->threads) {
