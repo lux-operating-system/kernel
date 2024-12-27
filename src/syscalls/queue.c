@@ -30,7 +30,7 @@ void syscallHandle(void *ctx) {
         // syscall queue for performance
         if((req->function >= SYSCALL_IPC_START && req->function <= SYSCALL_IPC_END) ||
             (req->function >= SYSCALL_RW_START && req->function <= SYSCALL_RW_END) ||
-            (req->function == SYSCALL_ACCEPT)) {
+            (req->function == SYSCALL_LSEEK)) {
             setLocalSched(false);
             syscallDispatchTable[req->function](req);
 
