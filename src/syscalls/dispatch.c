@@ -328,6 +328,11 @@ void syscallDispatchMount(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchFcntl(SyscallRequest *req) {
+    req->ret = fcntl(req->thread, req->params[0], req->params[1], req->params[2]);
+    req->unblock = true;
+}
+
 void syscallDispatchOpendir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
         req->requestID = syscallID();
@@ -604,7 +609,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchGetCWD,      // 31 - getcwd()
     syscallDispatchMount,       // 32 - mount()
     NULL,                       // 33 - umount()
-    NULL,                       // 34 - fnctl()
+    syscallDispatchFcntl,       // 34 - fcntl()
     syscallDispatchOpendir,     // 35 - opendir()
     syscallDispatchClosedir,    // 36 - closedir()
     syscallDispatchReaddir,     // 37 - readdir_r()
