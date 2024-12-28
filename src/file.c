@@ -211,3 +211,29 @@ off_t lseek(Thread *t, int fd, off_t offset, int where) {
     file->position = newOffset;
     return newOffset;
 }
+
+int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
+    if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    if(!p->io[fd].valid) return -EBADF;
+    
+    switch(cmd) {
+    case F_GETFD: return (p->io[fd].flags & O_CLOEXEC) ? FD_CLOEXEC : 0;
+    case F_GETFL: return (int) p->io[fd].flags;
+    case F_SETFD:
+        if(arg & FD_CLOEXEC) p->io[fd].flags |= O_CLOEXEC;
+        else p->io[fd].flags &= ~(O_CLOEXEC);
+        break;
+    case F_SETFL:
+        if(p->io[fd].flags & O_CLOEXEC) arg |= O_CLOEXEC;
+        else arg &= ~(O_CLOEXEC);
+        p->io[fd].flags = arg;
+        break;
+    default:
+        return -EINVAL;
+    }
+
+    return 0;
+}
