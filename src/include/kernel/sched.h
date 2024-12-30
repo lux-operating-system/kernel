@@ -78,6 +78,7 @@ typedef struct Process {
     pid_t pid, parent;
     uid_t user;
     gid_t group;
+    mode_t umask;           // file creation mask
 
     bool orphan;            // true when the parent process exits or is killed
     bool zombie;            // true when all threads are zombies
