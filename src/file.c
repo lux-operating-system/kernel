@@ -163,6 +163,8 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     strcpy(command->path, fd->abspath);
     memcpy(command->data, buffer, count);
 
+    if(fd->charDev) command->silent = 1;
+
     int status = requestServer(t, 0, command);
     free(command);
     return status;
