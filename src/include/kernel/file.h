@@ -51,6 +51,7 @@ typedef struct {
     char path[MAX_FILE_PATH];       // path relative to device mountpount
     off_t position;
     uint64_t id;                    // unique ID, this is for device files
+    int charDev;                    // character device boolean
     int refCount;
     int sd;                         // socket descriptor of relevant driver
 } FileDescriptor;
