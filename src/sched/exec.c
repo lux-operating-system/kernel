@@ -314,6 +314,7 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     // close file/socket descriptors marked as O_CLOEXEC
     // this fixes a security risk i realized too late
     Process *p = getProcess(t->tid);
+    p->umask = 0;
     for(int i = 0; i < MAX_IO_DESCRIPTORS; i++) {
         if(p->io[i].valid && (p->io[i].flags & O_CLOEXEC)) {
             p->io[i].valid = false;
