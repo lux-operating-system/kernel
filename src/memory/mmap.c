@@ -35,11 +35,21 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
     if(!command) return (void *) -ENOMEM;
 
     Process *p = getProcess(t->pid);
-    if(!p) return (void *) -ESRCH;
+    if(!p) {
+        free(command);
+        return (void *) -ESRCH;
+    }
 
     IODescriptor *io = &p->io[fd];
-    if(!io->valid || !io->data) return (void *) -EBADF;
-    if(io->type != IO_FILE) return (void *) -ENODEV;
+    if(!io->valid || !io->data) {
+        free(command);
+        return (void *) -EBADF;
+    }
+
+    if(io->type != IO_FILE) {
+        free(command);
+        return (void *) -ENODEV;
+    }
 
     FileDescriptor *f = (FileDescriptor *) io->data;
 
