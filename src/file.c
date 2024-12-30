@@ -85,7 +85,7 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
     command->header.header.length = sizeof(OpenCommand);
     command->header.id = id;
     command->flags = flags;
-    command->mode = mode;
+    command->mode = mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     command->uid = p->user;
     command->gid = p->group;
     command->umask = p->umask;
