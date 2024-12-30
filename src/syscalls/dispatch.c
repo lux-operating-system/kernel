@@ -241,7 +241,17 @@ void syscallDispatchWrite(SyscallRequest *req) {
             req->ret = status;      // status or error code
             req->unblock = true;
         } else {
-            // block until completion
+            // block until completion for everything except character devices
+            Process *p = getProcess(req->thread->pid);
+            if(p->io[req->params[0]].type == IO_FILE) {
+                FileDescriptor *fd = (FileDescriptor *) p->io[req->params[0]].data;
+                if(fd->charDev) {
+                    req->ret = req->params[2];  // size
+                    req->external = false;
+                    req->unblock = true;
+                    return;
+                }
+            }
             req->external = true;
             req->unblock = false;
         }
