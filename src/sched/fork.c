@@ -12,6 +12,7 @@
 #include <kernel/sched.h>
 #include <kernel/logger.h>
 #include <kernel/signal.h>
+#include <kernel/socket.h>
 
 /* fork(): forks the running thread
  * params: t - pointer to thread structure
@@ -89,13 +90,25 @@ pid_t fork(Thread *t) {
         p->iodCount = parent->iodCount;
         p->umask = parent->umask;
 
-        // increment reference counts for file descriptors
+        // increment reference counts for file and socket descriptors and close
+        // those flagged with O_CLOFORK
         for(int i = 0; i < MAX_IO_DESCRIPTORS; i++) {
             if(p->io[i].valid) {
+                if(p->io[i].flags & O_CLOFORK) {
+                    p->io[i].valid = 0;
+                    p->io[i].data = NULL;
+                    p->io[i].flags = 0;
+                    continue;
+                }
+
                 switch(p->io[i].type) {
                 case IO_FILE:
                     FileDescriptor *file = p->io[i].data;
                     file->refCount++;
+                    break;
+                case IO_SOCKET:
+                    SocketDescriptor *socket = p->io[i].data;
+                    socket->refCount++;
                     break;
                 }
             }
