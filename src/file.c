@@ -149,7 +149,12 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     command->header.id = id;
     command->uid = p->user;
     command->gid = p->group;
-    command->position = fd->position;
+
+    // persistent file system drivers will know to append when the position
+    // is a negative value
+    if(iod->flags & O_APPEND) command->position = -1;
+    else command->position = fd->position;
+
     command->flags = iod->flags;
     command->length = count;
     command->id = fd->id;
