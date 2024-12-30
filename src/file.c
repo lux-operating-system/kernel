@@ -226,23 +226,36 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
     if(!p) return -ESRCH;
 
     if(!p->io[fd].valid) return -EBADF;
+
+    int status = 0;
     
     switch(cmd) {
-    case F_GETFD: return (p->io[fd].flags & O_CLOEXEC) ? FD_CLOEXEC : 0;
-    case F_GETFL: return (int) p->io[fd].flags;
+    case F_GETFD:
+        if(p->io[fd].flags & O_CLOEXEC) status |= FD_CLOEXEC;
+        if(p->io[fd].flags & O_CLOFORK) status |= FD_CLOFORK;
+        return status;
+
+    case F_GETFL:
+        return (int) p->io[fd].flags & (O_APPEND|O_NONBLOCK|O_SYNC|O_DSYNC);
+
     case F_SETFD:
         if(arg & FD_CLOEXEC) p->io[fd].flags |= O_CLOEXEC;
         else p->io[fd].flags &= ~(O_CLOEXEC);
         if(arg & FD_CLOFORK) p->io[fd].flags |= O_CLOFORK;
         else p->io[fd].flags &= ~(O_CLOFORK);
         break;
+
     case F_SETFL:
-        if(p->io[fd].flags & O_CLOEXEC) arg |= O_CLOEXEC;
-        else arg &= ~(O_CLOEXEC);
-        if(p->io[fd].flags & O_CLOFORK) arg |= O_CLOFORK;
-        else arg &= ~(O_CLOFORK);
-        p->io[fd].flags = arg;
+        if(arg & O_APPEND) p->io[fd].flags |= O_APPEND;
+        else p->io[fd].flags &= ~(O_APPEND);
+        if(arg & O_NONBLOCK) p->io[fd].flags |= O_NONBLOCK;
+        else p->io[fd].flags &= ~(O_NONBLOCK);
+        if(arg & O_SYNC) p->io[fd].flags |= O_SYNC;
+        else p->io[fd].flags &= ~(O_SYNC);
+        if(arg & O_DSYNC) p->io[fd].flags |= O_DSYNC;
+        else p->io[fd].flags &= ~(O_DSYNC);
         break;
+
     default:
         return -EINVAL;
     }
