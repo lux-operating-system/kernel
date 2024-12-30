@@ -20,7 +20,8 @@
 
 void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
     SyscallRequest *req = getSyscall(hdr->header.requester);
-    if(!req) return;
+    if(!req || !req->external || req->thread->status != THREAD_BLOCKED)
+        return;
 
     // default action is to unblock the thread
     Process *p = getProcess(req->thread->pid);
