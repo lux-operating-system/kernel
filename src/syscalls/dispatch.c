@@ -287,6 +287,11 @@ void syscallDispatchLSeek(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchUmask(SyscallRequest *req) {
+    req->ret = umask(req->thread, req->params[0]);
+    req->unblock = true;
+}
+
 void syscallDispatchChdir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
         req->requestID = syscallID();
@@ -600,7 +605,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 22 - chmod()
     NULL,                       // 23 - link()
     NULL,                       // 24 - unlink()
-    NULL,                       // 25 - mknod()
+    syscallDispatchUmask,       // 25 - umask()
     NULL,                       // 26 - mkdir()
     NULL,                       // 27 - rmdir()
     NULL,                       // 28 - utime()
