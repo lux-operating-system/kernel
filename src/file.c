@@ -233,10 +233,14 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
     case F_SETFD:
         if(arg & FD_CLOEXEC) p->io[fd].flags |= O_CLOEXEC;
         else p->io[fd].flags &= ~(O_CLOEXEC);
+        if(arg & FD_CLOFORK) p->io[fd].flags |= O_CLOFORK;
+        else p->io[fd].flags &= ~(O_CLOFORK);
         break;
     case F_SETFL:
         if(p->io[fd].flags & O_CLOEXEC) arg |= O_CLOEXEC;
         else arg &= ~(O_CLOEXEC);
+        if(p->io[fd].flags & O_CLOFORK) arg |= O_CLOFORK;
+        else arg &= ~(O_CLOFORK);
         p->io[fd].flags = arg;
         break;
     default:
