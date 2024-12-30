@@ -87,6 +87,7 @@ pid_t fork(Thread *t) {
     if(parent) {
         memcpy(p->io, parent->io, sizeof(IODescriptor) * MAX_IO_DESCRIPTORS);
         p->iodCount = parent->iodCount;
+        p->umask = parent->umask;
 
         // increment reference counts for file descriptors
         for(int i = 0; i < MAX_IO_DESCRIPTORS; i++) {
