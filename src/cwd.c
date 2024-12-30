@@ -41,7 +41,7 @@ int chdir(Thread *t, uint16_t id, const char *path) {
         strcpy(cmd.path + strlen(cmd.path), path);
     }
 
-    return requestServer(t, &cmd);
+    return requestServer(t, 0, &cmd);
 }
 
 /* getcwd(): returns the current working directory of the running process

@@ -19,6 +19,7 @@
 #include <kernel/servers.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <kernel/logger.h>
 
 int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
     // send a request to lumen
@@ -33,7 +34,7 @@ int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *
     strcpy(command->target, tgt);
     strcpy(command->type, type);
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
@@ -57,7 +58,7 @@ int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
         strcpy(command->path + strlen(command->path), path);
     }
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
@@ -96,7 +97,7 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
         strcpy(command->abspath + strlen(command->abspath), path);
     }
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
@@ -123,9 +124,10 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     command->length = count;
     command->id = fd->id;
     strcpy(command->device, fd->device);
-    strcpy(command->path, fd->abspath);
+    strcpy(command->path, fd->path);
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, fd->sd, command);
+
     free(command);
     return status;
 }
@@ -155,7 +157,7 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     strcpy(command->path, fd->abspath);
     memcpy(command->data, buffer, count);
 
-    int status = requestServer(t, command);
+    int status = requestServer(t, 0, command);
     free(command);
     return status;
 }
@@ -172,6 +174,9 @@ int closeFile(Thread *t, int fd) {
     if(!file) return -EBADF;
 
     // TODO: flush the file buffers here to allow drivers to implement caching
+
+    file->refCount--;
+    if(!file->refCount) free(file);
 
     closeIO(p, &p->io[fd]);
     return 0;
@@ -205,4 +210,38 @@ off_t lseek(Thread *t, int fd, off_t offset, int where) {
     if(newOffset < 0) return -EINVAL;
     file->position = newOffset;
     return newOffset;
+}
+
+int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
+    if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    if(!p->io[fd].valid) return -EBADF;
+    
+    switch(cmd) {
+    case F_GETFD: return (p->io[fd].flags & O_CLOEXEC) ? FD_CLOEXEC : 0;
+    case F_GETFL: return (int) p->io[fd].flags;
+    case F_SETFD:
+        if(arg & FD_CLOEXEC) p->io[fd].flags |= O_CLOEXEC;
+        else p->io[fd].flags &= ~(O_CLOEXEC);
+        break;
+    case F_SETFL:
+        if(p->io[fd].flags & O_CLOEXEC) arg |= O_CLOEXEC;
+        else arg &= ~(O_CLOEXEC);
+        p->io[fd].flags = arg;
+        break;
+    default:
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
+mode_t umask(Thread *t, mode_t cmask) {
+    Process *p = getProcess(t->pid);
+    mode_t old = p->umask;
+    cmask &= (S_IRWXU | S_IRWXG | S_IRWXO);
+    p->umask = cmask;
+    return old;
 }

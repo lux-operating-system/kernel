@@ -35,6 +35,7 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
     }
 
     Process *process = getProcess(pid);
+    strcpy(process->command, "lumen");
 
     // this is a blank process, so we need to create a thread for it
     process->threadCount = 1;
@@ -131,7 +132,7 @@ int execve(Thread *t, uint16_t id, const char *name, const char **argv, const ch
     cmd->gid = p->group;
     strcpy(cmd->path, name);
 
-    int status = requestServer(t, cmd);
+    int status = requestServer(t, 0, cmd);
     free(cmd);
     return status;
 }
@@ -313,6 +314,7 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
     // close file/socket descriptors marked as O_CLOEXEC
     // this fixes a security risk i realized too late
     Process *p = getProcess(t->tid);
+    p->umask = 0;
     for(int i = 0; i < MAX_IO_DESCRIPTORS; i++) {
         if(p->io[i].valid && (p->io[i].flags & O_CLOEXEC)) {
             p->io[i].valid = false;

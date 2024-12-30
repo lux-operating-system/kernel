@@ -151,6 +151,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
 
     // set up the socket family for now
     SocketDescriptor *sock = (SocketDescriptor *)iod->data;
+    sock->refCount = 1;
     sock->process = p;
     sock->address.sa_family = domain;
     sock->type = type & 0xFF;
@@ -224,6 +225,12 @@ int closeSocket(Thread *t, int sd) {
         return -EBADF;
     }
 
+    sock->refCount--;
+    if(sock->refCount) {
+        releaseLock(&lock);
+        return 0;
+    }
+
     if(sock->peer) {
         // disconnect the socket from its peer
         // TODO: for future TCP sockets, terminate the connection here
@@ -233,6 +240,7 @@ int closeSocket(Thread *t, int sd) {
 
     // and delete the socket
     socketUnregister(sock->globalIndex);
+    free(sock);
     closeIO(p, &p->io[sd]);
     releaseLock(&lock);
     return 0;

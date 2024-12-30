@@ -29,7 +29,6 @@ static bool lumenConnected = false;
  */
 
 void serverInit() {
-    schedLock();
     struct sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     strcpy(addr.sun_path, SERVER_KERNEL_PATH);     // this is a special path and not a true file
@@ -64,7 +63,6 @@ void serverInit() {
     }
 
     KDEBUG("kernel is listening on socket %d: %s\n", kernelSocket, addr.sun_path);
-    schedRelease();
 }
 
 /* serverIdle(): handles incoming kernel connections when idle
@@ -112,7 +110,7 @@ void serverIdle() {
             recv(NULL, sd, in, h->length, 0);       // read the actual message
 
             if(h->command <= MAX_GENERAL_COMMAND) handleGeneralRequest(sd, in, out);
-            else if(h->command >= 0x8000 && h->command <= MAX_SYSCALL_COMMAND) handleSyscallResponse((SyscallHeader *)h);
+            else if(h->command >= 0x8000 && h->command <= MAX_SYSCALL_COMMAND) handleSyscallResponse(sd, (SyscallHeader *)h);
             else {
                 // TODO
                 KWARN("unimplemented message command 0x%02X, dropping...\n", h->command);

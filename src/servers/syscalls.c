@@ -16,30 +16,17 @@
 #include <kernel/syscalls.h>
 #include <kernel/logger.h>
 #include <kernel/io.h>
+#include <kernel/memory.h>
 
-void handleSyscallResponse(const SyscallHeader *hdr) {
+void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
     SyscallRequest *req = getSyscall(hdr->header.requester);
-    if(!req) {
-        KWARN("received response for syscall 0x%X pid %d but no such request exists\n", hdr->header.command, hdr->header.requester);
-        return;
-    }
-
-    if(req->requestID != hdr->id) {
-        KWARN("received response for syscall 0x%X (kernel syscall %d) pid %d but IDs mismatch; terminating thread\n", hdr->header.command, req->function, hdr->header.requester);
-        schedLock();
-        terminateThread(req->thread, -1, false);
-        schedRelease();
-        return;
-    }
+    if(!req) return;
 
     // default action is to unblock the thread
-    schedLock();
     Process *p = getProcess(req->thread->pid);
     req->ret = hdr->header.status;
     req->external = false;
     req->unblock = true;
-    req->thread->time = schedTimeslice(req->thread, req->thread->priority);
-    req->thread->status = THREAD_QUEUED;
 
     // some syscalls will require special handling
     ssize_t status;
@@ -77,6 +64,9 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         file = (FileDescriptor *) iod->data;
         file->process = p;
         file->id = opencmd->id;     // unique ID for device files
+        file->refCount = 1;
+        file->sd = sd;
+
         strcpy(file->abspath, opencmd->abspath);
         strcpy(file->device, opencmd->device);
         strcpy(file->path, opencmd->path);
@@ -96,9 +86,8 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             req->queued = true;
             req->next = NULL;
             req->retry = true;
-            schedRelease();
             syscallEnqueue(req);
-            break;
+            return;
         } else if(status < 0) break;  // here an actual error happened
         
         RWCommand *readcmd = (RWCommand *) hdr;
@@ -122,9 +111,8 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
             req->queued = true;
             req->next = NULL;
             req->retry = true;
-            schedRelease();
             syscallEnqueue(req);
-            break;
+            return;
         } else if(status < 0) break;  // here an actual error happened
 
         RWCommand *writecmd = (RWCommand *) hdr;
@@ -198,6 +186,8 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
     case COMMAND_EXEC:
         if(hdr->header.status) break;
 
+        schedLock();
+
         int execStatus = execveHandle((ExecCommand *) hdr);
 
         if(!execStatus) {
@@ -216,8 +206,16 @@ void handleSyscallResponse(const SyscallHeader *hdr) {
         ChdirCommand *chdircmd = (ChdirCommand *) hdr;
         strcpy(p->cwd, chdircmd->path);
         break;
+    
+    case COMMAND_MMAP:
+        if(hdr->header.status) break;
+
+        MmapCommand *mmapcmd = (MmapCommand *) hdr;
+        threadUseContext(req->thread->tid);
+        mmapHandle(mmapcmd, req);
+        break;
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
-    schedRelease();
+    req->thread->status = THREAD_QUEUED;
 }

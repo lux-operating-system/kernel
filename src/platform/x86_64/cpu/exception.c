@@ -86,7 +86,7 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
 
     // TODO: implement a separate kernel panic and userspace exception handling
     acquireLockBlocking(&lock);
-    schedLock();
+    setScheduling(false);
     pid_t pid = getPid();
     if(pid > 0) {
         pid_t tid = getTid();
@@ -112,12 +112,12 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
         if(schedException(pid, tid)) {
             // here the faulty thread was terminated
             releaseLock(&lock);
-            schedRelease();
+            setScheduling(true);
             for(;;) schedule();
         } else {
             // handled and can continue
             releaseLock(&lock);
-            schedRelease();
+            setScheduling(true);
             return;
         }
     }
@@ -133,7 +133,5 @@ void exception(uint64_t number, uint64_t code, InterruptRegisters *r) {
     KPANIC(" cr2: 0x%016X  cr3: 0x%016X\n", readCR2(), readCR3());
     KPANIC(" cr0: 0x%08X  cr4: 0x%08X  rflags: 0x%08X\n", readCR0(), readCR4(), r->rflags);
 
-    schedRelease();
-    releaseLock(&lock);
     while(1);
 }

@@ -87,9 +87,19 @@ pid_t fork(Thread *t) {
     if(parent) {
         memcpy(p->io, parent->io, sizeof(IODescriptor) * MAX_IO_DESCRIPTORS);
         p->iodCount = parent->iodCount;
+        p->umask = parent->umask;
 
-        for(int i = 0; i < MAX_IO_DESCRIPTORS; i++)
-            if(p->io[i].valid) p->io[i].clone = true;
+        // increment reference counts for file descriptors
+        for(int i = 0; i < MAX_IO_DESCRIPTORS; i++) {
+            if(p->io[i].valid) {
+                switch(p->io[i].type) {
+                case IO_FILE:
+                    FileDescriptor *file = p->io[i].data;
+                    file->refCount++;
+                    break;
+                }
+            }
+        }
 
         // clone working directory
         strcpy(p->cwd, parent->cwd);

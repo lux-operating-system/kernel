@@ -67,7 +67,7 @@ void syscallDispatchFork(SyscallRequest *req) {
 }
 
 void syscallDispatchYield(SyscallRequest *req) {
-    req->ret = yield(req->thread);
+    req->ret = 0;
     req->unblock = true;
 }
 
@@ -287,6 +287,11 @@ void syscallDispatchLSeek(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchUmask(SyscallRequest *req) {
+    req->ret = umask(req->thread, req->params[0]);
+    req->unblock = true;
+}
+
 void syscallDispatchChdir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
         req->requestID = syscallID();
@@ -326,6 +331,11 @@ void syscallDispatchMount(SyscallRequest *req) {
             req->unblock = false;
         }
     }
+}
+
+void syscallDispatchFcntl(SyscallRequest *req) {
+    req->ret = fcntl(req->thread, req->params[0], req->params[1], req->params[2]);
+    req->unblock = true;
 }
 
 void syscallDispatchOpendir(SyscallRequest *req) {
@@ -504,6 +514,23 @@ void syscallDispatchSBrk(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchMmap(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], sizeof(struct MmapSyscallParams))) {
+        req->requestID = syscallID();
+        struct MmapSyscallParams *p = (struct MmapSyscallParams *) req->params[0];
+        intptr_t status = (intptr_t) mmap(req->thread, req->requestID, p->addr, p->len,
+            p->prot, p->flags, p->fd, p->off);
+        if(status < 0) {
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            // block until completion
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 /* Group 5: Driver I/O Functions */
 
 void syscallDispatchIoperm(SyscallRequest *req) {
@@ -578,7 +605,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 22 - chmod()
     NULL,                       // 23 - link()
     NULL,                       // 24 - unlink()
-    NULL,                       // 25 - mknod()
+    syscallDispatchUmask,       // 25 - umask()
     NULL,                       // 26 - mkdir()
     NULL,                       // 27 - rmdir()
     NULL,                       // 28 - utime()
@@ -587,7 +614,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchGetCWD,      // 31 - getcwd()
     syscallDispatchMount,       // 32 - mount()
     NULL,                       // 33 - umount()
-    NULL,                       // 34 - fnctl()
+    syscallDispatchFcntl,       // 34 - fcntl()
     syscallDispatchOpendir,     // 35 - opendir()
     syscallDispatchClosedir,    // 36 - closedir()
     syscallDispatchReaddir,     // 37 - readdir_r()
@@ -608,7 +635,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
 
     /* group 4: memory management */
     syscallDispatchSBrk,        // 50 - sbrk()
-    NULL,                       // 51 - mmap()
+    syscallDispatchMmap,        // 51 - mmap()
     NULL,                       // 52 - munmap()
 
     /* group 5: driver I/O functions */
