@@ -88,6 +88,7 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
     command->mode = mode;
     command->uid = p->user;
     command->gid = p->group;
+    command->umask = p->umask;
 
     if(path[0] == '/') {
         strcpy(command->abspath, path);
