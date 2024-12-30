@@ -135,6 +135,7 @@ typedef struct {
     char device[MAX_FILE_PATH];     // device
     int flags;
     mode_t mode;
+    mode_t umask;
     uid_t uid;
     gid_t gid;
     uint64_t id;    // unique ID
