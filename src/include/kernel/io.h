@@ -35,6 +35,7 @@
 #define O_RSYNC                 0x0200
 #define O_SYNC                  0x0400
 #define O_TRUNC                 0x0800
+#define O_CLOFORK               0x1000
 
 /* Reserved bits in ioctl() opcodes */
 #define IOCTL_IN_PARAM          0x0001  /* third param is a value */
