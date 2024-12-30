@@ -237,3 +237,11 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
 
     return 0;
 }
+
+mode_t umask(Thread *t, mode_t cmask) {
+    Process *p = getProcess(t->pid);
+    mode_t old = p->umask;
+    cmask &= (S_IRWXU | S_IRWXG | S_IRWXO);
+    p->umask = cmask;
+    return old;
+}
