@@ -127,7 +127,7 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
         base += PAGE_SIZE;
 
         memcpy((void *) base, msg->data, msg->len);
-        memset((void *) (uintptr_t) base + msg->len, 0, PAGE_SIZE - msg->len);
+        memset((void *)((uintptr_t) base + msg->len), 0, PAGE_SIZE - msg->len);
         req->ret = base;
     }
 }
