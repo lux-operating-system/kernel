@@ -67,6 +67,7 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
         file->id = opencmd->id;     // unique ID for device files
         file->refCount = 1;
         file->sd = sd;
+        file->charDev = opencmd->charDev;
 
         strcpy(file->abspath, opencmd->abspath);
         strcpy(file->device, opencmd->device);
