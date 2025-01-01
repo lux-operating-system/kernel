@@ -66,7 +66,7 @@ int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
 int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
-    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+    if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;  // ensure valid file descriptor
     if(p->io[fd].type != IO_FILE) return -EBADF;
 
@@ -104,9 +104,6 @@ int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
 }
 
 ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t count) {
-    RWCommand *command = calloc(1, sizeof(RWCommand));
-    if(!command) return -ENOMEM;
-
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -114,6 +111,9 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
     if(!fd) return -EBADF;
 
     if(!(iod->flags & O_RDONLY)) return -EPERM;
+
+    RWCommand *command = calloc(1, sizeof(RWCommand));
+    if(!command) return -ENOMEM;
 
     command->header.header.command = COMMAND_READ;
     command->header.header.length = sizeof(RWCommand);
@@ -134,9 +134,6 @@ ssize_t readFile(Thread *t, uint64_t id, IODescriptor *iod, void *buffer, size_t
 }
 
 ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer, size_t count) {
-    RWCommand *command = calloc(1, sizeof(RWCommand) + count);
-    if(!command) return -ENOMEM;
-
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -144,6 +141,9 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     if(!fd) return -EBADF;
 
     if(!(iod->flags & O_WRONLY)) return -EPERM;
+
+    RWCommand *command = calloc(1, sizeof(RWCommand) + count);
+    if(!command) return -ENOMEM;
 
     command->header.header.command = COMMAND_WRITE;
     command->header.header.length = sizeof(RWCommand) + count;
@@ -171,7 +171,7 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
 }
 
 int closeFile(Thread *t, int fd) {
-    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+    if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
 
     Process *p;
     if(t) p = getProcess(t->pid);
@@ -191,7 +191,7 @@ int closeFile(Thread *t, int fd) {
 }
 
 off_t lseek(Thread *t, int fd, off_t offset, int where) {
-    if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return -EBADF;
+    if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
 
     Process *p;
     if(t) p = getProcess(t->pid);
