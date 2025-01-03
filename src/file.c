@@ -270,3 +270,58 @@ mode_t umask(Thread *t, mode_t cmask) {
     p->umask = cmask;
     return old;
 }
+
+int chown(Thread *t, uint64_t id, const char *path, uid_t owner, gid_t group) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    ChownCommand *command = calloc(1, sizeof(ChownCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_CHOWN;
+    command->header.header.length = sizeof(ChownCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+    command->newUid = owner;
+    command->newGid = group;
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
+
+int chmod(Thread *t, uint64_t id, const char *path, mode_t mode) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    ChmodCommand *command = calloc(1, sizeof(ChmodCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_CHMOD;;
+    command->header.header.length = sizeof(ChmodCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+    command->mode = mode;
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
