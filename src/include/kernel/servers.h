@@ -211,7 +211,7 @@ typedef struct {
 typedef struct {
     SyscallHeader header;
     char path[MAX_FILE_PATH];
-    char devices[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
     uid_t uid;
     gid_t gid;
     uid_t newUid;
