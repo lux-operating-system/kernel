@@ -73,6 +73,8 @@ off_t lseek(Thread *, int, off_t, int);
 int mount(Thread *, uint64_t, const char *, const char *, const char *, int);
 int fcntl(Thread *, int, int, uintptr_t);
 mode_t umask(Thread *, mode_t);
+int chown(Thread *, uint64_t, const char *, uid_t, gid_t);
+int chmod(Thread *, uint64_t, const char *, mode_t);
 
 ssize_t readFile(Thread *, uint64_t, IODescriptor *, void *, size_t);
 ssize_t writeFile(Thread *, uint64_t, IODescriptor *, const void *, size_t);
