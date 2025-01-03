@@ -24,6 +24,7 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
     ELFFileHeader *header = (ELFFileHeader *)ptr;
 
     uint64_t addr = 0;
+    int overlap = 0;
 
     if(header->magic[0] != 0x7F || header->magic[1] != 'E' ||
     header->magic[2] != 'L' || header->magic[3] != 'F') {
@@ -82,9 +83,8 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
                 return 0;
             }
 
-            if(vp != (prhdr->virtualAddress & ~(PAGE_SIZE-1))) {
-                vmmFree(vp, pages);
-            }
+            if(vp != (prhdr->virtualAddress & ~(PAGE_SIZE-1)))
+                overlap = 1;
 
             memset((void *)prhdr->virtualAddress, 0, prhdr->memorySize);
             memcpy((void *)prhdr->virtualAddress, (const void *)((uintptr_t)binary + prhdr->fileOffset), prhdr->fileSize);
@@ -94,7 +94,7 @@ uint64_t loadELF(const void *binary, uint64_t *highest) {
                 flags &= ~VMM_WRITE;
             }
 
-            vmmSetFlags(prhdr->virtualAddress, pages, flags);
+            if(!overlap) vmmSetFlags(prhdr->virtualAddress, pages, flags);
         } else {
             /* unimplemented header type */
             KERROR("unimplemented ELF header type %d\n", prhdr->segmentType);
