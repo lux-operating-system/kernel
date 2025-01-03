@@ -297,6 +297,38 @@ void syscallDispatchLSeek(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchChown(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = chown(req->thread, req->requestID, (const char *) req->params[0], req->params[1], req->params[2]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchChmod(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = chmod(req->thread, req->requestID, (const char *) req->params[0], req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchUmask(SyscallRequest *req) {
     req->ret = umask(req->thread, req->params[0]);
     req->unblock = true;
@@ -611,8 +643,8 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchStat,        // 18 - stat()
     syscallDispatchFStat,       // 19 - fstat()
     syscallDispatchLSeek,       // 20 - lseek()
-    NULL,                       // 21 - chown()
-    NULL,                       // 22 - chmod()
+    syscallDispatchChown,       // 21 - chown()
+    syscallDispatchChmod,       // 22 - chmod()
     NULL,                       // 23 - link()
     NULL,                       // 24 - unlink()
     syscallDispatchUmask,       // 25 - umask()
