@@ -197,6 +197,27 @@ typedef struct {
     char data[MAX_FILE_PATH];
 } ReaddirCommand;
 
+/* chmod() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+} ChmodCommand;
+
+/* chown() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char devices[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    uid_t newUid;
+    gid_t newGid;
+} ChownCommand;
+
 /* exec() */
 typedef struct {
     SyscallHeader header;
