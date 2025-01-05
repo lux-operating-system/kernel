@@ -21,6 +21,7 @@
 #include <kernel/signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -151,6 +152,14 @@ void syscallDispatchGetGID(SyscallRequest *req) {
 
 void syscallDispatchMSleep(SyscallRequest *req) {
     req->ret = msleep(req->thread, req->params[0]);
+    req->unblock = true;
+}
+
+void syscallDispatchGetTimeOfDay(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], sizeof(struct timeval))) {
+        req->ret = gettimeofday(req->thread, (struct timeval *) req->params[0], (void *) req->params[1]);
+        req->unblock = true;
+    }
 }
 
 /* Group 2: File System */
@@ -633,7 +642,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 10 - setuid()
     NULL,                       // 11 - setgid()
     syscallDispatchMSleep,      // 12 - msleep()
-    NULL,                       // 13 - times()
+    syscallDispatchGetTimeOfDay,// 13 - gettimeofday()
 
     /* group 2: file system manipulation */
     syscallDispatchOpen,        // 14 - open()
