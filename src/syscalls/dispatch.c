@@ -343,6 +343,22 @@ void syscallDispatchUmask(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchMkdir(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = mkdir(req->thread, req->requestID, (const char *) req->params[0], req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchChdir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
         req->requestID = syscallID();
@@ -657,7 +673,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 23 - link()
     NULL,                       // 24 - unlink()
     syscallDispatchUmask,       // 25 - umask()
-    NULL,                       // 26 - mkdir()
+    syscallDispatchMkdir,       // 26 - mkdir()
     NULL,                       // 27 - rmdir()
     NULL,                       // 28 - utime()
     NULL,                       // 29 - chroot()
