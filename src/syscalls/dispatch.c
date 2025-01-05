@@ -359,6 +359,26 @@ void syscallDispatchMkdir(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchUtime(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        if(req->params[1]) {
+            if(!syscallVerifyPointer(req, req->params[1], sizeof(struct utimbuf))) return;
+        }
+
+        req->requestID = syscallID();
+
+        int status = utime(req->thread, req->requestID, (const char *) req->params[0], (const struct utimbuf *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchChdir(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
         req->requestID = syscallID();
@@ -675,7 +695,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchUmask,       // 25 - umask()
     syscallDispatchMkdir,       // 26 - mkdir()
     NULL,                       // 27 - rmdir()
-    NULL,                       // 28 - utime()
+    syscallDispatchUtime,       // 28 - utime()
     NULL,                       // 29 - chroot()
     syscallDispatchChdir,       // 30 - chdir()
     syscallDispatchGetCWD,      // 31 - getcwd()
