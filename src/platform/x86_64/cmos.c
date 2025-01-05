@@ -13,6 +13,7 @@
 
 static lock_t lock = LOCK_INITIAL;
 static time_t initialTimestamp = 0;
+static uint64_t initialUptime = 0;
 static const int daysPerMonth[] = {
     31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  // common year
 };
@@ -45,7 +46,7 @@ void cmosWrite(uint8_t index, uint8_t value) {
 
 time_t platformTimestamp() {
     if(initialTimestamp)
-        return initialTimestamp + (platformUptime() / PLATFORM_TIMER_FREQUENCY);
+        return initialTimestamp + ((platformUptime()-initialUptime) / PLATFORM_TIMER_FREQUENCY);
 
     acquireLockBlocking(&lock);
 
@@ -96,6 +97,7 @@ time_t platformTimestamp() {
     initialTimestamp = sec + (min*60) + (hour*3600) + (yearDay * 86400);
     initialTimestamp += ((year-70) * 31536000) + (((year-69)/4) * 86400);
     initialTimestamp -= (((year-1)/100) * 86400) + (((year+299)/400) * 86400);
+    initialUptime = platformUptime();
 
     releaseLock(&lock);
     return initialTimestamp;
