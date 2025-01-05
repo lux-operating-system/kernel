@@ -19,7 +19,7 @@
 #include <kernel/servers.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <kernel/logger.h>
+#include <platform/platform.h>
 
 int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
     // send a request to lumen
@@ -340,6 +340,40 @@ int mkdir(Thread *t, uint64_t id, const char *path, mode_t mode) {
     command->gid = p->group;
     command->umask = p->umask;
     command->mode = mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
+
+int utime(Thread *t, uint64_t id, const char *path, const struct utimbuf *times) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    UtimeCommand *command = calloc(1, sizeof(UtimeCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_UTIME;
+    command->header.header.length = sizeof(UtimeCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+
+    if(times) {
+        command->accessTime = times->actime;
+        command->modifiedTime = times->modtime;
+    } else {
+        command->accessTime = platformTimestamp();
+        command->modifiedTime = command->accessTime;
+    }
 
     if(path[0] == '/') {
         strcpy(command->path, path);
