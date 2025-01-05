@@ -311,7 +311,7 @@ int chmod(Thread *t, uint64_t id, const char *path, mode_t mode) {
     command->header.id = id;
     command->uid = p->user;
     command->gid = p->group;
-    command->mode = mode;
+    command->mode = mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 
     if(path[0] == '/') {
         strcpy(command->path, path);
@@ -339,7 +339,7 @@ int mkdir(Thread *t, uint64_t id, const char *path, mode_t mode) {
     command->uid = p->user;
     command->gid = p->group;
     command->umask = p->umask;
-    command->mode = mode;
+    command->mode = mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 
     if(path[0] == '/') {
         strcpy(command->path, path);
