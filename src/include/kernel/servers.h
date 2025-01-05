@@ -47,7 +47,7 @@
 #define COMMAND_CHOWN           0x800B
 #define COMMAND_LINK            0x800C
 #define COMMAND_MKDIR           0x800D
-#define COMMAND_RMDIR           0x800E
+#define COMMAND_UTIME           0x800E
 
 #define COMMAND_EXEC            0x800F
 #define COMMAND_CHDIR           0x8010
@@ -228,6 +228,17 @@ typedef struct {
     mode_t mode;
     mode_t umask;
 } MkdirCommand;
+
+/* utime() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    time_t accessTime;
+    time_t modifiedTime;
+} UtimeCommand;
 
 /* exec() */
 typedef struct {
