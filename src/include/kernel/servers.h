@@ -218,6 +218,17 @@ typedef struct {
     gid_t newGid;
 } ChownCommand;
 
+/* mkdir() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+    mode_t umask;
+} MkdirCommand;
+
 /* exec() */
 typedef struct {
     SyscallHeader header;
