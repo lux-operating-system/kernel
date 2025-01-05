@@ -64,6 +64,12 @@ struct flock {
     pid_t l_pid;
 };
 
+/* utime */
+struct utimbuf {
+    time_t actime;
+    time_t modtime;
+};
+
 /* file system syscalls */
 int open(Thread *, uint64_t, const char *, int, mode_t);
 int close(Thread *, int);
@@ -76,6 +82,7 @@ mode_t umask(Thread *, mode_t);
 int chown(Thread *, uint64_t, const char *, uid_t, gid_t);
 int chmod(Thread *, uint64_t, const char *, mode_t);
 int mkdir(Thread *, uint64_t, const char *, mode_t);
+int utime(Thread *, uint64_t, const char *, const struct utimbuf *);
 
 ssize_t readFile(Thread *, uint64_t, IODescriptor *, void *, size_t);
 ssize_t writeFile(Thread *, uint64_t, IODescriptor *, const void *, size_t);
