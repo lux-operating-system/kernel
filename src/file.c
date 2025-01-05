@@ -325,3 +325,31 @@ int chmod(Thread *t, uint64_t id, const char *path, mode_t mode) {
     free(command);
     return status;
 }
+
+int mkdir(Thread *t, uint64_t id, const char *path, mode_t mode) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    MkdirCommand *command = calloc(1, sizeof(MkdirCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_MKDIR;
+    command->header.header.length = sizeof(MkdirCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+    command->umask = p->umask;
+    command->mode = mode;
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
