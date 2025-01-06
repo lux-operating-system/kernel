@@ -235,6 +235,10 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
         IODescriptor *iod = NULL;
         int dupfd = openIO(p, (void **) &iod);
         if(dupfd < 0) return dupfd;
+        if(dupfd < arg) {
+            iod->valid = false;
+            return -EMFILE;
+        }
 
         iod->type = p->io[fd].type;
         iod->flags = p->io[fd].flags;
