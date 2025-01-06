@@ -269,7 +269,7 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
         return status;
 
     case F_GETFL:
-        return (int) p->io[fd].flags & (O_APPEND|O_NONBLOCK|O_SYNC|O_DSYNC);
+        return (int) p->io[fd].flags & (O_APPEND|O_NONBLOCK|O_SYNC|O_DSYNC|O_RDONLY|O_WRONLY|O_RDWR);
 
     case F_SETFD:
         if(arg & FD_CLOEXEC) p->io[fd].flags |= O_CLOEXEC;
