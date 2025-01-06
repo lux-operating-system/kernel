@@ -16,6 +16,7 @@
 #include <kernel/file.h>
 #include <kernel/io.h>
 #include <kernel/sched.h>
+#include <kernel/socket.h>
 #include <kernel/servers.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -230,6 +231,25 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
     int status = 0;
     
     switch(cmd) {
+    case F_DUPFD:
+        IODescriptor *iod = NULL;
+        int dupfd = openIO(p, (void **) &iod);
+        if(dupfd < 0) return dupfd;
+
+        iod->type = p->io[fd].type;
+        iod->flags = p->io[fd].flags;
+        iod->data = p->io[fd].data;
+
+        if(iod->type == IO_FILE) {
+            FileDescriptor *file = (FileDescriptor *) iod->data;
+            file->refCount++;
+        } else if(iod->type == IO_SOCKET) {
+            SocketDescriptor *socket = (SocketDescriptor *) iod->data;
+            socket->refCount++;
+        }
+
+        return dupfd;
+
     case F_GETFD:
         if(p->io[fd].flags & O_CLOEXEC) status |= FD_CLOEXEC;
         if(p->io[fd].flags & O_CLOFORK) status |= FD_CLOFORK;
