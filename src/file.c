@@ -232,6 +232,11 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
     
     switch(cmd) {
     case F_DUPFD:
+    case F_DUPFD_CLOEXEC:
+    case F_DUPFD_CLOFORK:
+        if(((int) arg) < 0 || ((int)arg) >= MAX_IO_DESCRIPTORS)
+            return -EBADF;
+
         IODescriptor *iod = NULL;
         int dupfd = openIO(p, (void **) &iod);
         if(dupfd < 0) return dupfd;
@@ -251,6 +256,10 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
             SocketDescriptor *socket = (SocketDescriptor *) iod->data;
             socket->refCount++;
         }
+
+        iod->flags &= ~(FD_CLOEXEC | FD_CLOFORK);
+        if(cmd == F_DUPFD_CLOEXEC) iod->flags |= FD_CLOEXEC;
+        else if(cmd == F_DUPFD_CLOFORK) iod->flags |= FD_CLOFORK;
 
         return dupfd;
 
