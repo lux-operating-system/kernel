@@ -221,6 +221,34 @@ typedef struct {
     gid_t newGid;
 } ChownCommand;
 
+/* link() and symlink() */
+typedef struct {
+    SyscallHeader header;
+    char oldPath[MAX_FILE_PATH];
+    char newPath[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+} LinkCommand;
+
+/* unlink() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+} UnlinkCommand;
+
+/* readlink() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+} ReadLinkCommand;
+
 /* mkdir() */
 typedef struct {
     SyscallHeader header;
