@@ -34,7 +34,7 @@
 
 /* these commands are requested by the kernel for lumen to fulfill syscall requests */
 #define COMMAND_STAT            0x8000
-#define COMMAND_FLUSH           0x8001
+#define COMMAND_FSYNC           0x8001
 #define COMMAND_MOUNT           0x8002
 #define COMMAND_UMOUNT          0x8003
 #define COMMAND_OPEN            0x8004
@@ -55,8 +55,11 @@
 
 #define COMMAND_MMAP            0x8012
 #define COMMAND_MSYNC           0x8013
+#define COMMAND_UNLINK          0x8014
+#define COMMAND_SYMLINK         0x8015
+#define COMMAND_READLINK        0x8016
 
-#define MAX_SYSCALL_COMMAND     0x8013
+#define MAX_SYSCALL_COMMAND     0x8016
 
 /* these commands are for device drivers */
 #define COMMAND_IRQ             0xC000
