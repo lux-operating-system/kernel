@@ -636,16 +636,23 @@ void syscallDispatchIoctl(SyscallRequest *req) {
     unsigned long op = req->params[1];
     req->requestID = syscallID();
 
+    int status = -1;
     if(op & IOCTL_OUT_PARAM) {
         if(syscallVerifyPointer(req, req->params[2], sizeof(unsigned long))) {
-            ioctl(req->thread, req->requestID, req->params[0], req->params[1], (unsigned long *)req->params[2]);
+            status = ioctl(req->thread, req->requestID, req->params[0], op, (unsigned long *)req->params[2]);
         }
     } else {
-        ioctl(req->thread, req->requestID, req->params[0], req->params[1], req->params[2]);
+        status = ioctl(req->thread, req->requestID, req->params[0], op, req->params[2]);
     }
 
-    req->external = true;
-    req->unblock = false;
+    if(status) {
+        req->ret = status;
+        req->external = false;
+        req->unblock = true;
+    } else {
+        req->external = true;
+        req->unblock = false;
+    }
 }
 
 void syscallDispatchMMIO(SyscallRequest *req) {
