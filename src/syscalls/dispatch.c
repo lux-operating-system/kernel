@@ -338,6 +338,56 @@ void syscallDispatchChmod(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchLink(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = link(req->thread, req->requestID, (const char *) req->params[0], (const char *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchUnlink(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = unlink(req->thread, req->requestID, (const char *) req->params[0]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchSymlink(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = symlink(req->thread, req->requestID, (const char *) req->params[0], (const char *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchUmask(SyscallRequest *req) {
     req->ret = umask(req->thread, req->params[0]);
     req->unblock = true;
@@ -697,9 +747,9 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchLSeek,       // 20 - lseek()
     syscallDispatchChown,       // 21 - chown()
     syscallDispatchChmod,       // 22 - chmod()
-    NULL,                       // 23 - link()
-    NULL,                       // 24 - unlink()
-    NULL,                       // 25 - symlink()
+    syscallDispatchLink,        // 23 - link()
+    syscallDispatchUnlink,      // 24 - unlink()
+    syscallDispatchSymlink,     // 25 - symlink()
     NULL,                       // 26 - readlink()
     syscallDispatchUmask,       // 27 - umask()
     syscallDispatchMkdir,       // 28 - mkdir()
