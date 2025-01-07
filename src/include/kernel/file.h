@@ -92,3 +92,8 @@ int closeFile(Thread *, int);
 
 int chdir(Thread *, uint16_t, const char *);
 char *getcwd(Thread *, char *, size_t);
+
+int link(Thread *, uint64_t, const char *, const char *);
+int unlink(Thread *, uint64_t, const char *);
+int symlink(Thread *, uint64_t, const char *, const char *);
+ssize_t readlink(Thread *, uint64_t, const char *, char *, size_t);
