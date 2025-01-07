@@ -420,3 +420,97 @@ int utime(Thread *t, uint64_t id, const char *path, const struct utimbuf *times)
     free(command);
     return status;
 }
+
+int link(Thread *t, uint64_t id, const char *old, const char *new) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    LinkCommand *command = calloc(1, sizeof(LinkCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_LINK;
+    command->header.header.length = sizeof(LinkCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+
+    if(old[0] == '/') {
+        strcpy(command->oldPath, old);
+    } else {
+        strcpy(command->oldPath, p->cwd);
+        if(strlen(p->cwd) > 1) command->oldPath[strlen(command->oldPath)] = '/';
+        strcpy(command->oldPath + strlen(command->oldPath), old);
+    }
+
+    if(new[0] == '/') {
+        strcpy(command->newPath, new);
+    } else {
+        strcpy(command->newPath, p->cwd);
+        if(strlen(p->cwd) > 1) command->newPath[strlen(command->newPath)] = '/';
+        strcpy(command->newPath + strlen(command->newPath), new);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
+
+int symlink(Thread *t, uint64_t id, const char *old, const char *new) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    LinkCommand *command = calloc(1, sizeof(LinkCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_SYMLINK;
+    command->header.header.length = sizeof(LinkCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+
+    if(old[0] == '/') {
+        strcpy(command->oldPath, old);
+    } else {
+        strcpy(command->oldPath, p->cwd);
+        if(strlen(p->cwd) > 1) command->oldPath[strlen(command->oldPath)] = '/';
+        strcpy(command->oldPath + strlen(command->oldPath), old);
+    }
+
+    if(new[0] == '/') {
+        strcpy(command->newPath, new);
+    } else {
+        strcpy(command->newPath, p->cwd);
+        if(strlen(p->cwd) > 1) command->newPath[strlen(command->newPath)] = '/';
+        strcpy(command->newPath + strlen(command->newPath), new);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
+
+int unlink(Thread *t, uint64_t id, const char *path) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    UnlinkCommand *command = calloc(1, sizeof(UnlinkCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_UNLINK;
+    command->header.header.length = sizeof(UnlinkCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
