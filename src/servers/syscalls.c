@@ -216,6 +216,18 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
         threadUseContext(req->thread->tid);
         mmapHandle(mmapcmd, req);
         break;
+
+    case COMMAND_READLINK:
+        if(hdr->header.status <= 0) break;
+
+        ReadLinkCommand *rlcmd = (ReadLinkCommand *) hdr;
+        threadUseContext(req->thread->tid);
+
+        size_t linkLength = hdr->header.status;
+        if(linkLength > req->params[2]) linkLength = req->params[2];
+
+        req->ret = linkLength;
+        memcpy((void *) req->params[1], rlcmd->path, linkLength);        
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
