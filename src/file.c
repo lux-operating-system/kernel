@@ -524,3 +524,29 @@ int unlink(Thread *t, uint64_t id, const char *path) {
     free(command);
     return status;
 }
+
+ssize_t readlink(Thread *t, uint64_t id, const char *path, char *buf, size_t bufsiz) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    ReadLinkCommand *command = calloc(1, sizeof(ReadLinkCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_READLINK;
+    command->header.header.length = sizeof(ReadLinkCommand);
+    command->header.id = id;
+    command->uid = p->user;
+    command->gid = p->group;
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
