@@ -94,9 +94,9 @@ time_t platformTimestamp() {
     // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_15
     year -= 1900;       // depends on years since 1900
 
-    initialTimestamp = sec + (min*60) + (hour*3600) + (yearDay * 86400);
-    initialTimestamp += ((year-70) * 31536000) + (((year-69)/4) * 86400);
-    initialTimestamp -= (((year-1)/100) * 86400) + (((year+299)/400) * 86400);
+    initialTimestamp = sec + (min*60) + (hour*3600) + (yearDay * 86400)
+                        + ((year-70) * 31536000) + (((year-69)/4) * 86400)
+                        - (((year-1)/100) * 86400) + (((year+299)/400) * 86400);
     initialUptime = platformUptime();
 
     releaseLock(&lock);
