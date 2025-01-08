@@ -88,7 +88,7 @@ time_t platformTimestamp() {
         else yearDay += daysPerMonth[i-1];
     }
 
-    yearDay += day;
+    yearDay += day - 1;
 
     // calculation source:
     // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_15
