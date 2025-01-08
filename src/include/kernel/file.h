@@ -36,6 +36,7 @@
 #define F_SETOWN                10
 #define F_DUPFD_CLOEXEC         11
 #define F_DUPFD_CLOFORK         12
+#define F_GETPATH               0x8000
 
 /* fcntl() flags */
 #define FD_CLOEXEC              (O_CLOEXEC)

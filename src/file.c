@@ -227,6 +227,8 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
     if(!p) return -ESRCH;
 
     if(!p->io[fd].valid) return -EBADF;
+    FileDescriptor *file;
+    SocketDescriptor *socket;
 
     int status = 0;
     
@@ -250,10 +252,10 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
         iod->data = p->io[fd].data;
 
         if(iod->type == IO_FILE) {
-            FileDescriptor *file = (FileDescriptor *) iod->data;
+            file = (FileDescriptor *) iod->data;
             file->refCount++;
         } else if(iod->type == IO_SOCKET) {
-            SocketDescriptor *socket = (SocketDescriptor *) iod->data;
+            socket = (SocketDescriptor *) iod->data;
             socket->refCount++;
         }
 
@@ -288,6 +290,14 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
         if(arg & O_DSYNC) p->io[fd].flags |= O_DSYNC;
         else p->io[fd].flags &= ~(O_DSYNC);
         break;
+    
+    case F_GETPATH:
+        if(p->io[fd].type != IO_FILE)
+            return -EBADF;
+        file = (FileDescriptor *) p->io[fd].data;
+        char *path = (char *) arg;
+        strcpy(path, file->abspath);
+        return strlen(path);
 
     default:
         return -EINVAL;
