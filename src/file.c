@@ -40,7 +40,7 @@ int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *
     return status;
 }
 
-int stat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
+int lstat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -72,7 +72,7 @@ int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
     if(p->io[fd].type != IO_FILE) return -EBADF;
 
     FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
-    return stat(t, id, file->abspath, buffer);
+    return lstat(t, id, file->abspath, buffer);
 }
 
 int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {

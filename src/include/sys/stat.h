@@ -59,5 +59,5 @@ struct stat {
 #define S_ISLNK(m)          ((m & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(m)         ((m & S_IFMT) == S_IFSOCK)
 
-int stat(Thread *, uint64_t, const char *, struct stat *);
+int lstat(Thread *, uint64_t, const char *, struct stat *);
 int fstat(Thread *t, uint64_t, int, struct stat *);
