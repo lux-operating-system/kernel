@@ -161,12 +161,12 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     command->length = count;
     command->id = fd->id;
     strcpy(command->device, fd->device);
-    strcpy(command->path, fd->abspath);
+    strcpy(command->path, fd->path);
     memcpy(command->data, buffer, count);
 
     if(fd->charDev) command->silent = 1;
 
-    int status = requestServer(t, 0, command);
+    int status = requestServer(t, fd->sd, command);
     free(command);
     return status;
 }
