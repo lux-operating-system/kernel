@@ -550,3 +550,29 @@ ssize_t readlink(Thread *t, uint64_t id, const char *path, char *buf, size_t buf
     free(command);
     return status;
 }
+
+int fsync(Thread *t, uint64_t id, int fd) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(!p->io[fd].valid || (p->io[fd].type != IO_FILE)) return -EBADF;
+
+    FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
+    if(!file) return -EBADF;
+
+    FsyncCommand *cmd = calloc(1, sizeof(FsyncCommand));
+    if(!cmd) return -ENOMEM;
+
+    cmd->header.header.command = COMMAND_FSYNC;
+    cmd->header.header.length = sizeof(FsyncCommand);
+    cmd->header.id = id;
+    cmd->close = 0;
+    cmd->uid = p->user;
+    cmd->gid = p->group;
+    cmd->id = file->id;
+    strcpy(cmd->path, file->path);
+    strcpy(cmd->device, file->device);
+    
+    int status = requestServer(t, file->sd, cmd);
+    free(cmd);
+    return status;
+}
