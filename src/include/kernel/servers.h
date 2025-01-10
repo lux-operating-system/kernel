@@ -130,6 +130,16 @@ typedef struct {
     struct stat buffer;
 } StatCommand;
 
+/* fsync() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uint64_t id;
+    uid_t uid;
+    gid_t gid;
+} FsyncCommand;
+
 /* open() */
 typedef struct {
     SyscallHeader header;
@@ -312,6 +322,24 @@ typedef struct {
     uint64_t mmio;      // mmio pointer
     uint64_t data[];
 } MmapCommand;
+
+/* msync() */
+typedef struct {
+    SyscallHeader header;
+
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uint64_t id;
+    uid_t uid;
+    gid_t gid;
+
+    size_t len;
+    off_t off;
+    int mapFlags;
+    int syncFlags;
+
+    uint64_t data[];
+} MsyncCommand;
 
 void serverInit();
 void serverIdle();
