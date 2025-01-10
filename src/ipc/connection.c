@@ -26,6 +26,7 @@
  */
 
 int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -74,6 +75,7 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
  */
 
 int listen(Thread *t, int sd, int backlog) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -111,6 +113,7 @@ int listen(Thread *t, int sd, int backlog) {
  */
 
 int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());

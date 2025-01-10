@@ -177,6 +177,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
  */
 
 int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -213,6 +214,7 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
  */
 
 int closeSocket(Thread *t, int sd) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());

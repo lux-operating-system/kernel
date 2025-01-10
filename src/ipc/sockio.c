@@ -26,6 +26,7 @@
  */
 
 ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -108,6 +109,7 @@ ssize_t send(Thread *t, int sd, const void *buffer, size_t len, int flags) {
  */
 
 ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
