@@ -148,6 +148,15 @@ int munmap(Thread *t, void *addr, size_t len) {
 
     MmapHeader *header = (MmapHeader *)((uintptr_t) ptr-PAGE_SIZE);
     if(len > header->length) return -EINVAL;
+    int fd = header->fd;    // back this up before unmapping
+
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(!p->io[fd].valid || (p->io[fd].type != IO_FILE))
+        return -EINVAL;
+    
+    FileDescriptor *file = (FileDescriptor *) p->io[header->fd].data;
+    if(!file) return -EINVAL;
 
     size_t pageCount = (len+PAGE_SIZE)/PAGE_SIZE;
 
@@ -156,6 +165,12 @@ int munmap(Thread *t, void *addr, size_t len) {
         for(int i = 0; i < pageCount; i++) platformUnmapPage(ptr + (i*PAGE_SIZE));
     } else {
         vmmFree(ptr-PAGE_SIZE, pageCount+1);
+    }
+
+    file->refCount--;
+    if(!file->refCount) {
+        free(file);
+        closeIO(p, &p->io[fd]);
     }
 
     return 0;
