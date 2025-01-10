@@ -688,6 +688,11 @@ void syscallDispatchMmap(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchMunmap(SyscallRequest *req) {
+    req->ret = munmap(req->thread, (void *) req->params[0], req->params[1]);
+    req->unblock = true;
+}
+
 /* Group 5: Driver I/O Functions */
 
 void syscallDispatchIoperm(SyscallRequest *req) {
@@ -801,7 +806,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     /* group 4: memory management */
     syscallDispatchSBrk,        // 51 - sbrk()
     syscallDispatchMmap,        // 52 - mmap()
-    NULL,                       // 53 - munmap()
+    syscallDispatchMunmap,      // 53 - munmap()
     NULL,                       // 54 - msync()
 
     /* group 5: driver I/O functions */
