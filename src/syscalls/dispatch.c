@@ -543,6 +543,19 @@ void syscallDispatchTelldir(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchFsync(SyscallRequest *req) {
+    req->requestID = syscallID();
+    int status = fsync(req->thread, req->requestID, req->params[0]);
+    if(status) {
+        req->external = false;
+        req->ret = status;
+        req->unblock = true;
+    } else {
+        req->external = true;
+        req->unblock = false;
+    }
+}
+
 /* Group 3: Interprocess Communication */
 
 void syscallDispatchSocket(SyscallRequest *req) {
@@ -805,7 +818,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchReaddir,     // 38 - readdir_r()
     syscallDispatchSeekdir,     // 39 - seekdir()
     syscallDispatchTelldir,     // 40 - telldir()
-    NULL,                       // 41 - fsync()
+    syscallDispatchFsync,       // 41 - fsync()
 
     /* group 3: interprocess communication */
     syscallDispatchSocket,      // 42 - socket()
