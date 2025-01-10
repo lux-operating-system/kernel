@@ -138,6 +138,7 @@ typedef struct {
     uint64_t id;
     uid_t uid;
     gid_t gid;
+    int close;      // 0 for close(), non-zero for fsync()
 } FsyncCommand;
 
 /* open() */
