@@ -86,6 +86,7 @@ int chown(Thread *, uint64_t, const char *, uid_t, gid_t);
 int chmod(Thread *, uint64_t, const char *, mode_t);
 int mkdir(Thread *, uint64_t, const char *, mode_t);
 int utime(Thread *, uint64_t, const char *, const struct utimbuf *);
+int fsync(Thread *, uint64_t, int);
 
 ssize_t readFile(Thread *, uint64_t, IODescriptor *, void *, size_t);
 ssize_t writeFile(Thread *, uint64_t, IODescriptor *, const void *, size_t);
