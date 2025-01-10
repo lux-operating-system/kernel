@@ -555,7 +555,8 @@ int fsync(Thread *t, uint64_t id, int fd) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
     if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
-    if(!p->io[fd].valid || (p->io[fd].type != IO_FILE)) return -EBADF;
+    if(!p->io[fd].valid) return -EBADF;
+    if(p->io[fd].type != IO_FILE) return -EINVAL;
 
     FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
     if(!file) return -EBADF;
