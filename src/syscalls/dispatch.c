@@ -693,6 +693,21 @@ void syscallDispatchMunmap(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchMsync(SyscallRequest *req) {
+    req->requestID = syscallID();
+    int status = msync(req->thread, req->requestID, (void *) req->params[0], req->params[1], req->params[2]);
+    if(!status) {
+        req->external = true;
+        req->unblock = false;
+    } else if(status == 1) {
+        req->ret = 0;
+        req->unblock = true;
+    } else {
+        req->ret = status;
+        req->unblock = true;
+    }
+}
+
 /* Group 5: Driver I/O Functions */
 
 void syscallDispatchIoperm(SyscallRequest *req) {
@@ -807,7 +822,7 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchSBrk,        // 51 - sbrk()
     syscallDispatchMmap,        // 52 - mmap()
     syscallDispatchMunmap,      // 53 - munmap()
-    NULL,                       // 54 - msync()
+    syscallDispatchMsync,       // 54 - msync()
 
     /* group 5: driver I/O functions */
     syscallDispatchIoperm,      // 55 - ioperm()
