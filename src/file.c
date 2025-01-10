@@ -554,6 +554,7 @@ ssize_t readlink(Thread *t, uint64_t id, const char *path, char *buf, size_t buf
 int fsync(Thread *t, uint64_t id, int fd) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
+    if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[fd].valid || (p->io[fd].type != IO_FILE)) return -EBADF;
 
     FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
