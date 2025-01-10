@@ -160,3 +160,54 @@ int munmap(Thread *t, void *addr, size_t len) {
 
     return 0;
 }
+
+/* msync(): syncs disk storage with memory-mapped I/O
+ * params: t - calling thread
+ * params: addr - address of the mapping
+ * params: len - length to be synced
+ * params: flags - synchronous/asynchronous toggle
+ * returns: 0 on success, 1 if nothing to be done, negative errno on fail
+ */
+
+int msync(Thread *t, uint64_t id, void *addr, size_t len, int flags) {
+    uintptr_t ptr = (uintptr_t) addr;
+    if(ptr & (PAGE_SIZE-1)) return -EINVAL;
+    if(ptr < USER_MMIO_BASE || ptr > USER_LIMIT_ADDRESS) return -EINVAL;
+    if(!len) return -EINVAL;
+
+    MmapHeader *header = (MmapHeader *)((uintptr_t) ptr-PAGE_SIZE);
+    if(len > header->length) return -EINVAL;
+
+    if(header->device) return 1;    // nothing to do for physical device mmio
+    if(header->flags & MAP_PRIVATE) return 1;
+    if(!(header->prot & PROT_WRITE)) return 1;
+
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(!p->io[header->fd].valid || (p->io[header->fd].type != IO_FILE))
+        return -EINVAL;
+
+    FileDescriptor *file = (FileDescriptor *) p->io[header->fd].data;
+    if(!file) return -EINVAL;
+
+    MsyncCommand *cmd = calloc(1, sizeof(MsyncCommand) + len);
+    if(!cmd) return -ENOMEM;
+
+    cmd->header.header.command = COMMAND_MSYNC;
+    cmd->header.header.length = sizeof(MsyncCommand) + len;
+    cmd->header.id = id;
+    cmd->uid = p->user;
+    cmd->gid = p->group;
+    cmd->mapFlags = header->flags;
+    cmd->syncFlags = flags;
+    cmd->off = header->offset;
+
+    cmd->id = file->id;
+    strcpy(cmd->path, file->path);
+    strcpy(cmd->device, file->device);
+    memcpy(cmd->data, addr, len);
+
+    int status = requestServer(t, file->sd, cmd);
+    free(cmd);
+    return status;
+}
