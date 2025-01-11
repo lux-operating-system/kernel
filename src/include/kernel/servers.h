@@ -122,6 +122,13 @@ typedef struct {
     int flags;
 } MountCommand;
 
+/* umount() */
+typedef struct {
+    SyscallHeader header;
+    char mp[MAX_FILE_PATH];
+    int flags;
+} UmountCommand;
+
 /* stat() */
 typedef struct {
     SyscallHeader header;
