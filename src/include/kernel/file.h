@@ -47,6 +47,15 @@
 #define F_RDLCK                 2
 #define F_WRLCK                 4
 
+/* umount2() flags
+ * these are not POSIX standard but are implemented by linux and honestly
+ * they make a lot of sense to have
+ */
+#define MNT_FORCE               0x01
+#define MNT_DETACH              0x02
+#define MNT_EXPIRE              0x04
+#define UMOUNT_NOFOLLOW         0x08
+
 /* file-specific I/O descriptor (see io.h) */
 typedef struct {
     Process *process;
@@ -80,6 +89,7 @@ ssize_t read(Thread *, uint64_t, int, void *, size_t);
 ssize_t write(Thread *, uint64_t, int, const void *, size_t);
 off_t lseek(Thread *, int, off_t, int);
 int mount(Thread *, uint64_t, const char *, const char *, const char *, int);
+int umount2(Thread *, uint64_t, const char *, int);
 int fcntl(Thread *, int, int, uintptr_t);
 mode_t umask(Thread *, mode_t);
 int chown(Thread *, uint64_t, const char *, uid_t, gid_t);
