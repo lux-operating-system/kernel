@@ -210,7 +210,7 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 /* closeSocket(): closes a socket
  * params: t - calling thread
  * params: sd - socket descriptor
- * returns: zero on success, negative error code on fail
+ * returns: 1 on success, negative error code on fail
  */
 
 int closeSocket(Thread *t, int sd) {
@@ -230,7 +230,7 @@ int closeSocket(Thread *t, int sd) {
     sock->refCount--;
     if(sock->refCount) {
         releaseLock(&lock);
-        return 0;
+        return 1;
     }
 
     if(sock->peer) {
@@ -245,5 +245,5 @@ int closeSocket(Thread *t, int sd) {
     free(sock);
     closeIO(p, &p->io[sd]);
     releaseLock(&lock);
-    return 0;
+    return 1;
 }
