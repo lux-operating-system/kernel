@@ -182,13 +182,22 @@ int closeFile(Thread *t, uint64_t id, int fd) {
     FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
     if(!file) return -EBADF;
 
-    // TODO: flush the file buffers here to allow drivers to implement caching
+    FsyncCommand *cmd = calloc(1, sizeof(FsyncCommand));
+    if(!cmd) return -ENOMEM;
 
-    file->refCount--;
-    if(!file->refCount) free(file);
-
-    closeIO(p, &p->io[fd]);
-    return 0;
+    cmd->header.header.command = COMMAND_FSYNC;
+    cmd->header.header.length = sizeof(FsyncCommand);
+    cmd->header.id = id;
+    cmd->close = 1;
+    cmd->uid = p->user;
+    cmd->gid = p->group;
+    cmd->id = file->id;
+    strcpy(cmd->path, file->path);
+    strcpy(cmd->device, file->device);
+    
+    int status = requestServer(t, file->sd, cmd);
+    free(cmd);
+    return status;
 }
 
 off_t lseek(Thread *t, int fd, off_t offset, int where) {
