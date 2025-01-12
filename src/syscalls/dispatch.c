@@ -181,8 +181,16 @@ void syscallDispatchOpen(SyscallRequest *req) {
 }
 
 void syscallDispatchClose(SyscallRequest *req) {
-    req->ret = close(req->thread, req->params[0]);
-    req->unblock = true;
+    req->requestID = syscallID();
+    int status = close(req->thread, req->requestID, req->params[0]);
+    if(!status) {
+        req->external = true;
+        req->unblock = false;
+    } else {
+        req->external = false;
+        req->ret = status;
+        req->unblock = true;
+    }
 }
 
 void syscallDispatchRead(SyscallRequest *req) {
