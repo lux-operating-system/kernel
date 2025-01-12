@@ -186,6 +186,10 @@ void syscallDispatchClose(SyscallRequest *req) {
     if(!status) {
         req->external = true;
         req->unblock = false;
+    } else if(status == 1) {
+        req->external = false;
+        req->ret = 0;
+        req->unblock = true;
     } else {
         req->external = false;
         req->ret = status;
