@@ -84,7 +84,7 @@ struct utimbuf {
 
 /* file system syscalls */
 int open(Thread *, uint64_t, const char *, int, mode_t);
-int close(Thread *, int);
+int close(Thread *, uint64_t, int);
 ssize_t read(Thread *, uint64_t, int, void *, size_t);
 ssize_t write(Thread *, uint64_t, int, const void *, size_t);
 off_t lseek(Thread *, int, off_t, int);
@@ -100,7 +100,7 @@ int fsync(Thread *, uint64_t, int);
 
 ssize_t readFile(Thread *, uint64_t, IODescriptor *, void *, size_t);
 ssize_t writeFile(Thread *, uint64_t, IODescriptor *, const void *, size_t);
-int closeFile(Thread *, int);
+int closeFile(Thread *, uint64_t, int);
 
 int chdir(Thread *, uint16_t, const char *);
 char *getcwd(Thread *, char *, size_t);

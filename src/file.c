@@ -171,7 +171,7 @@ ssize_t writeFile(Thread *t, uint64_t id, IODescriptor *iod, const void *buffer,
     return status;
 }
 
-int closeFile(Thread *t, int fd) {
+int closeFile(Thread *t, uint64_t id, int fd) {
     if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
 
     Process *p;

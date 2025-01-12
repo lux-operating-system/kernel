@@ -118,11 +118,12 @@ ssize_t write(Thread *t, uint64_t id, int fd, const void *buffer, size_t count) 
 
 /* close(): closes an I/O descriptor
  * params: t - calling thread, NULL for kernel threads
+ * params: id - syscall request ID
  * params: fd - file or socket descriptor
- * returns: zero on success, negative error code on fail
+ * returns: 0 if blocked, 1 if not blocked, negative error code on fail
  */
 
-int close(Thread *t, int fd) {
+int close(Thread *t, uint64_t id, int fd) {
     if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
 
     Process *p;
@@ -133,7 +134,7 @@ int close(Thread *t, int fd) {
     if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;
 
     if(p->io[fd].type == IO_SOCKET) return closeSocket(t, fd);
-    else if(p->io[fd].type == IO_FILE) return closeFile(t, fd);
+    else if(p->io[fd].type == IO_FILE) return closeFile(t, id, fd);
     else return -EBADF;
 }
 
