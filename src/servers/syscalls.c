@@ -227,7 +227,22 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
         if(linkLength > req->params[2]) linkLength = req->params[2];
 
         req->ret = linkLength;
-        memcpy((void *) req->params[1], rlcmd->path, linkLength);        
+        memcpy((void *) req->params[1], rlcmd->path, linkLength);       
+        break;
+
+    case COMMAND_FSYNC:
+        if(hdr->header.status) break;
+
+        /* special handling for close() after syncing I/O */
+        FsyncCommand *fscmd = (FsyncCommand *) hdr;
+        if(!fscmd->close) break;
+
+        file = (FileDescriptor *) p->io[req->params[0]].data;
+        if(!file) break;
+
+        file->refCount--;
+        if(!file->refCount) free(file);
+        closeIO(p, &p->io[req->params[0]]);
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
