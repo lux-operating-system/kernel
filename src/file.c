@@ -182,6 +182,14 @@ int closeFile(Thread *t, uint64_t id, int fd) {
     FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
     if(!file) return -EBADF;
 
+    if(!(p->io[fd].flags & O_WRONLY)) {
+        file->refCount--;
+        if(!file->refCount) free(file);
+        closeIO(p, &p->io[fd]);
+        return 1;   // non-blocking
+    }
+
+    // syncing is only necessary for files that have been written to
     FsyncCommand *cmd = calloc(1, sizeof(FsyncCommand));
     if(!cmd) return -ENOMEM;
 
