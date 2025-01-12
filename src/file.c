@@ -182,7 +182,7 @@ int closeFile(Thread *t, uint64_t id, int fd) {
     FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
     if(!file) return -EBADF;
 
-    if(!(p->io[fd].flags & O_WRONLY)) {
+    if((!(p->io[fd].flags & O_WRONLY)) || file->charDev) {
         file->refCount--;
         if(!file->refCount) free(file);
         closeIO(p, &p->io[fd]);
