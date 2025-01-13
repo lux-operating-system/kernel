@@ -20,6 +20,7 @@
 #include <kernel/servers.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <platform/platform.h>
 
 int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
@@ -594,4 +595,41 @@ int fsync(Thread *t, uint64_t id, int fd) {
     int status = requestServer(t, file->sd, cmd);
     free(cmd);
     return status;
+}
+
+int statvfs(Thread *t, uint64_t id, const char *path, struct statvfs *buf) {
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+
+    StatvfsCommand *command = calloc(1, sizeof(StatvfsCommand));
+    if(!command) return -ENOMEM;
+
+    command->header.header.command = COMMAND_STATVFS;
+    command->header.header.length = sizeof(StatvfsCommand);
+    command->header.id = id;
+
+    if(path[0] == '/') {
+        strcpy(command->path, path);
+    } else {
+        strcpy(command->path, p->cwd);
+        if(strlen(p->cwd) > 1) command->path[strlen(command->path)] = '/';
+        strcpy(command->path + strlen(command->path), path);
+    }
+
+    int status = requestServer(t, 0, command);
+    free(command);
+    return status;
+}
+
+int fstatvfs(Thread *t, uint64_t id, int fd, struct statvfs *buf) {
+    if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
+
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(!p->io[fd].valid || (p->io[fd].type != IO_FILE)) return -EBADF;
+
+    FileDescriptor *file = p->io[fd].data;
+    if(!file) return -EBADF;
+
+    return statvfs(t, id, file->abspath, buf);
 }
