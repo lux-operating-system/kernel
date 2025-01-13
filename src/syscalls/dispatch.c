@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/statvfs.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -568,6 +569,37 @@ void syscallDispatchFsync(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchStatvfs(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)
+    && syscallVerifyPointer(req, req->params[1], sizeof(struct statvfs))) {
+        req->requestID = syscallID();
+        int status = statvfs(req->thread, req->requestID, (const char *) req->params[0], (struct statvfs *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchFStatvfs(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], sizeof(struct statvfs))) {
+        req->requestID = syscallID();
+        int status = fstatvfs(req->thread, req->requestID, req->params[0], (struct statvfs *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 /* Group 3: Interprocess Communication */
 
 void syscallDispatchSocket(SyscallRequest *req) {
@@ -831,8 +863,8 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     syscallDispatchSeekdir,     // 39 - seekdir()
     syscallDispatchTelldir,     // 40 - telldir()
     syscallDispatchFsync,       // 41 - fsync()
-    NULL,                       // 42 - statvfs()
-    NULL,                       // 43 - fstatvfs()
+    syscallDispatchStatvfs,     // 42 - statvfs()
+    syscallDispatchFStatvfs,    // 43 - fstatvfs()
 
     /* group 3: interprocess communication */
     syscallDispatchSocket,      // 44 - socket()
