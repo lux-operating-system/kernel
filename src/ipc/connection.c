@@ -45,6 +45,16 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
         return -EADDRNOTAVAIL;
     }
 
+    if(self->peer) {
+        if(!memcmp(self->peer->address.sa_data, addr->sa_data, len)) {
+            socketRelease();
+            return 0;
+        }
+
+        socketRelease();
+        return -EISCONN;
+    }
+
     if(self->address.sa_family != peer->address.sa_family) {
         socketRelease();
         return -EAFNOSUPPORT;
@@ -57,14 +67,23 @@ int connect(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 
     if(peer->backlogCount >= peer->backlogMax) {
         socketRelease();
-        return -ETIMEDOUT;
+        return -ECONNREFUSED;
     }
 
-    // at this point we're sure it's safe to create a connection
+    // make sure the connection is not already in the backlog
+    for(int i = 0; peer->backlogCount && (i < peer->backlogCount); i++) {
+        SocketDescriptor *request = peer->backlog[i];
+        if(!memcmp(request->address.sa_data, self->address.sa_data, self->addressLength)) {
+            socketRelease();
+            return -EINPROGRESS;
+        }
+    }
+
+    // at this point we're sure it's safe to attempt a connection
     peer->backlog[peer->backlogCount] = self;
     peer->backlogCount++;
     socketRelease();
-    return 0;
+    return -EWOULDBLOCK;
 }
 
 /* listen(): listens for incoming connections on a socket
@@ -131,10 +150,18 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
         return -EWOULDBLOCK;    // socket has no incoming queue
     }
 
+    socketLock();
+
+    if(!listener->backlogCount) {
+        socketRelease();
+        return -EWOULDBLOCK;
+    }
+
     // create a new connected socket
     IODescriptor *iod = NULL;
     int connectedSocket = openIO(p, (void **) &iod);
     if((connectedSocket < 0) || !iod) {
+        socketRelease();
         return -EMFILE;
     }
 
@@ -142,6 +169,7 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     iod->flags = p->io[sd].flags;
     iod->data = calloc(1, sizeof(SocketDescriptor));
     if(!iod->data) {
+        socketRelease();
         closeIO(p, iod);
         return -ENOMEM;
     }
@@ -157,7 +185,7 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     // and assign the peer address
     self->peer = listener->backlog[0];  // TODO: is this always FIFO?
     self->peer->peer = self;
-    memmove(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
+    memcpy(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
     listener->backlogCount--;
 
     // save the peer address if requested
@@ -166,9 +194,6 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
         memcpy(addr, &self->peer->address, *len);
     }
 
-    if(!self->peer) {
-        return -ECONNABORTED;
-    } else {
-        return connectedSocket;
-    }
+    socketRelease();
+    return connectedSocket;
 }
