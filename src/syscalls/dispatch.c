@@ -609,8 +609,17 @@ void syscallDispatchSocket(SyscallRequest *req) {
 
 void syscallDispatchConnect(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        req->ret = connect(req->thread, req->params[0], (const struct sockaddr *)req->params[1], req->params[2]);
-        req->unblock = true;
+        int status = connect(req->thread, req->params[0], (const struct sockaddr *)req->params[1], req->params[2]);
+        if(status == -EAGAIN || status == -EWOULDBLOCK) {
+            req->unblock = false;
+            req->busy = false;
+            req->queued = true;
+            req->next = NULL;
+            syscallEnqueue(req);
+        } else {
+            req->ret = status;
+            req->unblock = true;
+        }
     }
 }
 
