@@ -43,6 +43,13 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
         threadUseContext(req->thread->tid);
         memcpy((void *)req->params[1], &statcmd->buffer, sizeof(struct stat));
         break;
+    
+    case COMMAND_STATVFS:
+        if(hdr->header.status) break;
+        StatvfsCommand *statvfscmd = (StatvfsCommand *) hdr;
+        threadUseContext(req->thread->tid);
+        memcpy((void *)req->params[1], &statvfscmd->buffer, sizeof(struct statvfs));
+        break;
 
     case COMMAND_OPEN:
         if(hdr->header.status) break;
