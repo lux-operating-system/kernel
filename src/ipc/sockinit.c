@@ -203,6 +203,7 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 
     // finally
     memcpy(&sock->address, addr, len);
+    sock->addressLength = len;
     releaseLock(&lock);
     return 0;
 }
