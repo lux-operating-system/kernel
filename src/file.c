@@ -70,10 +70,23 @@ int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
     if(!p) return -ESRCH;
     if(fd < 0 || fd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[fd].valid || !p->io[fd].data) return -EBADF;  // ensure valid file descriptor
-    if(p->io[fd].type != IO_FILE) return -EBADF;
 
-    FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
-    return lstat(t, id, file->abspath, buffer);
+    if(p->io[fd].type == IO_FILE) {
+        FileDescriptor *file = (FileDescriptor *) p->io[fd].data;
+        return lstat(t, id, file->abspath, buffer);
+    } else if(p->io[fd].type == IO_SOCKET) {
+        SocketDescriptor *socket = (SocketDescriptor *) p->io[fd].data;
+        memset(buffer, 0, sizeof(struct stat));
+        buffer->st_mode = S_IFSOCK|S_IRUSR|S_IWUSR|S_IRGRP;
+        buffer->st_uid = socket->process->user;
+        buffer->st_gid = socket->process->group;
+        buffer->st_ino = fd * socket->process->pid;
+        buffer->st_dev = 1;
+        buffer->st_nlink = 1;
+        return 1;
+    }
+
+    return -EBADF;  // TODO: shared memory and typed memory objects
 }
 
 int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
