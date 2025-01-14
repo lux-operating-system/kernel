@@ -504,8 +504,7 @@ void syscallDispatchMount(SyscallRequest *req) {
 }
 
 void syscallDispatchFcntl(SyscallRequest *req) {
-    if(req->params[1] != F_GETPATH ||
-    (req->params[1] == F_GETPATH && syscallVerifyPointer(req, req->params[2], MAX_FILE_PATH))) {
+    if(req->params[1] != F_GETPATH || syscallVerifyPointer(req, req->params[2], MAX_FILE_PATH)) {
         req->ret = fcntl(req->thread, req->params[0], req->params[1], req->params[2]);
         req->unblock = true;
     }
