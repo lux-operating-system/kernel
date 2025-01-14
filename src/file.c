@@ -90,11 +90,11 @@ int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
 }
 
 int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
-    OpenCommand *command = calloc(1, sizeof(OpenCommand));
-    if(!command) return -ENOMEM;
-
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
+
+    OpenCommand *command = calloc(1, sizeof(OpenCommand));
+    if(!command) return -ENOMEM;
 
     command->header.header.command = COMMAND_OPEN;
     command->header.header.length = sizeof(OpenCommand);
