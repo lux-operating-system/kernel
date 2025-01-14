@@ -152,11 +152,6 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
 
     socketLock();
 
-    if(!listener->backlogCount) {
-        socketRelease();
-        return -EWOULDBLOCK;
-    }
-
     // create a new connected socket
     IODescriptor *iod = NULL;
     int connectedSocket = openIO(p, (void **) &iod);
