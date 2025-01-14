@@ -120,21 +120,15 @@ uintptr_t platformGetPage(int *flags, uintptr_t addr) {
     // TODO: account for inconsistencies between virtual and physical addresses here
     uint64_t *pml4 = (uint64_t *)vmmMMIO(readCR3() & ~(PAGE_SIZE-1), true);
     uint64_t pml4Entry = pml4[pml4Index];
-    if(!pml4Entry & PT_PAGE_PRESENT) {
-        return 0;
-    }
+    if(!(pml4Entry & PT_PAGE_PRESENT)) return 0;
 
     uint64_t *pdp = (uint64_t *)vmmMMIO((pml4Entry & ~(PAGE_SIZE-1)), true);
     uint64_t pdpEntry = pdp[pdpIndex];
-    if(!pdpEntry & PT_PAGE_PRESENT) {
-        return 0;
-    }
+    if(!(pdpEntry & PT_PAGE_PRESENT)) return 0;
 
     uint64_t *pd = (uint64_t *)vmmMMIO((pdpEntry & ~(PAGE_SIZE-1)), true);
     uint64_t pdEntry = pd[pdIndex];
-    if(!pdEntry & PT_PAGE_PRESENT) {
-        return 0;
-    }
+    if(!(pdEntry & PT_PAGE_PRESENT)) return 0;
 
     uint64_t *pt = (uint64_t *)vmmMMIO((pdEntry & ~(PAGE_SIZE-1)), true);
     uint64_t ptEntry = pt[ptIndex];
