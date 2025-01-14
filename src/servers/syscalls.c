@@ -164,7 +164,8 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
 
         dir = (DirectoryDescriptor *) iod->data;
         dir->process = p;
-        strcpy(dir->path, opendircmd->abspath);
+        dir->sd = sd;
+        strcpy(dir->path, opendircmd->path);
         strcpy(dir->device, opendircmd->device);
 
         // and return the directory descriptor to the thread
