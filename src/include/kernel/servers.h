@@ -14,6 +14,7 @@
 #include <kernel/file.h>
 #include <kernel/dirent.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 
 #define SERVER_MAX_CONNECTIONS  128
 #define SERVER_MAX_SIZE         0x8000              // default max msg size is 8 KiB
@@ -34,7 +35,7 @@
 
 /* these commands are requested by the kernel for lumen to fulfill syscall requests */
 #define COMMAND_STAT            0x8000
-#define COMMAND_FLUSH           0x8001
+#define COMMAND_FSYNC           0x8001
 #define COMMAND_MOUNT           0x8002
 #define COMMAND_UMOUNT          0x8003
 #define COMMAND_OPEN            0x8004
@@ -47,7 +48,7 @@
 #define COMMAND_CHOWN           0x800B
 #define COMMAND_LINK            0x800C
 #define COMMAND_MKDIR           0x800D
-#define COMMAND_RMDIR           0x800E
+#define COMMAND_UTIME           0x800E
 
 #define COMMAND_EXEC            0x800F
 #define COMMAND_CHDIR           0x8010
@@ -55,8 +56,12 @@
 
 #define COMMAND_MMAP            0x8012
 #define COMMAND_MSYNC           0x8013
+#define COMMAND_UNLINK          0x8014
+#define COMMAND_SYMLINK         0x8015
+#define COMMAND_READLINK        0x8016
+#define COMMAND_STATVFS         0x8017
 
-#define MAX_SYSCALL_COMMAND     0x8013
+#define MAX_SYSCALL_COMMAND     0x8017
 
 /* these commands are for device drivers */
 #define COMMAND_IRQ             0xC000
@@ -119,6 +124,13 @@ typedef struct {
     int flags;
 } MountCommand;
 
+/* umount() */
+typedef struct {
+    SyscallHeader header;
+    char mp[MAX_FILE_PATH];
+    int flags;
+} UmountCommand;
+
 /* stat() */
 typedef struct {
     SyscallHeader header;
@@ -126,6 +138,17 @@ typedef struct {
     char path[MAX_FILE_PATH];
     struct stat buffer;
 } StatCommand;
+
+/* fsync() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uint64_t id;
+    uid_t uid;
+    gid_t gid;
+    int close;      // 0 for close(), non-zero for fsync()
+} FsyncCommand;
 
 /* open() */
 typedef struct {
@@ -135,14 +158,17 @@ typedef struct {
     char device[MAX_FILE_PATH];     // device
     int flags;
     mode_t mode;
+    mode_t umask;
     uid_t uid;
     gid_t gid;
     uint64_t id;    // unique ID
+    int charDev;
 } OpenCommand;
 
 /* read() and write() */
 typedef struct {
     SyscallHeader header;
+    int silent;         // request no response
     char path[MAX_FILE_PATH];
     char device[MAX_FILE_PATH];
     uint64_t id;
@@ -194,6 +220,77 @@ typedef struct {
     char data[MAX_FILE_PATH];
 } ReaddirCommand;
 
+/* chmod() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+} ChmodCommand;
+
+/* chown() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    uid_t newUid;
+    gid_t newGid;
+} ChownCommand;
+
+/* link() and symlink() */
+typedef struct {
+    SyscallHeader header;
+    char oldPath[MAX_FILE_PATH];
+    char newPath[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+} LinkCommand;
+
+/* unlink() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+} UnlinkCommand;
+
+/* readlink() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+} ReadLinkCommand;
+
+/* mkdir() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+    mode_t umask;
+} MkdirCommand;
+
+/* utime() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uid_t uid;
+    gid_t gid;
+    time_t accessTime;
+    time_t modifiedTime;
+} UtimeCommand;
+
 /* exec() */
 typedef struct {
     SyscallHeader header;
@@ -235,6 +332,32 @@ typedef struct {
     uint64_t mmio;      // mmio pointer
     uint64_t data[];
 } MmapCommand;
+
+/* msync() */
+typedef struct {
+    SyscallHeader header;
+
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    uint64_t id;
+    uid_t uid;
+    gid_t gid;
+
+    size_t len;
+    off_t off;
+    int mapFlags;
+    int syncFlags;
+
+    uint64_t data[];
+} MsyncCommand;
+
+/* statvfs() */
+typedef struct {
+    SyscallHeader header;
+    char path[MAX_FILE_PATH];
+    char device[MAX_FILE_PATH];
+    struct statvfs buffer;
+} StatvfsCommand;
 
 void serverInit();
 void serverIdle();

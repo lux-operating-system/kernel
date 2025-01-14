@@ -47,7 +47,7 @@ int readdir_r(Thread *t, uint64_t id, DIR *dir, struct dirent *entry, struct dir
     if(!p) return -ESRCH;
 
     // input validation
-    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    int dd = (intptr_t) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
     if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return -EBADF;
 
@@ -64,7 +64,7 @@ int readdir_r(Thread *t, uint64_t id, DIR *dir, struct dirent *entry, struct dir
     strcpy(cmd->path, descriptor->path);
     strcpy(cmd->device, descriptor->device);
 
-    int status = requestServer(t, 0, cmd);
+    int status = requestServer(t, descriptor->sd, cmd);
     free(cmd);
     return status;
 }
@@ -73,7 +73,7 @@ void seekdir(Thread *t, DIR *dir, long position) {
     Process *p = getProcess(t->pid);
     if(!p) return;
 
-    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    int dd = (intptr_t) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
     if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return;
     if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return;
 
@@ -88,7 +88,7 @@ long telldir(Thread *t, DIR *dir) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
-    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    int dd = (intptr_t) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
     if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return -EBADF;
 
@@ -102,7 +102,7 @@ int closedir(Thread *t, DIR *dir) {
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
-    int dd = (int) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
+    int dd = (intptr_t) dir & ~(DIRECTORY_DESCRIPTOR_FLAG);
     if(dd < 0 || dd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[dd].valid || p->io[dd].type != IO_DIRECTORY) return -EBADF;
 

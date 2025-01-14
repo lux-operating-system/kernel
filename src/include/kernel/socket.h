@@ -58,6 +58,7 @@ struct sockaddr_un {
 typedef struct SocketDescriptor {
     Process *process;
     struct sockaddr address;
+    socklen_t addressLength;
     lock_t lock;
     bool listener;
     int globalIndex;

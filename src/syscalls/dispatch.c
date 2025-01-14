@@ -21,6 +21,8 @@
 #include <kernel/signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/statvfs.h>
 
 /* This is the dispatcher for system calls, many of which need a wrapper for
  * their behavior. This ensures the exposed functionality is always as close
@@ -151,6 +153,14 @@ void syscallDispatchGetGID(SyscallRequest *req) {
 
 void syscallDispatchMSleep(SyscallRequest *req) {
     req->ret = msleep(req->thread, req->params[0]);
+    req->unblock = true;
+}
+
+void syscallDispatchGetTimeOfDay(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], sizeof(struct timeval))) {
+        req->ret = gettimeofday(req->thread, (struct timeval *) req->params[0], (void *) req->params[1]);
+        req->unblock = true;
+    }
 }
 
 /* Group 2: File System */
@@ -172,8 +182,20 @@ void syscallDispatchOpen(SyscallRequest *req) {
 }
 
 void syscallDispatchClose(SyscallRequest *req) {
-    req->ret = close(req->thread, req->params[0]);
-    req->unblock = true;
+    req->requestID = syscallID();
+    int status = close(req->thread, req->requestID, req->params[0]);
+    if(!status) {
+        req->external = true;
+        req->unblock = false;
+    } else if(status == 1) {
+        req->external = false;
+        req->ret = 0;
+        req->unblock = true;
+    } else {
+        req->external = false;
+        req->ret = status;
+        req->unblock = true;
+    }
 }
 
 void syscallDispatchRead(SyscallRequest *req) {
@@ -241,18 +263,28 @@ void syscallDispatchWrite(SyscallRequest *req) {
             req->ret = status;      // status or error code
             req->unblock = true;
         } else {
-            // block until completion
+            // block until completion for everything except character devices
+            Process *p = getProcess(req->thread->pid);
+            if(p->io[req->params[0]].type == IO_FILE) {
+                FileDescriptor *fd = (FileDescriptor *) p->io[req->params[0]].data;
+                if(fd->charDev) {
+                    req->ret = req->params[2];  // size
+                    req->external = false;
+                    req->unblock = true;
+                    return;
+                }
+            }
             req->external = true;
             req->unblock = false;
         }
     }
 }
 
-void syscallDispatchStat(SyscallRequest *req) {
+void syscallDispatchLStat(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) && syscallVerifyPointer(req, req->params[1], sizeof(struct stat))) {
         req->requestID = syscallID();
 
-        int status = stat(req->thread, req->requestID, (const char *)req->params[0], (struct stat *)req->params[1]);
+        int status = lstat(req->thread, req->requestID, (const char *)req->params[0], (struct stat *)req->params[1]);
         if(status) {
             req->external = false;
             req->ret = status;      // error code
@@ -270,9 +302,12 @@ void syscallDispatchFStat(SyscallRequest *req) {
         req->requestID = syscallID();
 
         int status = fstat(req->thread, req->requestID, req->params[0], (struct stat *)req->params[1]);
-        if(status) {
+        if(status < 0) {
             req->external = false;
             req->ret = status;      // error code
+            req->unblock = true;
+        } else if(status == 1) {    // return without blocking
+            req->ret = 0;
             req->unblock = true;
         } else {
             // block until completion
@@ -287,9 +322,144 @@ void syscallDispatchLSeek(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchChown(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = chown(req->thread, req->requestID, (const char *) req->params[0], req->params[1], req->params[2]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchChmod(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = chmod(req->thread, req->requestID, (const char *) req->params[0], req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchLink(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = link(req->thread, req->requestID, (const char *) req->params[0], (const char *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchUnlink(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = unlink(req->thread, req->requestID, (const char *) req->params[0]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchSymlink(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = symlink(req->thread, req->requestID, (const char *) req->params[0], (const char *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchReadLink(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH) &&
+    syscallVerifyPointer(req, req->params[1], req->params[2])) {
+        req->requestID = syscallID();
+
+        ssize_t status = readlink(req->thread, req->requestID, (const char *) req->params[0], (char *) req->params[1], req->params[2]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 void syscallDispatchUmask(SyscallRequest *req) {
     req->ret = umask(req->thread, req->params[0]);
     req->unblock = true;
+}
+
+void syscallDispatchMkdir(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        req->requestID = syscallID();
+
+        int status = mkdir(req->thread, req->requestID, (const char *) req->params[0], req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchUtime(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)) {
+        if(req->params[1]) {
+            if(!syscallVerifyPointer(req, req->params[1], sizeof(struct utimbuf))) return;
+        }
+
+        req->requestID = syscallID();
+
+        int status = utime(req->thread, req->requestID, (const char *) req->params[0], (const struct utimbuf *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
 }
 
 void syscallDispatchChdir(SyscallRequest *req) {
@@ -334,8 +504,10 @@ void syscallDispatchMount(SyscallRequest *req) {
 }
 
 void syscallDispatchFcntl(SyscallRequest *req) {
-    req->ret = fcntl(req->thread, req->params[0], req->params[1], req->params[2]);
-    req->unblock = true;
+    if(req->params[1] != F_GETPATH || syscallVerifyPointer(req, req->params[2], MAX_FILE_PATH)) {
+        req->ret = fcntl(req->thread, req->params[0], req->params[1], req->params[2]);
+        req->unblock = true;
+    }
 }
 
 void syscallDispatchOpendir(SyscallRequest *req) {
@@ -386,6 +558,50 @@ void syscallDispatchTelldir(SyscallRequest *req) {
     req->unblock = true;
 }
 
+void syscallDispatchFsync(SyscallRequest *req) {
+    req->requestID = syscallID();
+    int status = fsync(req->thread, req->requestID, req->params[0]);
+    if(status) {
+        req->external = false;
+        req->ret = status;
+        req->unblock = true;
+    } else {
+        req->external = true;
+        req->unblock = false;
+    }
+}
+
+void syscallDispatchStatvfs(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[0], MAX_FILE_PATH)
+    && syscallVerifyPointer(req, req->params[1], sizeof(struct statvfs))) {
+        req->requestID = syscallID();
+        int status = statvfs(req->thread, req->requestID, (const char *) req->params[0], (struct statvfs *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
+void syscallDispatchFStatvfs(SyscallRequest *req) {
+    if(syscallVerifyPointer(req, req->params[1], sizeof(struct statvfs))) {
+        req->requestID = syscallID();
+        int status = fstatvfs(req->thread, req->requestID, req->params[0], (struct statvfs *) req->params[1]);
+        if(status) {
+            req->external = false;
+            req->ret = status;
+            req->unblock = true;
+        } else {
+            req->external = true;
+            req->unblock = false;
+        }
+    }
+}
+
 /* Group 3: Interprocess Communication */
 
 void syscallDispatchSocket(SyscallRequest *req) {
@@ -395,8 +611,17 @@ void syscallDispatchSocket(SyscallRequest *req) {
 
 void syscallDispatchConnect(SyscallRequest *req) {
     if(syscallVerifyPointer(req, req->params[1], req->params[2])) {
-        req->ret = connect(req->thread, req->params[0], (const struct sockaddr *)req->params[1], req->params[2]);
-        req->unblock = true;
+        int status = connect(req->thread, req->params[0], (const struct sockaddr *)req->params[1], req->params[2]);
+        if(status == -EAGAIN || status == -EWOULDBLOCK || status == -EINPROGRESS) {
+            req->unblock = false;
+            req->busy = false;
+            req->queued = true;
+            req->next = NULL;
+            syscallEnqueue(req);
+        } else {
+            req->ret = status;
+            req->unblock = true;
+        }
     }
 }
 
@@ -531,6 +756,26 @@ void syscallDispatchMmap(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchMunmap(SyscallRequest *req) {
+    req->ret = munmap(req->thread, (void *) req->params[0], req->params[1]);
+    req->unblock = true;
+}
+
+void syscallDispatchMsync(SyscallRequest *req) {
+    req->requestID = syscallID();
+    int status = msync(req->thread, req->requestID, (void *) req->params[0], req->params[1], req->params[2]);
+    if(!status) {
+        req->external = true;
+        req->unblock = false;
+    } else if(status == 1) {
+        req->ret = 0;
+        req->unblock = true;
+    } else {
+        req->ret = status;
+        req->unblock = true;
+    }
+}
+
 /* Group 5: Driver I/O Functions */
 
 void syscallDispatchIoperm(SyscallRequest *req) {
@@ -549,16 +794,23 @@ void syscallDispatchIoctl(SyscallRequest *req) {
     unsigned long op = req->params[1];
     req->requestID = syscallID();
 
+    int status = -1;
     if(op & IOCTL_OUT_PARAM) {
         if(syscallVerifyPointer(req, req->params[2], sizeof(unsigned long))) {
-            ioctl(req->thread, req->requestID, req->params[0], req->params[1], (unsigned long *)req->params[2]);
+            status = ioctl(req->thread, req->requestID, req->params[0], op, (unsigned long *)req->params[2]);
         }
     } else {
-        ioctl(req->thread, req->requestID, req->params[0], req->params[1], req->params[2]);
+        status = ioctl(req->thread, req->requestID, req->params[0], op, req->params[2]);
     }
 
-    req->external = true;
-    req->unblock = false;
+    if(status) {
+        req->ret = status;
+        req->external = false;
+        req->unblock = true;
+    } else {
+        req->external = true;
+        req->unblock = false;
+    }
 }
 
 void syscallDispatchMMIO(SyscallRequest *req) {
@@ -591,58 +843,63 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 10 - setuid()
     NULL,                       // 11 - setgid()
     syscallDispatchMSleep,      // 12 - msleep()
-    NULL,                       // 13 - times()
+    syscallDispatchGetTimeOfDay,// 13 - gettimeofday()
 
     /* group 2: file system manipulation */
     syscallDispatchOpen,        // 14 - open()
     syscallDispatchClose,       // 15 - close()
     syscallDispatchRead,        // 16 - read()
     syscallDispatchWrite,       // 17 - write()
-    syscallDispatchStat,        // 18 - stat()
+    syscallDispatchLStat,       // 18 - lstat()
     syscallDispatchFStat,       // 19 - fstat()
     syscallDispatchLSeek,       // 20 - lseek()
-    NULL,                       // 21 - chown()
-    NULL,                       // 22 - chmod()
-    NULL,                       // 23 - link()
-    NULL,                       // 24 - unlink()
-    syscallDispatchUmask,       // 25 - umask()
-    NULL,                       // 26 - mkdir()
-    NULL,                       // 27 - rmdir()
-    NULL,                       // 28 - utime()
-    NULL,                       // 29 - chroot()
-    syscallDispatchChdir,       // 30 - chdir()
-    syscallDispatchGetCWD,      // 31 - getcwd()
-    syscallDispatchMount,       // 32 - mount()
-    NULL,                       // 33 - umount()
-    syscallDispatchFcntl,       // 34 - fcntl()
-    syscallDispatchOpendir,     // 35 - opendir()
-    syscallDispatchClosedir,    // 36 - closedir()
-    syscallDispatchReaddir,     // 37 - readdir_r()
-    syscallDispatchSeekdir,     // 38 - seekdir()
-    syscallDispatchTelldir,     // 39 - telldir()
+    syscallDispatchChown,       // 21 - chown()
+    syscallDispatchChmod,       // 22 - chmod()
+    syscallDispatchLink,        // 23 - link()
+    syscallDispatchUnlink,      // 24 - unlink()
+    syscallDispatchSymlink,     // 25 - symlink()
+    syscallDispatchReadLink,    // 26 - readlink()
+    syscallDispatchUmask,       // 27 - umask()
+    syscallDispatchMkdir,       // 28 - mkdir()
+    syscallDispatchUtime,       // 29 - utime()
+    NULL,                       // 30 - chroot()
+    syscallDispatchChdir,       // 31 - chdir()
+    syscallDispatchGetCWD,      // 32 - getcwd()
+    syscallDispatchMount,       // 33 - mount()
+    NULL,                       // 34 - umount()
+    syscallDispatchFcntl,       // 35 - fcntl()
+    syscallDispatchOpendir,     // 36 - opendir()
+    syscallDispatchClosedir,    // 37 - closedir()
+    syscallDispatchReaddir,     // 38 - readdir_r()
+    syscallDispatchSeekdir,     // 39 - seekdir()
+    syscallDispatchTelldir,     // 40 - telldir()
+    syscallDispatchFsync,       // 41 - fsync()
+    syscallDispatchStatvfs,     // 42 - statvfs()
+    syscallDispatchFStatvfs,    // 43 - fstatvfs()
 
     /* group 3: interprocess communication */
-    syscallDispatchSocket,      // 40 - socket()
-    syscallDispatchConnect,     // 41 - connect()
-    syscallDispatchBind,        // 42 - bind()
-    syscallDispatchListen,      // 43 - listen()
-    syscallDispatchAccept,      // 44 - accept()
-    syscallDispatchRecv,        // 45 - recv()
-    syscallDispatchSend,        // 46 - send()
-    syscallDispatchKill,        // 47 - kill()
-    syscallDispatchSigAction,   // 48 - sigaction()
-    syscallDispatchSigreturn,   // 49 - sigreturn()
+    syscallDispatchSocket,      // 44 - socket()
+    syscallDispatchConnect,     // 45 - connect()
+    syscallDispatchBind,        // 46 - bind()
+    syscallDispatchListen,      // 47 - listen()
+    syscallDispatchAccept,      // 48 - accept()
+    syscallDispatchRecv,        // 49 - recv()
+    syscallDispatchSend,        // 50 - send()
+    syscallDispatchKill,        // 51 - kill()
+    syscallDispatchSigAction,   // 52 - sigaction()
+    syscallDispatchSigreturn,   // 53 - sigreturn()
 
     /* group 4: memory management */
-    syscallDispatchSBrk,        // 50 - sbrk()
-    syscallDispatchMmap,        // 51 - mmap()
-    NULL,                       // 52 - munmap()
+    syscallDispatchSBrk,        // 54 - sbrk()
+    syscallDispatchMmap,        // 55 - mmap()
+    syscallDispatchMunmap,      // 56 - munmap()
+    syscallDispatchMsync,       // 57 - msync()
 
     /* group 5: driver I/O functions */
-    syscallDispatchIoperm,      // 53 - ioperm()
-    syscallDispatchIRQ,         // 54 - irq()
-    syscallDispatchIoctl,       // 55 - ioctl()
-    syscallDispatchMMIO,        // 56 - mmio()
-    syscallDispatchPContig,     // 57 - pcontig()
-    syscallDispatchVToP,        // 58 - vtop()
+    syscallDispatchIoperm,      // 58 - ioperm()
+    syscallDispatchIRQ,         // 59 - irq()
+    syscallDispatchIoctl,       // 60 - ioctl()
+    syscallDispatchMMIO,        // 61 - mmio()
+    syscallDispatchPContig,     // 62 - pcontig()
+    syscallDispatchVToP,        // 63 - vtop()
 };

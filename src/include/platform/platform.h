@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <sys/types.h>
 #include <kernel/sched.h>
 #include <kernel/irq.h>
 #include <kernel/servers.h>
@@ -64,3 +64,4 @@ void platformIdle();            // to be called when the CPU is idle
 void platformCleanThread(void *, uintptr_t);   // garbage collector after thread is killed or replaced by exec()
 int platformSendSignal(Thread *, Thread *, int, uintptr_t);
 void platformSigreturn(Thread *);
+time_t platformTimestamp();         // unix timestamp

@@ -177,6 +177,7 @@ int socket(Thread *t, int domain, int type, int protocol) {
  */
 
 int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -184,7 +185,6 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 
     // input verification
     if(len > sizeof(struct sockaddr)) len = sizeof(struct sockaddr);
-    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[sd].valid || p->io[sd].type != IO_SOCKET) return -ENOTSOCK;
 
     acquireLockBlocking(&lock);
@@ -202,6 +202,7 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 
     // finally
     memcpy(&sock->address, addr, len);
+    sock->addressLength = len;
     releaseLock(&lock);
     return 0;
 }
@@ -209,10 +210,11 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 /* closeSocket(): closes a socket
  * params: t - calling thread
  * params: sd - socket descriptor
- * returns: zero on success, negative error code on fail
+ * returns: 1 on success, negative error code on fail
  */
 
 int closeSocket(Thread *t, int sd) {
+    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     Process *p;
     if(t) p = getProcess(t->pid);
     else p = getProcess(getKernelPID());
@@ -228,7 +230,7 @@ int closeSocket(Thread *t, int sd) {
     sock->refCount--;
     if(sock->refCount) {
         releaseLock(&lock);
-        return 0;
+        return 1;
     }
 
     if(sock->peer) {
@@ -243,5 +245,5 @@ int closeSocket(Thread *t, int sd) {
     free(sock);
     closeIO(p, &p->io[sd]);
     releaseLock(&lock);
-    return 0;
+    return 1;
 }

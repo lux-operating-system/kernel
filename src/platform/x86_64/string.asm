@@ -42,7 +42,7 @@ memmove:
     inc r8
 
 .check_overlap:
-    cmp r8, 8
+    cmp r8, rdx
     jge .memcpy
 
     popfq

@@ -97,6 +97,7 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
         return;
     }
 
+    // first page will be reserved for the mapping
     MmapHeader *header = (MmapHeader *) base;
     header->fd = p->fd;
     header->flags = p->flags;
@@ -105,6 +106,8 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
     header->prot = msg->prot;
     header->pid = req->thread->pid;
     header->tid = req->thread->tid;
+
+    base += PAGE_SIZE;      // skip over to the next page
 
     // mmap adds one extra reference to a file descriptor
     // so it will not be closed even when close() is invoked
@@ -115,7 +118,6 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
     if(msg->responseType) {
         /* memory-mapped device file */
         header->device = true;
-        base += PAGE_SIZE;      // skip over to the next page
 
         for(size_t i = 0; i < pageCount; i++)
             platformMapPage(base + (i*PAGE_SIZE), msg->mmio + (i*PAGE_SIZE), pageFlags);
@@ -124,10 +126,103 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
     } else {
         /* memory-mapped regular file */
         header->device = false;
-        base += PAGE_SIZE;
 
         memcpy((void *) base, msg->data, msg->len);
         memset((void *)((uintptr_t) base + msg->len), 0, PAGE_SIZE - msg->len);
         req->ret = base;
     }
+}
+
+/* munmap(): unmaps a memory-mapped file
+ * params: t - calling thread
+ * params: addr - address of the mapping
+ * params: len - length to unmap
+ * returns: zero on success, negative errno on fail
+ */
+
+int munmap(Thread *t, void *addr, size_t len) {
+    uintptr_t ptr = (uintptr_t) addr;
+    if(ptr & (PAGE_SIZE-1)) return -EINVAL;
+    if(ptr < USER_MMIO_BASE || ptr > USER_LIMIT_ADDRESS) return -EINVAL;
+    if(!len) return -EINVAL;
+
+    MmapHeader *header = (MmapHeader *)((uintptr_t) ptr-PAGE_SIZE);
+    if(len > header->length) return -EINVAL;
+    int fd = header->fd;    // back this up before unmapping
+
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(!p->io[fd].valid || (p->io[fd].type != IO_FILE))
+        return -EINVAL;
+    
+    FileDescriptor *file = (FileDescriptor *) p->io[header->fd].data;
+    if(!file) return -EINVAL;
+
+    size_t pageCount = (len+PAGE_SIZE)/PAGE_SIZE;
+
+    if(header->device) {
+        vmmFree(ptr-PAGE_SIZE, 1);
+        for(int i = 0; i < pageCount; i++) platformUnmapPage(ptr + (i*PAGE_SIZE));
+    } else {
+        vmmFree(ptr-PAGE_SIZE, pageCount+1);
+    }
+
+    file->refCount--;
+    if(!file->refCount) {
+        free(file);
+        closeIO(p, &p->io[fd]);
+    }
+
+    return 0;
+}
+
+/* msync(): syncs disk storage with memory-mapped I/O
+ * params: t - calling thread
+ * params: addr - address of the mapping
+ * params: len - length to be synced
+ * params: flags - synchronous/asynchronous toggle
+ * returns: 0 on success, 1 if nothing to be done, negative errno on fail
+ */
+
+int msync(Thread *t, uint64_t id, void *addr, size_t len, int flags) {
+    uintptr_t ptr = (uintptr_t) addr;
+    if(ptr & (PAGE_SIZE-1)) return -EINVAL;
+    if(ptr < USER_MMIO_BASE || ptr > USER_LIMIT_ADDRESS) return -EINVAL;
+    if(!len) return -EINVAL;
+
+    MmapHeader *header = (MmapHeader *)((uintptr_t) ptr-PAGE_SIZE);
+    if(len > header->length) return -EINVAL;
+
+    if(header->device) return 1;    // nothing to do for physical device mmio
+    if(header->flags & MAP_PRIVATE) return 1;
+    if(!(header->prot & PROT_WRITE)) return 1;
+
+    Process *p = getProcess(t->pid);
+    if(!p) return -ESRCH;
+    if(!p->io[header->fd].valid || (p->io[header->fd].type != IO_FILE))
+        return -EINVAL;
+
+    FileDescriptor *file = (FileDescriptor *) p->io[header->fd].data;
+    if(!file) return -EINVAL;
+
+    MsyncCommand *cmd = calloc(1, sizeof(MsyncCommand) + len);
+    if(!cmd) return -ENOMEM;
+
+    cmd->header.header.command = COMMAND_MSYNC;
+    cmd->header.header.length = sizeof(MsyncCommand) + len;
+    cmd->header.id = id;
+    cmd->uid = p->user;
+    cmd->gid = p->group;
+    cmd->mapFlags = header->flags;
+    cmd->syncFlags = flags;
+    cmd->off = header->offset;
+
+    cmd->id = file->id;
+    strcpy(cmd->path, file->path);
+    strcpy(cmd->device, file->device);
+    memcpy(cmd->data, addr, len);
+
+    int status = requestServer(t, file->sd, cmd);
+    free(cmd);
+    return status;
 }

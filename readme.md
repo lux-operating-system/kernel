@@ -2,7 +2,7 @@
 
 [![luxOS logo](https://jewelcodes.io/lux/logo-small.png)](https://github.com/lux-operating-system)
 
-[![License: MIT](https://img.shields.io/github/license/lux-operating-system/kernel?color=red)](https://github.com/lux-operating-system/kernel/blob/main/LICENSE) [![GitHub commit activity](https://img.shields.io/github/commit-activity/w/lux-operating-system/kernel)](https://github.com/lux-operating-system/kernel/commits/main/) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/01007e2804e34b4da5d164ea927443a5)](https://app.codacy.com/gh/lux-operating-system/kernel/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Build Status](https://github.com/lux-operating-system/kernel/actions/workflows/build-mac.yml/badge.svg)](https://github.com/lux-operating-system/kernel/actions) [![GitHub Issues](https://img.shields.io/github/issues/lux-operating-system/kernel)](https://github.com/lux-operating-system/kernel/issues)
+[![License: MIT](https://img.shields.io/github/license/lux-operating-system/kernel?color=red)](https://github.com/lux-operating-system/kernel/blob/main/LICENSE) [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/lux-operating-system/kernel)](https://github.com/lux-operating-system/kernel/commits/main/) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/01007e2804e34b4da5d164ea927443a5)](https://app.codacy.com/gh/lux-operating-system/kernel/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Build Status](https://github.com/lux-operating-system/kernel/actions/workflows/build-mac.yml/badge.svg)](https://github.com/lux-operating-system/kernel/actions) [![GitHub Issues](https://img.shields.io/github/issues/lux-operating-system/kernel)](https://github.com/lux-operating-system/kernel/issues)
 
 #
 
@@ -10,18 +10,20 @@
 
 **lux** (intentionally stylized in lowercase) is a portable work-in-progress microkernel written from scratch that currently runs on x86_64, with future plans for an ARM64 port. For the operating system built on the lux microkernel, visit [lux-operating-system/lux](https://github.com/lux-operating-system/lux).
 
-![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux-10-06-24.png)
+![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux-01-08-24.png)
 
 # Overview
 
-In little over 4,000 lines <sup>[1]</sup> of code, lux implements **memory management**, preemptive **multiprocessor priority scheduling**, **interprocess communication**, and basic **Unix-like system calls**. This elimination of bloat minimizes resource consumption compared to mainstream operating systems and increases stability and memory protection. lux is developed primarily as a one-person project, both as a learning and research tool as well as a criticism of the bloat that has become normalized in modern software engineering.
+In under 5,000 lines <sup>[1]</sup> of code, lux implements **memory management**, preemptive **multiprocessor priority scheduling**, **interprocess communication**, and basic **Unix-like system calls**. This elimination of bloat minimizes resource consumption compared to mainstream operating systems and increases stability and memory protection. lux is developed primarily as a one-person project, both as a learning and research tool as well as a criticism of the bloat that has become normalized in modern software engineering.
 
 # Features
+
+> ⚠️ For a more complete list of features, the full project roadmap, and progress checklist, visit [lux-operating-system/lux](https://github.com/lux-operating-system/lux#progress-checklist). The list below only concerns the microkernel and not luxOS as a whole.
 
 - [x] **Portability:** At the heart of lux is a platform abstraction layer with a set of functions and constants to be implemented and defined for each platform. This enables ease of porting lux to other CPU architectures.
 - [x] **Memory management:** lux implements a future-proof memory manager that can manage practically unlimited physical memory (as limited by hardware) and virtual address spaces of up to 256 TiB for each thread.
 - [x] **Multiprocessor priority scheduling:** The scheduler of lux was designed with multiprocessor support from the start. The microkernel itself is also multithreaded and can be preempted.
-- [x] **Interprocess communication:** lux implements kernel-level support for local Unix domain sockets to facilitate communication with the servers.
+- [x] **Interprocess communication:** Alongside POSIX signals, lux implements kernel-level support for Unix domain sockets to facilitate communication with the servers.
 - [x] **Unix-like system calls:** lux provides a minimal Unix-like API for the common system calls, namely those related to files, sockets, and scheduling. Most of the system calls wrap around external servers implementing the actual functionality.
 - [x] **Asynchronous I/O:** I/O system calls implemented by lux are fully asynchronous. The microkernel threads are never blocked, and user processes can explicitly request either blocking or asynchronous system calls in accordance with POSIX.
 

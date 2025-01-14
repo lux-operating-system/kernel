@@ -27,6 +27,7 @@ typedef struct {
     char path[MAX_FILE_PATH];
     char device[MAX_FILE_PATH];
     size_t position;
+    int sd;
 } DirectoryDescriptor;
 
 int opendir(Thread *, uint64_t, const char *);

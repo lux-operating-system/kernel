@@ -20,7 +20,8 @@
 
 void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
     SyscallRequest *req = getSyscall(hdr->header.requester);
-    if(!req) return;
+    if(!req || !req->external || req->thread->status != THREAD_BLOCKED)
+        return;
 
     // default action is to unblock the thread
     Process *p = getProcess(req->thread->pid);
@@ -41,6 +42,13 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
         StatCommand *statcmd = (StatCommand *) hdr;
         threadUseContext(req->thread->tid);
         memcpy((void *)req->params[1], &statcmd->buffer, sizeof(struct stat));
+        break;
+    
+    case COMMAND_STATVFS:
+        if(hdr->header.status) break;
+        StatvfsCommand *statvfscmd = (StatvfsCommand *) hdr;
+        threadUseContext(req->thread->tid);
+        memcpy((void *)req->params[1], &statvfscmd->buffer, sizeof(struct statvfs));
         break;
 
     case COMMAND_OPEN:
@@ -66,6 +74,7 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
         file->id = opencmd->id;     // unique ID for device files
         file->refCount = 1;
         file->sd = sd;
+        file->charDev = opencmd->charDev;
 
         strcpy(file->abspath, opencmd->abspath);
         strcpy(file->device, opencmd->device);
@@ -155,7 +164,8 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
 
         dir = (DirectoryDescriptor *) iod->data;
         dir->process = p;
-        strcpy(dir->path, opendircmd->abspath);
+        dir->sd = sd;
+        strcpy(dir->path, opendircmd->path);
         strcpy(dir->device, opendircmd->device);
 
         // and return the directory descriptor to the thread
@@ -214,6 +224,33 @@ void handleSyscallResponse(int sd, const SyscallHeader *hdr) {
         threadUseContext(req->thread->tid);
         mmapHandle(mmapcmd, req);
         break;
+
+    case COMMAND_READLINK:
+        if(hdr->header.status <= 0) break;
+
+        ReadLinkCommand *rlcmd = (ReadLinkCommand *) hdr;
+        threadUseContext(req->thread->tid);
+
+        size_t linkLength = hdr->header.status;
+        if(linkLength > req->params[2]) linkLength = req->params[2];
+
+        req->ret = linkLength;
+        memcpy((void *) req->params[1], rlcmd->path, linkLength);       
+        break;
+
+    case COMMAND_FSYNC:
+        if(hdr->header.status) break;
+
+        /* special handling for close() after syncing I/O */
+        FsyncCommand *fscmd = (FsyncCommand *) hdr;
+        if(!fscmd->close) break;
+
+        file = (FileDescriptor *) p->io[req->params[0]].data;
+        if(!file) break;
+
+        file->refCount--;
+        if(!file->refCount) free(file);
+        closeIO(p, &p->io[req->params[0]]);
     }
 
     platformSetContextStatus(req->thread->context, req->ret);
