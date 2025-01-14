@@ -259,7 +259,6 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
 
     if(!p->io[fd].valid) return -EBADF;
     FileDescriptor *file;
-    SocketDescriptor *socket;
 
     int status = 0;
     
@@ -286,7 +285,7 @@ int fcntl(Thread *t, int fd, int cmd, uintptr_t arg) {
             file = (FileDescriptor *) iod->data;
             file->refCount++;
         } else if(iod->type == IO_SOCKET) {
-            socket = (SocketDescriptor *) iod->data;
+            SocketDescriptor *socket = (SocketDescriptor *) iod->data;
             socket->refCount++;
         }
 
