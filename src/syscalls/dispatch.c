@@ -302,9 +302,12 @@ void syscallDispatchFStat(SyscallRequest *req) {
         req->requestID = syscallID();
 
         int status = fstat(req->thread, req->requestID, req->params[0], (struct stat *)req->params[1]);
-        if(status) {
+        if(status < 0) {
             req->external = false;
             req->ret = status;      // error code
+            req->unblock = true;
+        } else if(status == 1) {    // return without blocking
+            req->ret = 0;
             req->unblock = true;
         } else {
             // block until completion
