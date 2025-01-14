@@ -185,7 +185,6 @@ int bind(Thread *t, int sd, const struct sockaddr *addr, socklen_t len) {
 
     // input verification
     if(len > sizeof(struct sockaddr)) len = sizeof(struct sockaddr);
-    if(sd < 0 || sd >= MAX_IO_DESCRIPTORS) return -EBADF;
     if(!p->io[sd].valid || p->io[sd].type != IO_SOCKET) return -ENOTSOCK;
 
     acquireLockBlocking(&lock);
