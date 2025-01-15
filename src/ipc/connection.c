@@ -173,6 +173,7 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     SocketDescriptor *self = (SocketDescriptor *)iod->data;
     self->refCount = 1;
     memcpy(&self->address, &listener->address, sizeof(struct sockaddr));
+    self->addressLength = listener->addressLength;
     self->type = listener->type;
     self->protocol = listener->protocol;
     self->process = listener->process;
@@ -180,7 +181,7 @@ int accept(Thread *t, int sd, struct sockaddr *addr, socklen_t *len) {
     // and assign the peer address
     self->peer = listener->backlog[0];  // TODO: is this always FIFO?
     self->peer->peer = self;
-    memcpy(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
+    memmove(&listener->backlog[0], &listener->backlog[1], (listener->backlogMax - 1) * sizeof(SocketDescriptor *));
     listener->backlogCount--;
 
     // save the peer address if requested

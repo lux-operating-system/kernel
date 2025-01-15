@@ -148,8 +148,8 @@ ssize_t recv(Thread *t, int sd, void *buffer, size_t len, int flags) {
 
             self->inboundCount--;
             if(self->inboundCount) {
-                memcpy(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
-                memcpy(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
+                memmove(&self->inbound[0], &self->inbound[1], self->inboundCount * sizeof(void *));
+                memmove(&self->inboundLen[0], &self->inboundLen[1], self->inboundCount * sizeof(size_t));
             }
         }
 
