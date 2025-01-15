@@ -10,7 +10,7 @@
 
 **lux** (intentionally stylized in lowercase) is a portable work-in-progress microkernel written from scratch that currently runs on x86_64, with future plans for an ARM64 port. For the operating system built on the lux microkernel, visit [lux-operating-system/lux](https://github.com/lux-operating-system/lux).
 
-![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux-01-08-24.png)
+![Screenshot of luxOS running on QEMU](https://jewelcodes.io/lux-01-14-24.png)
 
 # Overview
 
