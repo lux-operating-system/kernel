@@ -20,6 +20,7 @@ static SyscallRequest *requests = NULL;    // sort of a linked list in a sense
  */
 
 void syscallHandle(void *ctx) {
+    setLocalSched(false);
     Thread *t = getThread(getTid());
     if(t) {
         platformSaveContext(t->context, ctx);
@@ -31,7 +32,6 @@ void syscallHandle(void *ctx) {
         if((req->function >= SYSCALL_IPC_START && req->function <= SYSCALL_IPC_END) ||
             (req->function >= SYSCALL_RW_START && req->function <= SYSCALL_RW_END) ||
             (req->function == SYSCALL_LSEEK)) {
-            setLocalSched(false);
             syscallDispatchTable[req->function](req);
 
             if(req->unblock) {
