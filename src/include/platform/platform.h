@@ -52,6 +52,8 @@ void *platformCloneKernelSpace();           // clone kernel thread page tables
 void *platformCloneUserSpace(uintptr_t);    // clone user thread page tables
 pid_t platformGetPid();
 pid_t platformGetTid();
+Process *platformGetProcess();
+Thread *platformGetThread();
 int platformUseContext(void *);     // use the paging context of a thread without switching context
 SyscallRequest *platformCreateSyscallContext(Thread *); // create syscall context from register state
 void *platformCloneContext(void *, const void *);   // for fork()
