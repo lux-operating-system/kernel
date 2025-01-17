@@ -69,7 +69,13 @@ void tssSetup() {
 
     // store the stack pointer in the per-CPU info structure as well
     KernelCPUInfo *info = getKernelCPUInfo();
-    info->kernelStack = (void *)tss->rsp0;
+    stack = calloc(1, KENREL_STACK_SIZE);
+    if(!stack) {
+        KERROR("failed to allocate memory for kernel stack\n");
+        while(1);
+    }
+
+    info->kernelStack = (void *) ((uintptr_t) stack+KENREL_STACK_SIZE-16);
     info->tss = tss;
 
     // allocate a switching stack as well
