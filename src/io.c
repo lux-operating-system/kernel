@@ -150,6 +150,8 @@ int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
     // not all platforms implement I/O ports and this is really relevant to x86
     // on platforms that don't implement I/O ports, simply return -EIO
 
+    if(!count) return -EINVAL;
+
     // check permissions
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
@@ -158,10 +160,17 @@ int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
     schedLock();
 
     int status = platformIoperm(t, from, count, enable);
-    if(!status)
-        KDEBUG("thread %d %s access to I/O ports 0x%04X-0x%04X\n", t->tid, enable ? "was granted" : "revoked", from, from+count-1);
-    else
-        KWARN("thread %d was denied access to I/O ports 0x%04X-0x%04X\n", t->tid, from, from+count-1);
+    if(!status) {
+        if(count != 1)
+            KDEBUG("thread %d %s access to I/O ports 0x%04X-0x%04X\n", t->tid, enable ? "was granted" : "revoked", from, from+count-1);
+        else
+            KDEBUG("thread %d %s access to I/O port 0x%04X\n", t->tid, enable ? "was granted" : "revoked", from);
+    } else {
+        if(count != 1)
+            KWARN("thread %d was denied access to I/O ports 0x%04X-0x%04X\n", t->tid, from, from+count-1);
+        else
+            KWARN("thread %d was denied access to I/O port 0x%04X\n", t->tid, from);
+    }
 
     schedRelease();
     return status;
