@@ -47,7 +47,6 @@ acquireLock:
 global acquireLockBlocking
 align 16
 acquireLockBlocking:
-    pushfq
     cli
 
     test dword [rdi], 1
@@ -57,7 +56,6 @@ acquireLockBlocking:
     lock bts dword [rdi], 0
     jc .wait
 
-    popfq
     mov rax, 1
     ret
 
@@ -72,9 +70,6 @@ acquireLockBlocking:
 global releaseLock
 align 16
 releaseLock:
-    pushfq
-    cli
-
     xor rax, rax
     test dword [rdi], 1
     jz .done
@@ -82,5 +77,4 @@ releaseLock:
     mov [rdi], eax
 
 .done:
-    popfq
     ret
