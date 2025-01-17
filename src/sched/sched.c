@@ -330,8 +330,8 @@ void schedule() {
     if(!acquireLock(&lock)) return;
     setLocalSched(false);
 
-    Process *p = getProcess(getPid());
-    Thread *t = getThread(getTid());
+    Process *p = platformGetProcess();
+    Thread *t = platformGetThread();
     Thread *current = t;
     int cpu = platformWhichCPU();   // cpu index
     int rounds = 0;
