@@ -43,6 +43,28 @@ pid_t platformGetTid() {
     return 0;
 }
 
+/* platformGetProcess(): returns the current process structure
+ * params: none
+ * returns: pointer to process struct
+ */
+
+Process *platformGetProcess() {
+    KernelCPUInfo *kinfo = getKernelCPUInfo();
+    if(kinfo) return kinfo->process;
+    return NULL;
+}
+
+/* platformGetThread(): returns the current thread structure
+ * params: none
+ * returns: pointer to thread struct
+ */
+
+Thread *platformGetThread() {
+    KernelCPUInfo *kinfo = getKernelCPUInfo();
+    if(kinfo) return kinfo->thread;
+    return NULL;
+}
+
 /* platformCreateContext(): creates the context for a new thread
  * params: ptr - pointer to the context structure
  * params: level - kernel/user space
