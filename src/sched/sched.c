@@ -330,11 +330,6 @@ void schedule() {
     if(!acquireLock(&lock)) return;
     setLocalSched(false);
 
-    if(!schedBusy()) {
-        releaseLock(&lock);
-        return;
-    }
-
     Process *p = getProcess(getPid());
     Thread *t = getThread(getTid());
     Thread *current = t;
