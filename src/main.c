@@ -15,9 +15,17 @@
 #include <kernel/servers.h>
 #include <platform/platform.h>
 
+static int idleThreshold = 0;
+
 void *idleThread(void *args) {
+    int count = 0;
     for(;;) {
         if(!syscallProcess()) platformIdle();
+        count++;
+        if(count >= idleThreshold) {
+            count = 0;
+            platformIdle();
+        }
     }
 }
 
@@ -67,9 +75,15 @@ void *kernelThread(void *args) {
     setLocalSched(true);
     setScheduling(true);
 
+    int count = 0;
     for(;;) {
         serverIdle();
         if(!syscallProcess()) platformIdle();
+        count++;
+        if(count >= idleThreshold) {
+            count = 0;
+            platformIdle();
+        }
     }
 }
 
@@ -84,10 +98,17 @@ int main(int argc, char **argv) {
     socketInit();       // sockets
     schedInit();        // scheduler
 
+    if(platformCountCPU() > 16)
+        idleThreshold = 2;
+    else if(platformCountCPU() > 8)
+        idleThreshold = 4;
+    else
+        idleThreshold = 8;
+
     // number of kernel threads = number of CPU cores + 1
     kthreadCreate(&kernelThread, NULL);
 
-    for(int i = 1; i < platformCountCPU(); i++)
+    for(int i = 0; i < platformCountCPU(); i++)
         kthreadCreate(&idleThread, NULL);
 
     // now enable the scheduler
