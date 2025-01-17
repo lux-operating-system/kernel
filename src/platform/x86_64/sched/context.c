@@ -95,7 +95,13 @@ void *platformCreateContext(void *ptr, int level, uintptr_t entry, uintptr_t arg
 void platformSwitchContext(Thread *t) {
     KernelCPUInfo *kinfo = getKernelCPUInfo();
     ThreadContext *ctx = (ThreadContext *)t->context;
-    ctx->regs.rflags |= 0x202; // interrupts can never be switched off outside of the kernel
+    //
+
+    if((ctx->regs.cs & 0x03) || (ctx->regs.ss & 0x03)) {
+        ctx->regs.cs = (GDT_USER_CODE << 3) | 3;
+        ctx->regs.ss = (GDT_USER_DATA << 3) | 3;
+        ctx->regs.rflags |= 0x202;
+    }
 
     // modify the TSS with the current thread's I/O permissions if necessary
     Thread *old = kinfo->thread;
