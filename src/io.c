@@ -148,7 +148,7 @@ int close(Thread *t, uint64_t id, int fd) {
 
 int ioperm(struct Thread *t, uintptr_t from, uintptr_t count, int enable) {
     // not all platforms implement I/O ports and this is really relevant to x86
-    // on platforms that don't implement I/O ports, simply return -EIO
+    // on platforms that don't implement I/O ports, simply return -ENOSYS
 
     if(!count) return -EINVAL;
 
