@@ -75,7 +75,7 @@ typedef struct Thread {
 } Thread;
 
 typedef struct Process {
-    pid_t pid, parent;
+    pid_t pid, parent, pgrp;
     uid_t user;
     gid_t group;
     mode_t umask;           // file creation mask
