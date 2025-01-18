@@ -163,6 +163,19 @@ void syscallDispatchGetTimeOfDay(SyscallRequest *req) {
     }
 }
 
+void syscallDispatchGetPgrp(SyscallRequest *req) {
+    Process *p = getProcess(req->thread->tid);
+    req->ret = p->pgrp;
+    req->unblock = true;
+}
+
+void syscallDispatchSetPgrp(SyscallRequest *req) {
+    Process *p = getProcess(req->thread->tid);
+    p->pgrp = p->pid;
+    req->ret = p->pgrp;
+    req->unblock = true;
+}
+
 /* Group 2: File System */
 
 void syscallDispatchOpen(SyscallRequest *req) {
@@ -844,62 +857,65 @@ void (*syscallDispatchTable[])(SyscallRequest *) = {
     NULL,                       // 11 - setgid()
     syscallDispatchMSleep,      // 12 - msleep()
     syscallDispatchGetTimeOfDay,// 13 - gettimeofday()
+    syscallDispatchGetPgrp,     // 14 - getpgrp()
+    syscallDispatchSetPgrp,     // 15 - setpgrp()
 
     /* group 2: file system manipulation */
-    syscallDispatchOpen,        // 14 - open()
-    syscallDispatchClose,       // 15 - close()
-    syscallDispatchRead,        // 16 - read()
-    syscallDispatchWrite,       // 17 - write()
-    syscallDispatchLStat,       // 18 - lstat()
-    syscallDispatchFStat,       // 19 - fstat()
-    syscallDispatchLSeek,       // 20 - lseek()
-    syscallDispatchChown,       // 21 - chown()
-    syscallDispatchChmod,       // 22 - chmod()
-    syscallDispatchLink,        // 23 - link()
-    syscallDispatchUnlink,      // 24 - unlink()
-    syscallDispatchSymlink,     // 25 - symlink()
-    syscallDispatchReadLink,    // 26 - readlink()
-    syscallDispatchUmask,       // 27 - umask()
-    syscallDispatchMkdir,       // 28 - mkdir()
-    syscallDispatchUtime,       // 29 - utime()
-    NULL,                       // 30 - chroot()
-    syscallDispatchChdir,       // 31 - chdir()
-    syscallDispatchGetCWD,      // 32 - getcwd()
-    syscallDispatchMount,       // 33 - mount()
-    NULL,                       // 34 - umount()
-    syscallDispatchFcntl,       // 35 - fcntl()
-    syscallDispatchOpendir,     // 36 - opendir()
-    syscallDispatchClosedir,    // 37 - closedir()
-    syscallDispatchReaddir,     // 38 - readdir_r()
-    syscallDispatchSeekdir,     // 39 - seekdir()
-    syscallDispatchTelldir,     // 40 - telldir()
-    syscallDispatchFsync,       // 41 - fsync()
-    syscallDispatchStatvfs,     // 42 - statvfs()
-    syscallDispatchFStatvfs,    // 43 - fstatvfs()
+    syscallDispatchOpen,        // 16 - open()
+    syscallDispatchClose,       // 17 - close()
+    syscallDispatchRead,        // 18 - read()
+    syscallDispatchWrite,       // 19 - write()
+    syscallDispatchLStat,       // 20 - lstat()
+    syscallDispatchFStat,       // 21 - fstat()
+    syscallDispatchLSeek,       // 22 - lseek()
+    syscallDispatchChown,       // 23 - chown()
+    syscallDispatchChmod,       // 24 - chmod()
+    syscallDispatchLink,        // 25 - link()
+    syscallDispatchUnlink,      // 26 - unlink()
+    syscallDispatchSymlink,     // 27 - symlink()
+    syscallDispatchReadLink,    // 28 - readlink()
+    syscallDispatchUmask,       // 29 - umask()
+    syscallDispatchMkdir,       // 30 - mkdir()
+    syscallDispatchUtime,       // 31 - utime()
+    NULL,                       // 32 - chroot()
+    syscallDispatchChdir,       // 33 - chdir()
+    syscallDispatchGetCWD,      // 34 - getcwd()
+    syscallDispatchMount,       // 35 - mount()
+    NULL,                       // 36 - umount()
+    syscallDispatchFcntl,       // 37 - fcntl()
+    syscallDispatchOpendir,     // 38 - opendir()
+    syscallDispatchClosedir,    // 39 - closedir()
+    syscallDispatchReaddir,     // 40 - readdir_r()
+    syscallDispatchSeekdir,     // 41 - seekdir()
+    syscallDispatchTelldir,     // 42 - telldir()
+    syscallDispatchFsync,       // 43 - fsync()
+    syscallDispatchStatvfs,     // 44 - statvfs()
+    syscallDispatchFStatvfs,    // 45 - fstatvfs()
 
     /* group 3: interprocess communication */
-    syscallDispatchSocket,      // 44 - socket()
-    syscallDispatchConnect,     // 45 - connect()
-    syscallDispatchBind,        // 46 - bind()
-    syscallDispatchListen,      // 47 - listen()
-    syscallDispatchAccept,      // 48 - accept()
-    syscallDispatchRecv,        // 49 - recv()
-    syscallDispatchSend,        // 50 - send()
-    syscallDispatchKill,        // 51 - kill()
-    syscallDispatchSigAction,   // 52 - sigaction()
-    syscallDispatchSigreturn,   // 53 - sigreturn()
+    syscallDispatchSocket,      // 46 - socket()
+    syscallDispatchConnect,     // 47 - connect()
+    syscallDispatchBind,        // 48 - bind()
+    syscallDispatchListen,      // 49 - listen()
+    syscallDispatchAccept,      // 50 - accept()
+    syscallDispatchRecv,        // 51 - recv()
+    syscallDispatchSend,        // 52 - send()
+    syscallDispatchKill,        // 53 - kill()
+    syscallDispatchSigAction,   // 54 - sigaction()
+    syscallDispatchSigreturn,   // 55 - sigreturn()
+    NULL,                       // 56 - sigprocmask()
 
     /* group 4: memory management */
-    syscallDispatchSBrk,        // 54 - sbrk()
-    syscallDispatchMmap,        // 55 - mmap()
-    syscallDispatchMunmap,      // 56 - munmap()
-    syscallDispatchMsync,       // 57 - msync()
+    syscallDispatchSBrk,        // 57 - sbrk()
+    syscallDispatchMmap,        // 58 - mmap()
+    syscallDispatchMunmap,      // 59 - munmap()
+    syscallDispatchMsync,       // 60 - msync()
 
     /* group 5: driver I/O functions */
-    syscallDispatchIoperm,      // 58 - ioperm()
-    syscallDispatchIRQ,         // 59 - irq()
-    syscallDispatchIoctl,       // 60 - ioctl()
-    syscallDispatchMMIO,        // 61 - mmio()
-    syscallDispatchPContig,     // 62 - pcontig()
-    syscallDispatchVToP,        // 63 - vtop()
+    syscallDispatchIoperm,      // 61 - ioperm()
+    syscallDispatchIRQ,         // 62 - irq()
+    syscallDispatchIoctl,       // 63 - ioctl()
+    syscallDispatchMMIO,        // 64 - mmio()
+    syscallDispatchPContig,     // 65 - pcontig()
+    syscallDispatchVToP,        // 66 - vtop()
 };
