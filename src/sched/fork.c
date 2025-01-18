@@ -121,6 +121,9 @@ pid_t fork(Thread *t) {
         strcpy(p->name, parent->name);
         strcpy(p->command, parent->command);
 
+        // and process group
+        p->pgrp = parent->pgrp;
+
         // if we made this far then the creation was successful
         // list the child process as a child of the parent
         parent->childrenCount++;
