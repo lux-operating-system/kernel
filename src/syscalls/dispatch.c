@@ -758,7 +758,7 @@ void syscallDispatchMmap(SyscallRequest *req) {
         struct MmapSyscallParams *p = (struct MmapSyscallParams *) req->params[0];
         intptr_t status = (intptr_t) mmap(req->thread, req->requestID, p->addr, p->len,
             p->prot, p->flags, p->fd, p->off);
-        if(status < 0) {
+        if(status) {
             req->ret = status;
             req->unblock = true;
         } else {
