@@ -30,6 +30,26 @@
 
 void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
            int fd, off_t off) {
+    if((flags == MAP_ANONYMOUS) && (fd == -1) && (!off)) {
+        size_t pageCount = (len+PAGE_SIZE-1) / PAGE_SIZE;
+        int pageFlags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER;
+        if(prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
+        if(prot & PROT_EXEC) pageFlags |= PLATFORM_PAGE_EXEC;
+
+        uintptr_t anon = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, pageFlags);
+        if(!anon) return (void *) -ENOMEM;
+
+        memset((void *) anon, 0, (pageCount+1) * PAGE_SIZE);
+        MmapHeader *hdr = (MmapHeader *) anon;
+        hdr->flags = flags;
+        hdr->length = len;
+        hdr->pid = t->pid;
+        hdr->tid = t->tid;
+        hdr->fd = -1;
+
+        return (void *) ((uintptr_t) anon + PAGE_SIZE);
+    }
+
     if(fd < 0 || fd > MAX_IO_DESCRIPTORS) return (void *) -EBADF;
     MmapCommand *command = calloc(1, sizeof(MmapCommand));
     if(!command) return (void *) -ENOMEM;
@@ -150,13 +170,21 @@ int munmap(Thread *t, void *addr, size_t len) {
     if(len > header->length) return -EINVAL;
     int fd = header->fd;    // back this up before unmapping
 
-    Process *p = getProcess(t->pid);
-    if(!p) return -ESRCH;
-    if(!p->io[fd].valid || (p->io[fd].type != IO_FILE))
-        return -EINVAL;
-    
-    FileDescriptor *file = (FileDescriptor *) p->io[header->fd].data;
-    if(!file) return -EINVAL;
+    if(fd > 0 && fd <= MAX_IO_DESCRIPTORS) {
+        Process *p = getProcess(t->pid);
+        if(!p) return -ESRCH;
+        if(!p->io[fd].valid || (p->io[fd].type != IO_FILE))
+            return -EINVAL;
+        
+        FileDescriptor *file = (FileDescriptor *) p->io[header->fd].data;
+        if(!file) return -EINVAL;
+
+        file->refCount--;
+        if(!file->refCount) {
+            free(file);
+            closeIO(p, &p->io[fd]);
+        }
+    }
 
     size_t pageCount = (len+PAGE_SIZE)/PAGE_SIZE;
 
@@ -165,12 +193,6 @@ int munmap(Thread *t, void *addr, size_t len) {
         for(int i = 0; i < pageCount; i++) platformUnmapPage(ptr + (i*PAGE_SIZE));
     } else {
         vmmFree(ptr-PAGE_SIZE, pageCount+1);
-    }
-
-    file->refCount--;
-    if(!file->refCount) {
-        free(file);
-        closeIO(p, &p->io[fd]);
     }
 
     return 0;
@@ -191,6 +213,8 @@ int msync(Thread *t, uint64_t id, void *addr, size_t len, int flags) {
     if(!len) return -EINVAL;
 
     MmapHeader *header = (MmapHeader *)((uintptr_t) ptr-PAGE_SIZE);
+    if(header->fd < 0) return -EINVAL;
+
     if(len > header->length) return -EINVAL;
 
     if(header->device) return 1;    // nothing to do for physical device mmio
