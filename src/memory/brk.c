@@ -23,14 +23,11 @@
 
 void *sbrk(Thread *t, intptr_t delta) {
     intptr_t brk = t->highest;
-    intptr_t newbrk = t->highest + delta;
+    if(!delta) return (void *) brk;
 
-    ssize_t diff = newbrk - brk;
-    if(diff < 0) diff *= -1;
-
-    size_t pages = (diff + PAGE_SIZE - 1) / PAGE_SIZE;
-
-    if(!delta) return (void *)brk;
+    size_t pages;
+    if(delta < 0) pages = ((-delta)+PAGE_SIZE-1) / PAGE_SIZE;
+    else pages = (delta+PAGE_SIZE-1) / PAGE_SIZE;
 
     Process *p = getProcess(t->pid);
     if(!p) return (void *) -ESRCH;
