@@ -105,6 +105,7 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
     strcpy(command->device, f->device);
     strcpy(command->path, f->abspath);
 
+    command->addr = addr;
     command->len = len;
     command->prot = prot;
     command->flags = flags;
