@@ -57,6 +57,7 @@ pid_t fork(Thread *t) {
     p->threads[0]->signalContext = calloc(1, PLATFORM_CONTEXT_SIZE);
     p->threads[0]->highest = t->highest;
     p->threads[0]->pages = t->pages;
+    p->threads[0]->signalMask = t->signalMask;
 
     // NOTE: fork() only clones one thread, which is why we're not cloning the
     // entire process memory, but just the calling thread
