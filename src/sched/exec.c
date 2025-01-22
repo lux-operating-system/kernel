@@ -337,6 +337,7 @@ int execmve(Thread *t, void *image, const char **argv, const char **envp) {
 
     // set up default signal handlers
     t->signals = signalDefaults();
+    t->signalMask = 0;
 
     // TODO: here we've successfully loaded the new program, but we also need
     // to free up memory used by the original program
