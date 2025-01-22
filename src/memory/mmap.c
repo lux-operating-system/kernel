@@ -30,7 +30,7 @@
 
 void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
            int fd, off_t off) {
-    if((flags == MAP_ANONYMOUS) && (fd == -1) && (!off)) {
+    if((flags & MAP_ANONYMOUS) && (fd == -1) && (!off)) {
         size_t pageCount = (len+PAGE_SIZE-1) / PAGE_SIZE;
         int pageFlags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER;
         if(prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
