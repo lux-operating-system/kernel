@@ -337,3 +337,39 @@ void sigreturn(Thread *t) {
     platformSigreturn(t);
     t->handlingSignal = false;
 }
+
+/* sigprocmask(): modifies the signal mask of a thread
+ * params: t - calling thread
+ * params: how - action to take
+ * params: set - new signal mask
+ * params: old - old signal mask
+ * returns: zero on success, negative errno on fail
+ */
+
+int sigprocmask(Thread *t, int how, const sigset_t *set, sigset_t *old) {
+    if(old) *old = t->signalMask;
+
+    if(set) {
+        switch(how) {
+        case SIG_SETMASK:
+            t->signalMask = *set;
+            break;
+        case SIG_BLOCK:
+            t->signalMask |= *set;
+            break;
+        case SIG_UNBLOCK:
+            t->signalMask &= ~(*set);
+            break;
+        default:
+            return -EINVAL;
+        }
+
+        /* unmaskable signals */
+        sigdelset(&t->signalMask, SIGFPE);
+        sigdelset(&t->signalMask, SIGILL);
+        sigdelset(&t->signalMask, SIGSEGV);
+        sigdelset(&t->signalMask, SIGBUS);
+    }
+
+    return 0;
+}
