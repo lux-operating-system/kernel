@@ -24,6 +24,9 @@
 #include <platform/platform.h>
 
 int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *type, int flags) {
+    if((strlen(src) > MAX_PATH) || (strlen(tgt) > MAX_PATH))
+        return -ENAMETOOLONG;
+
     // send a request to lumen
     MountCommand *command = calloc(1, sizeof(MountCommand));
     if(!command) return -ENOMEM;
@@ -42,6 +45,7 @@ int mount(Thread *t, uint64_t id, const char *src, const char *tgt, const char *
 }
 
 int lstat(Thread *t, uint64_t id, const char *path, struct stat *buffer) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -90,6 +94,8 @@ int fstat(Thread *t, uint64_t id, int fd, struct stat *buffer) {
 }
 
 int open(Thread *t, uint64_t id, const char *path, int flags, mode_t mode) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -345,6 +351,8 @@ mode_t umask(Thread *t, mode_t cmask) {
 }
 
 int chown(Thread *t, uint64_t id, const char *path, uid_t owner, gid_t group) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -373,6 +381,8 @@ int chown(Thread *t, uint64_t id, const char *path, uid_t owner, gid_t group) {
 }
 
 int chmod(Thread *t, uint64_t id, const char *path, mode_t mode) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -400,6 +410,8 @@ int chmod(Thread *t, uint64_t id, const char *path, mode_t mode) {
 }
 
 int mkdir(Thread *t, uint64_t id, const char *path, mode_t mode) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -428,6 +440,8 @@ int mkdir(Thread *t, uint64_t id, const char *path, mode_t mode) {
 }
 
 int utime(Thread *t, uint64_t id, const char *path, const struct utimbuf *times) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -462,6 +476,9 @@ int utime(Thread *t, uint64_t id, const char *path, const struct utimbuf *times)
 }
 
 int link(Thread *t, uint64_t id, const char *old, const char *new) {
+    if((strlen(old) > MAX_PATH) || (strlen(new) > MAX_PATH))
+        return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -496,6 +513,9 @@ int link(Thread *t, uint64_t id, const char *old, const char *new) {
 }
 
 int symlink(Thread *t, uint64_t id, const char *old, const char *new) {
+    if((strlen(old) > MAX_PATH) || (strlen(new) > MAX_PATH))
+        return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -530,6 +550,8 @@ int symlink(Thread *t, uint64_t id, const char *old, const char *new) {
 }
 
 int unlink(Thread *t, uint64_t id, const char *path) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -556,6 +578,8 @@ int unlink(Thread *t, uint64_t id, const char *path) {
 }
 
 ssize_t readlink(Thread *t, uint64_t id, const char *path, char *buf, size_t bufsiz) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
@@ -610,6 +634,8 @@ int fsync(Thread *t, uint64_t id, int fd) {
 }
 
 int statvfs(Thread *t, uint64_t id, const char *path, struct statvfs *buf) {
+    if(strlen(path) > MAX_PATH) return -ENAMETOOLONG;
+
     Process *p = getProcess(t->pid);
     if(!p) return -ESRCH;
 
