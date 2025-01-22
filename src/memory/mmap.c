@@ -41,9 +41,9 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
 
     if(flags & MAP_ANONYMOUS) {
         size_t pageCount = (len+PAGE_SIZE-1) / PAGE_SIZE;
-        int pageFlags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER;
-        if(prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
-        if(prot & PROT_EXEC) pageFlags |= PLATFORM_PAGE_EXEC;
+        int pageFlags = VMM_USER;
+        if(prot & PROT_WRITE) pageFlags |= VMM_WRITE;
+        if(prot & PROT_EXEC) pageFlags |= VMM_EXEC;
 
         uintptr_t anon;
         if(flags & MAP_FIXED) {
@@ -130,10 +130,19 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
     if(msg->prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
     if(msg->prot & PROT_EXEC) pageFlags |= PLATFORM_PAGE_EXEC;
 
-    // allocate one extra page for the mmap() header so we can unmap later
-    // the difference between this and malloc() is that this must always be
-    // page-aligned to comply with POSIX
-    uintptr_t base = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, VMM_USER | VMM_WRITE);
+    uintptr_t base;
+    if(!(msg->flags & MAP_FIXED)) {
+        base = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, VMM_USER | VMM_WRITE);
+    } else {
+        uintptr_t start = (uintptr_t) msg->addr - PAGE_SIZE;
+        base = vmmAllocate(start, USER_LIMIT_ADDRESS, pageCount+1, VMM_USER | VMM_WRITE);
+        if(base && (base != start)) {
+            vmmFree(base, pageCount+1);
+            req->ret = -ENOMEM;
+            return;
+        }
+    }
+
     if(!base) {
         req->ret = -ENOMEM;
         return;
@@ -163,16 +172,15 @@ void mmapHandle(MmapCommand *msg, SyscallRequest *req) {
 
         for(size_t i = 0; i < pageCount; i++)
             platformMapPage(base + (i*PAGE_SIZE), msg->mmio + (i*PAGE_SIZE), pageFlags);
-
-        req->ret = base;
     } else {
         /* memory-mapped regular file */
         header->device = false;
 
         memcpy((void *) base, msg->data, msg->len);
         memset((void *)((uintptr_t) base + msg->len), 0, PAGE_SIZE - msg->len);
-        req->ret = base;
     }
+
+    req->ret = base;
 }
 
 /* munmap(): unmaps a memory-mapped file
