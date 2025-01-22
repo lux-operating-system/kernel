@@ -70,6 +70,7 @@ typedef uint64_t sigset_t;
 
 #define SIG_BLOCK       0x0001
 #define SIG_UNBLOCK     0x0002
+#define SIG_SETMASK     0x0003
 
 #define SS_ONSTACK      0x0001
 #define SS_DISABLE      0x0002
