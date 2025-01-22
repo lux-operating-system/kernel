@@ -8,6 +8,10 @@
 #pragma once
 
 #include <sys/types.h>
+
+typedef volatile uint32_t sig_atomic_t;
+typedef uint64_t sigset_t;
+
 #include <kernel/sched.h>
 
 /* Signal Handler Macros */
@@ -73,9 +77,6 @@
 #define MINSIGSTKSZ     4096
 #define SIGSTKSZ        16384
 
-typedef volatile uint32_t sig_atomic_t;
-typedef uint64_t sigset_t;
-
 typedef struct {
     int si_signo, si_code, si_errno, si_status;
     pid_t si_pid;
@@ -108,3 +109,4 @@ void signalHandle(Thread *);
 int kill(Thread *, pid_t, int);
 int sigaction(Thread *, int, const struct sigaction *, struct sigaction *);
 void sigreturn(Thread *);
+int sigprocmask(Thread *, int, const sigset_t *, sigset_t *);
