@@ -36,7 +36,24 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
         if(prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
         if(prot & PROT_EXEC) pageFlags |= PLATFORM_PAGE_EXEC;
 
-        uintptr_t anon = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, pageFlags);
+        uintptr_t anon;
+        if(flags & MAP_FIXED) {
+            anon = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, pageFlags);
+        } else {
+            uintptr_t base = (uintptr_t) addr;
+            if(base & (PAGE_SIZE-1)) return (void *) -EINVAL;
+            base -= PAGE_SIZE;
+            uintptr_t end = base + len;
+            if((base < t->highest) || (end >= USER_LIMIT_ADDRESS))
+                return (void *) -ENOMEM;
+
+            anon = vmmAllocate(base, USER_LIMIT_ADDRESS, pageCount+1, pageFlags);
+            if(anon && (anon != base)) {
+                vmmFree(anon, pageCount+1);
+                return (void *) -ENOMEM;
+            }
+        }
+    
         if(!anon) return (void *) -ENOMEM;
 
         memset((void *) anon, 0, (pageCount+1) * PAGE_SIZE);
