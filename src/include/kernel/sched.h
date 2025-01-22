@@ -16,6 +16,11 @@
 #include <kernel/syscalls.h>
 #include <kernel/io.h>
 
+typedef struct Process Process;
+typedef struct Thread Thread;
+
+#include <kernel/signal.h>
+
 // still not sure of how to decide on this value so it'll probably change
 #define SCHED_TIME_SLICE        1       // ms
 
@@ -46,7 +51,7 @@ typedef struct SignalQueue {
     struct Thread *sender;
 } SignalQueue;
 
-typedef struct Thread {
+struct Thread {
     int status, cpu, priority;
     pid_t pid, tid;         // pid == tid for the main thread
     uint64_t time;          // timeslice OR sleep time if sleeping thread
@@ -57,6 +62,7 @@ typedef struct Thread {
     bool handlingSignal;    // true inside a signal handler
 
     void *signals;
+    sigset_t signalMask;
     SignalQueue *signalQueue;
     uintptr_t signalTrampoline;
     uintptr_t siginfo;
@@ -72,9 +78,9 @@ typedef struct Thread {
     void *signalContext;
 
     uintptr_t highest;
-} Thread;
+};
 
-typedef struct Process {
+struct Process {
     pid_t pid, parent, pgrp;
     uid_t user;
     gid_t group;
@@ -99,7 +105,7 @@ typedef struct Process {
     Thread **threads;
     struct Process **children;  // array of pointers of size childrenCount
     struct Process *next;
-} Process;
+};
 
 extern int processes, threads;
 void schedInit();
