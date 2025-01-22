@@ -349,7 +349,7 @@ void sigreturn(Thread *t) {
  */
 
 int sigprocmask(Thread *t, int how, const sigset_t *set, sigset_t *old) {
-    if(old) *old = t->signalMask;
+    sigset_t oldMask = t->signalMask;
 
     if(set) {
         switch(how) {
@@ -373,5 +373,6 @@ int sigprocmask(Thread *t, int how, const sigset_t *set, sigset_t *old) {
         sigdelset(&t->signalMask, SIGBUS);
     }
 
+    if(old) *old = oldMask;
     return 0;
 }
