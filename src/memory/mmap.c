@@ -30,7 +30,16 @@
 
 void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
            int fd, off_t off) {
-    if((flags & MAP_ANONYMOUS) && (fd == -1) && (!off)) {
+    if(flags & MAP_FIXED) {
+        uintptr_t base = (uintptr_t) addr;
+        if(base & (PAGE_SIZE-1)) return (void *) -EINVAL;
+        base -= PAGE_SIZE;
+        uintptr_t end = base + len;
+        if((base < t->highest) || (end >= USER_LIMIT_ADDRESS))
+            return (void *) -ENOMEM;
+    }
+
+    if(flags & MAP_ANONYMOUS) {
         size_t pageCount = (len+PAGE_SIZE-1) / PAGE_SIZE;
         int pageFlags = PLATFORM_PAGE_PRESENT | PLATFORM_PAGE_USER;
         if(prot & PROT_WRITE) pageFlags |= PLATFORM_PAGE_WRITE;
@@ -41,11 +50,6 @@ void *mmap(Thread *t, uint64_t id, void *addr, size_t len, int prot, int flags,
             anon = vmmAllocate(USER_MMIO_BASE, USER_LIMIT_ADDRESS, pageCount+1, pageFlags);
         } else {
             uintptr_t base = (uintptr_t) addr;
-            if(base & (PAGE_SIZE-1)) return (void *) -EINVAL;
-            base -= PAGE_SIZE;
-            uintptr_t end = base + len;
-            if((base < t->highest) || (end >= USER_LIMIT_ADDRESS))
-                return (void *) -ENOMEM;
 
             anon = vmmAllocate(base, USER_LIMIT_ADDRESS, pageCount+1, pageFlags);
             if(anon && (anon != base)) {
