@@ -7,6 +7,7 @@
 
 /* Program Break Memory Manager */
 
+#include <errno.h>
 #include <string.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -17,7 +18,7 @@
 /* sbrk(): changes the size of the program's data segment by moving the program break
  * params: t - calling thread
  * params: delta - number of bytes to increment or decrement
- * returns: pointer to previous program break on success, -1 on fail
+ * returns: pointer to previous program break on success, negative errno on fail
  */
 
 void *sbrk(Thread *t, intptr_t delta) {
@@ -32,7 +33,7 @@ void *sbrk(Thread *t, intptr_t delta) {
     if(!delta) return (void *)brk;
 
     Process *p = getProcess(t->pid);
-    if(!p) return (void *)-1;
+    if(!p) return (void *) -ESRCH;
 
     if(delta > 0) {
         // thread is trying to allocate memory
@@ -40,10 +41,10 @@ void *sbrk(Thread *t, intptr_t delta) {
         // the physical mm work only upon access
         uintptr_t ptr = vmmAllocate(brk, USER_LIMIT_ADDRESS, pages, VMM_USER | VMM_WRITE);
         if(!ptr) {
-            return (void *)-1;
+            return (void *) -ENOMEM;
         } else if(ptr != brk) {
             vmmFree(ptr, pages);
-            return (void *)-1;
+            return (void *) -ENOMEM;
         }
 
         memset((void *)ptr, 0, pages*PAGE_SIZE);
