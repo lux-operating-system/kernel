@@ -259,20 +259,22 @@ void signalHandle(Thread *t) {
 
     releaseLock(&t->lock);
 
-    int signum = s->signum - 1;     // change to zero-based
+    int signum = s->signum;
     struct sigaction *handlers = (struct sigaction *) t->signals;
-    uintptr_t handler = (uintptr_t) handlers[signum].sa_handler;
+    uintptr_t handler = (uintptr_t) handlers[signum-1].sa_handler;
     Thread *sender = s->sender;
     int def = 0;
 
     free(s);
-    
+
+    if(sigismember(&t->signalMask, signum)) return;
+
     switch(handler) {
     case (uintptr_t) SIG_IGN:
     case (uintptr_t) SIG_HOLD:
         return;
     case (uintptr_t) SIG_DFL:
-        def = signalDefaultHandler(signum + 1);
+        def = signalDefaultHandler(signum);
         break;
     }
 
@@ -287,7 +289,7 @@ void signalHandle(Thread *t) {
         break;
     default:
         t->handlingSignal = true;
-        platformSendSignal(sender, t, signum + 1, handler);
+        platformSendSignal(sender, t, signum, handler);
     }
 }
 
