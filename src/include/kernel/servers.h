@@ -323,6 +323,7 @@ typedef struct {
     off_t position;
 
     /* mmap params */
+    void *addr;
     size_t len;
     int prot;
     int flags;
