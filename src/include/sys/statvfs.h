@@ -22,7 +22,7 @@ struct statvfs {
     fsfilcnt_t f_files;
     fsfilcnt_t f_ffree;
     fsfilcnt_t f_favail;
-    unsigned long f_sid;
+    unsigned long f_fsid;
     unsigned long f_flag;
     unsigned long f_namemax;
 };
