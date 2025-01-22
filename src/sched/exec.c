@@ -115,6 +115,8 @@ pid_t execveMemory(const void *ptr, const char **argv, const char **envp) {
  */
 
 int execve(Thread *t, uint16_t id, const char *name, const char **argv, const char **envp) {
+    if(strlen(name) > MAX_PATH) return -ENAMETOOLONG;
+
     // request an external server to load the executable for us
     ExecCommand *cmd = calloc(1, sizeof(ExecCommand));
     if(!cmd) return -ENOMEM;
@@ -130,7 +132,14 @@ int execve(Thread *t, uint16_t id, const char *name, const char **argv, const ch
     cmd->header.id = id;
     cmd->uid = p->user;
     cmd->gid = p->group;
-    strcpy(cmd->path, name);
+
+    if(name[0] == '/') {
+        strcpy(cmd->path, name);
+    } else {
+        strcpy(cmd->path, p->cwd);
+        if(strlen(p->cwd) > 1) cmd->path[strlen(cmd->path)] = '/';
+        strcpy(cmd->path + strlen(cmd->path), name);
+    }
 
     int status = requestServer(t, 0, cmd);
     free(cmd);
