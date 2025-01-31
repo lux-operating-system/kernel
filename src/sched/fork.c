@@ -5,6 +5,7 @@
  * Core Microkernel
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <platform/platform.h>
@@ -25,7 +26,7 @@ pid_t fork(Thread *t) {
     pid_t pid = processCreate();
     if(!pid) {
         schedRelease();
-        return -1;
+        return -EAGAIN;
     }
 
     // we now have a blank slate process, so we need to create a thread in it
@@ -37,7 +38,7 @@ pid_t fork(Thread *t) {
     if(!p->threads) {
         free(p);
         schedRelease();
-        return -1;
+        return -ENOMEM;
     }
 
     p->threads[0] = calloc(1, sizeof(Thread));
@@ -45,7 +46,7 @@ pid_t fork(Thread *t) {
         free(p->threads);
         free(p);
         schedRelease();
-        return -1;
+        return -ENOMEM;
     }
 
     // add the new thread to the queue
@@ -68,7 +69,7 @@ pid_t fork(Thread *t) {
         free(p->threads);
         free(p);
         schedRelease();
-        return -1;
+        return -ENOMEM;
     }
 
     // and clone the parent's context
@@ -78,7 +79,7 @@ pid_t fork(Thread *t) {
         free(p->threads);
         free(p);
         schedRelease();
-        return -1;
+        return -ENOMEM;
     }
 
     // clone signal handlers
@@ -127,9 +128,17 @@ pid_t fork(Thread *t) {
 
         // if we made this far then the creation was successful
         // list the child process as a child of the parent
+        Process **newChildren = realloc(parent->children, parent->childrenCount+1);
+        if(!newChildren) {
+            // we can't add the child to the parent's list
+            platformCleanThread(p->threads[0]->context, p->threads[0]->highest);
+            free(p);
+            return -ENOMEM;
+        }
+
+        parent->children = newChildren;
+        parent->children[parent->childrenCount] = p;
         parent->childrenCount++;
-        parent->children = realloc(parent->children, parent->childrenCount);
-        if(parent->children) parent->children[parent->childrenCount-1] = p;
     }
 
     processes++;
